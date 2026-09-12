@@ -1,0 +1,81 @@
+# 🏢 Hệ thống Trợ lý Trực ca CSKH AI & Giám sát Vận hành Tự động
+
+> Hệ thống Trực ca CSKH kết hợp Trí tuệ Nhân tạo (AI Agent) và Cảm xúc Con người (Human-in-the-Loop), hỗ trợ doanh nghiệp tự động hóa phân loại Ticket, tra cứu RAG với Supabase `pgvector`, quản lý SLA real-time và can thiệp trực ca live cho Nhân viên CSKH.
+
+---
+
+## 📁 Cấu trúc Thư mục Dự án (Project Directory Structure)
+
+Cấu trúc tổng thể của thư mục dự án gốc (`project/`):
+
+```text
+project/
+├── 📁 .claude/                    # Cấu hình AI Assistant (Skills, Agents & Guidelines)
+│   ├── 📁 agents/                 # Agent profiles & chuyên gia hỗ trợ (VC UI/UX Designer...)
+│   ├── 📁 skills/                 # Skill guides & bộ quy chuẩn lập trình / thiết kế
+│   └── 📄 settings.json           # Cấu hình thiết lập AI Environment
+│
+├── 📁 code/                       # Mã nguồn ứng dụng (Full-stack Codebase)
+│   ├── 📁 backend/                # Server FastAPI, AI Engine, Worker & Services
+│   │   ├── 📁 app/                # Core logic, modules & workers
+│   │   ├── 📄 Dockerfile          # Dockerfile build backend container
+│   │   └── 📄 requirements.txt    # Thư viện Python (FastAPI, Supabase, Redis...)
+│   ├── 📁 frontend/               # Single Page Application (React + Vite)
+│   │   ├── 📁 src/                # Giao diện UI, Components & Styling
+│   │   ├── 📄 Dockerfile          # Dockerfile build frontend container
+│   │   ├── 📄 vite.config.js      # Cấu hình Vite Dev/Production Server
+│   │   └── 📄 package.json        # Thư viện Node.js (React, Tailwind CSS v4...)
+│   ├── 📄 .env                    # Biến môi trường hệ thống (Supabase DSN, Redis, API Keys)
+│   ├── 📄 docker-compose.yml      # Cấu hình khởi chạy toàn bộ 3 dịch vụ qua 1 lệnh
+│   └── 📄 README.md               # Hướng dẫn chi tiết thư mục code
+│
+├── 📁 docs/                       # Tài liệu Phân tích, Thiết kế & Hướng dẫn
+│   ├── 📄 gioithieuduan.md        # Tổng quan dự án, 4 khối chức năng & Use Cases
+│   ├── 📄 phantichhethong.md      # Phân tích kỹ thuật chi tiết, ERD, DDL (Supabase pgvector) & Sequence Diagrams
+│   ├── 📄 setup.md                # Hướng dẫn chi tiết Cài đặt, Khởi chạy & Tắt hệ thống
+│   └── 📄 design pattern.md       # Quy chuẩn Visual Language & Design Tokens (Organic Minimalism)
+│
+└── 📄 README.md                   # Tài liệu tổng quan dự án (File hiện tại)
+```
+
+---
+
+## 🛠️ Công nghệ Sử dụng (Tech Stack)
+
+- **Backend**: FastAPI (Python 3.11), SQLAlchemy ORM, Uvicorn, WebSockets / SSE.
+- **AI & Vector DB**: Supabase PostgreSQL + Extension `pgvector` (bảng `knowledge_chunks` với HNSW Index `vector_cosine_ops`), OpenAI / BGE Embeddings.
+- **Event Driven & Cache**: Redis Queue & PubSub.
+- **Frontend**: React 18, Vite, Tailwind CSS v4, Lucide Icons, Modern Vietnamese Typography (`Be Vietnam Pro` / `Plus Jakarta Sans`).
+- **DevOps**: Docker, Docker Compose.
+
+---
+
+## 🚀 Khởi chạy Nhanh (Quick Start)
+
+Yêu cầu: Đã cài đặt **Docker Desktop** và **Git**.
+
+### 1. Khởi chạy 1 Lệnh qua Docker (Khuyên dùng)
+```bash
+cd code
+docker compose up --build -d
+```
+
+- **Frontend (Giao diện UI)**: [http://localhost:5173](http://localhost:5173)
+- **Backend (API Docs)**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Redis Server**: `localhost:6379`
+
+### 2. Dừng Hệ thống
+```bash
+cd code
+docker compose down
+```
+
+---
+
+## 📖 Tài liệu Tham khảo Chi tiết
+
+- 📘 [Tài liệu Giới thiệu Dự án](file:///d:/Study/TLU/kiemthu/project/docs/gioithieuduan.md)
+- 📐 [Tài liệu Phân tích & Thiết kế Hệ thống](file:///d:/Study/TLU/kiemthu/project/docs/phantichhethong.md)
+- ⚙️ [Hướng dẫn Setup & Thao tác Vận hành](file:///d:/Study/TLU/kiemthu/project/docs/setup.md)
+- 🎨 [Quy chuẩn Thiết kế Giao diện UI/UX](file:///d:/Study/TLU/kiemthu/project/docs/design pattern.md)
+- 💻 [Hướng dẫn Mã nguồn Codebase](file:///d:/Study/TLU/kiemthu/project/code/README.md)

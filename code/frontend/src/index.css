@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-serif: "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+}
+
+*, ::before, ::after {
+  font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: #FFF8E7;
+  color: #2B2523;
+  line-height: 1.75;
+}
+
+/* Custom Soft Ambient Shadow */
+.shadow-editorial {
+  box-shadow: 0 20px 40px -15px rgba(43, 37, 35, 0.06), 0 0 15px 0 rgba(147, 5, 0, 0.03);
+}
+
+.shadow-editorial-hover {
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.shadow-editorial-hover:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 25px 50px -12px rgba(43, 37, 35, 0.09), 0 0 20px 0 rgba(147, 5, 0, 0.05);
+}
+
+/* Custom scrollbar for Editorial feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FFF8E7;
+}
+::-webkit-scrollbar-thumb {
+  background: #EFE7D3;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #95BBEA;
+}
