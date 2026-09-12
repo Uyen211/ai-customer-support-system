@@ -1,1 +1,94 @@
-\# BẢN ĐỊNH HƯỚNG THẨM MỸ & NGÔN NGỮ THỊ GIÁC TOÀN DIỆN \*\*(Creative & Visual Design Direction)\*\* --- ## 1. Brand Essence & Triết lý Thẩm mỹ (Core Philosophy)\[cite: 1\] \* \*\*Tone & Mood:\*\* Tinh tế, ấm cúng, thư thái nhưng đậm tính biên tập đương đại (\*Editorial Calm & Organic Minimalism\*). Thiết kế mang hơi thở tĩnh lặng của nghệ thuật gốm sứ/nội thất Scandinavian, giao thoa cùng sự tươi mới, trang nhã. \* \*\*Nguyên tắc định hướng (Guiding Principles):\*\* \* \*\*Negative Space as Value (Khoảng trắng là nội dung):\*\* Khoảng đệm rộng rãi không phải là không gian thừa, mà là công cụ tôn vinh vật thể và nội dung chính. \* \*\*Soft Geometry & Tactile Feel (Hình khối mềm & Tính xúc giác):\*\* Hạn chế các cạnh viền sắc nhọn hay hộp khối cứng nhắc; ưu tiên các đường cong tự nhiên, bo góc mềm mại (\*Squircle, Organic pill/capsule\*) gợi cảm giác thủ công, mộc mạc và an tĩnh. \* \*\*Visual Serenity & Rhythm (Nhịp điệu thư thái):\*\* Bố cục không gò bó theo lưới cứng hay chia cột dồn dập, mà chuyển động nhịp nhàng theo nhịp thở thị giác thông qua các mảng nền pastel nhẹ nhàng và kích thước card so le. --- ## 2. Hệ thống Màu sắc (Color Tokens & Distribution)\[cite: 1\] Toàn bộ bảng màu được chuyển dịch dựa trên tinh thần ảnh tham chiếu số 4, thay thế hoàn toàn các gam màu vàng/cam/xanh lá đơn lẻ để tạo nên một bảng màu cổ điển, thanh lịch và giàu tương phản cảm xúc: | Token / Vai trò | Tên màu | Giá trị HEX | Ý nghĩa & Ứng dụng | | :--- | :--- | :--- | :--- | | \*\*Canvas / Background\*\* | \*\*Cosmic Latte\*\* | \`#FFF8E7\` | Màu kem bơ ấm áp, làm nền tổng thể thay thế cho màu trắng tinh khiết (\`#FFFFFF\`), giúp giao diện có chiều sâu hữu cơ và dịu mắt. | | \*\*Primary Accent / Statement\*\* | \*\*Sangria Red\*\* | \`#930500\` | Màu đỏ rượu đậm, đóng vai trò tạo điểm nhấn thị giác cao trào (Hero CTA, tiêu đề đặc biệt, nhãn highlight, các điểm neo chú ý cốt lõi). | | \*\*Atmospheric / Secondary\*\* | \*\*Cornflower Blue\*\* | \`#95BBEA\` | Màu xanh lam mờ/pastel thanh thoát, dùng cho các mảng nền phân khối (background blocks), khối phụ trợ, trạng thái kích hoạt nhẹ hoặc các thẻ thông tin phụ. | | \*\*Neutral Dark / Typography\*\* | \*\*Deep Espresso / Slate\*\* | \`#2B2523\` \*(hoặc #1F242B)\* | Màu chữ chính, tạo độ tương phản cao trên nền kem bơ, không dùng đen thuần \`#000000\` để giữ được sự mềm mại tự nhiên. | | \*\*Neutral Light / Border\*\* | \*\*Muted Cream / Mist\*\* | \`rgba(147, 5, 0, 0.08)\` / \`#EFE7D3\` | Dành cho đường kẻ mảnh (hairline), viền card mờ, hoặc vệt phân cách tinh tế. | ### Quy tắc phân bổ tỷ lệ màu (60 - 30 - 10 Rule): \* \*\*60% (Chủ đạo):\*\* Nền bơ ấm \`#FFF8E7\` và các sắc thái kem sáng tạo cảm giác thông thoáng, trong trẻo. \* \*\*30% (Thứ cấp & Cân bằng cấu trúc):\*\* Sắc xanh \`#95BBEA\` ở các mảng nền module, block thông tin đan xen, tạo nhịp nghỉ thị giác mát mẻ đối trọng với nền ấm. \* \*\*10% (Điểm nhấn quyền lực):\*\* Sắc đỏ \`#930500\` xuất hiện tiết chế, chính xác và có chủ đích tại các điểm tương tác quan trọng hoặc chi tiết đắt giá. --- ## 3. Kiểu chữ & Cấu trúc Phân cấp (Editorial Typography)\[cite: 1\] \* \*\*Font Stack Định hướng:\*\* \* \*\*Display & Primary Headings (H1, H2, H3):\*\* Sử dụng các font chữ có chân mang phong cách hiện đại hoặc serif biên tập (\*Editorial / Modern Serif\* như \*Ogg, Canela, Playfair Display, Instrument Serif\*). Đường nét uốn lượn nhẹ, thanh lịch, mang cảm xúc nghệ thuật và thủ công cao cấp. \* \*\*Body & UI Elements:\*\* Font Sans-serif hình học hoặc humanist mềm mại (\*Inter, Plus Jakarta Sans, DM Sans\*), nét mảnh đến vừa (Light / Regular / Medium), độ giãn dòng rộng thoáng (\`line-height: 1.6 – 1.8\`) để tối ưu sự dễ đọc trên nền kem. \* \*\*Quy tắc phân cấp (Hierarchy Behavior):\*\* \* Tiêu đề chính mang tính tuyên ngôn cảm xúc (\*Emotional Title\*), dùng kích thước lớn nhưng tracking nhẹ, tạo cảm giác như trang tạp chí phong cách sống. \* Nhãn phụ (\*Eyebrow / Overline\*) thường viết hoa nhẹ nhàng (\*Uppercase\*), font size nhỏ, letter-spacing giãn nhẹ (\`+0.05em đến +0.1em\`) để tạo cấu trúc gọn gàng phía trên tiêu đề chính. --- ## 4. Ngôn ngữ Thị giác & Chất liệu Đồ họa (Visual Language & Imagery)\[cite: 1\] \* \*\*Phong cách Hình ảnh (Art Direction / Photography):\*\* \* Bối cảnh Studio tĩnh vật (\*Still-life\*), ánh sáng khuếch tán mềm (diffused light) với bóng đổ tự nhiên, dài và mờ (soft organic shadows). \* Sản phẩm/chủ thể được đặt cùng các vật thể có chất cảm mộc: gốm mờ (matte ceramic), thạch cao, vải lanh, hoa cỏ khô hoặc trái cây tươi có độ bóng nhẹ. \* Xử lý nền ảnh cắt ghép hoặc tách lớp (cutout) tinh tế, hòa hợp liền mạch vào nền kem bơ \`#FFF8E7\` hoặc khối xanh \`#95BBEA\` mà không tạo cảm giác viền cứng. \* \*\*Hình khối & Đường nét (Shapes & Radii):\*\* \* Bán kính cong lớn và tự nhiên: Áp dụng bo góc mềm mại (\*Large Border-Radius: 16px – 32px\*) cho các card và khối ảnh. \* Các nút bấm và nhãn tag sử dụng dạng viên nhộng mềm (\*Fully rounded / Pill shape\*). \* Hạn chế tuyệt đối đường kẻ viền (border) dày nặng; thay vào đó phân biệt các tầng giao diện bằng sự tương phản sắc độ nền hoặc viền mờ siêu mỏng (\*subtle 1px border with low opacity\*). \* \*\*Bóng đổ & Chiều sâu (Elevation & Lighting):\*\* \* Ưu tiên đổ bóng tàng hình (\*Ambient Diffused Shadows\*): Không dùng bóng đen gắt; bóng đổ phải có sắc độ pha từ chính màu nền (tone ấm mờ hoặc xám ấm), độ mờ lớn (\`blur > 24px\`) với độ trong suốt cực thấp (\`opacity: 4% – 8%\`) để vật thể nổi nhẹ nhàng như lơ lửng trên mặt phẳng. --- ## 5. Quy chuẩn Tương tác & Trải nghiệm (Interaction & Motion Feel)\[cite: 1\] \* \*\*Nhịp điệu chuyển động (Motion Tone):\*\* \* Chuyển động lướt êm, mượt mà và chậm rãi (Slow-ease, duration từ \`300ms\` đến \`500ms\`, dùng curve \`cubic-bezier(0.25, 1, 0.5, 1)\`). \* Hiệu ứng hover cho card hoặc ảnh: Scale phóng to cực nhẹ (\`scale(1.015 – 1.02)\`) hoặc nâng bóng mờ mượt mà, gợi sự ân cần và trân trọng chi tiết. \* \*\*Tương tác Nút bấm & CTA:\*\* \* Trạng thái mặc định: CTA chính dùng màu đỏ \`#930500\` nổi bật trên nền kem, hoặc nút dạng outline thanh lịch. \* Phản hồi tương tác (Feedback): Chuyển sắc độ đằm thắm, không dùng các hiệu ứng nhấp nháy hay rung giật mạnh nhằm giữ trọn trạng thái an yên cho mắt người xem.
+# BẢN ĐỊNH HƯỚNG THẨM MỸ & NGÔN NGỮ THỊ GIÁC TOÀN DIỆN
+
+**(Creative & Visual Design Direction)**
+
+---
+
+## 1. Brand Essence & Triết lý Thẩm mỹ (Core Philosophy)
+
+
+
+* **Tone & Mood:** Tinh tế, ấm cúng, thư thái nhưng đậm tính biên tập đương đại (*Editorial Calm & Organic Minimalism*). Thiết kế mang hơi thở tĩnh lặng của nghệ thuật gốm sứ/nội thất Scandinavian, giao thoa cùng sự tươi mới, trang nhã.
+* **Nguyên tắc định hướng (Guiding Principles):**
+* **Negative Space as Value (Khoảng trắng là nội dung):** Khoảng đệm rộng rãi không phải là không gian thừa, mà là công cụ tôn vinh vật thể và nội dung chính.
+* **Soft Geometry & Tactile Feel (Hình khối mềm & Tính xúc giác):** Hạn chế các cạnh viền sắc nhọn hay hộp khối cứng nhắc; ưu tiên các đường cong tự nhiên, bo góc mềm mại (*Squircle, Organic pill/capsule*) gợi cảm giác thủ công, mộc mạc và an tĩnh.
+* **Visual Serenity & Rhythm (Nhịp điệu thư thái):** Bố cục không gò bó theo lưới cứng hay chia cột dồn dập, mà chuyển động nhịp nhàng theo nhịp thở thị giác thông qua các mảng nền pastel nhẹ nhàng và kích thước card so le.
+
+
+
+---
+
+## 2. Hệ thống Màu sắc (Color Tokens & Distribution)
+
+
+
+Toàn bộ bảng màu được chuyển dịch dựa trên tinh thần ảnh tham chiếu số 4, thay thế hoàn toàn các gam màu vàng/cam/xanh lá đơn lẻ để tạo nên một bảng màu cổ điển, thanh lịch và giàu tương phản cảm xúc:
+
+| Token / Vai trò | Tên màu | Giá trị HEX | Ý nghĩa & Ứng dụng |
+| --- | --- | --- | --- |
+| **Canvas / Background** | **Cosmic Latte** | `#FFF8E7` | Màu kem bơ ấm áp, làm nền tổng thể thay thế cho màu trắng tinh khiết (`#FFFFFF`), giúp giao diện có chiều sâu hữu cơ và dịu mắt. |
+| **Primary Accent / Statement** | **Sangria Red** | `#930500` | Màu đỏ rượu đậm, đóng vai trò tạo điểm nhấn thị giác cao trào (Hero CTA, tiêu đề đặc biệt, nhãn highlight, các điểm neo chú ý cốt lõi). |
+| **Atmospheric / Secondary** | **Cornflower Blue** | `#95BBEA` | Màu xanh lam mờ/pastel thanh thoát, dùng cho các mảng nền phân khối (background blocks), khối phụ trợ, trạng thái kích hoạt nhẹ hoặc các thẻ thông tin phụ. |
+| **Neutral Dark / Typography** | **Deep Espresso / Slate** | `#2B2523` *(hoặc #1F242B)* | Màu chữ chính, tạo độ tương phản cao trên nền kem bơ, không dùng đen thuần `#000000` để giữ được sự mềm mại tự nhiên. |
+| **Neutral Light / Border** | **Muted Cream / Mist** | `rgba(147, 5, 0, 0.08)` / `#EFE7D3` | Dành cho đường kẻ mảnh (hairline), viền card mờ, hoặc vệt phân cách tinh tế. |
+
+### Quy tắc phân bổ tỷ lệ màu (60 - 30 - 10 Rule):
+
+* **60% (Chủ đạo):** Nền bơ ấm `#FFF8E7` và các sắc thái kem sáng tạo cảm giác thông thoáng, trong trẻo.
+* **30% (Thứ cấp & Cân bằng cấu trúc):** Sắc xanh `#95BBEA` ở các mảng nền module, block thông tin đan xen, tạo nhịp nghỉ thị giác mát mẻ đối trọng với nền ấm.
+* **10% (Điểm nhấn quyền lực):** Sắc đỏ `#930500` xuất hiện tiết chế, chính xác và có chủ đích tại các điểm tương tác quan trọng hoặc chi tiết đắt giá.
+
+---
+
+## 3. Kiểu chữ & Cấu trúc Phân cấp (Editorial Typography)
+
+
+
+* **Font Stack Định hướng:**
+* **Display & Primary Headings (H1, H2, H3):** Sử dụng các font chữ có chân mang phong cách hiện đại hoặc serif biên tập (*Editorial / Modern Serif* như *Ogg, Canela, Playfair Display, Instrument Serif*). Đường nét uốn lượn nhẹ, thanh lịch, mang cảm xúc nghệ thuật và thủ công cao cấp.
+* **Body & UI Elements:** Font Sans-serif hình học hoặc humanist mềm mại (*Inter, Plus Jakarta Sans, DM Sans*), nét mảnh đến vừa (Light / Regular / Medium), độ giãn dòng rộng thoáng (`line-height: 1.6 – 1.8`) để tối ưu sự dễ đọc trên nền kem.
+
+
+* **Quy tắc phân cấp (Hierarchy Behavior):**
+* Tiêu đề chính mang tính tuyên ngôn cảm xúc (*Emotional Title*), dùng kích thước lớn nhưng tracking nhẹ, tạo cảm giác như trang tạp chí phong cách sống.
+* Nhãn phụ (*Eyebrow / Overline*) thường viết hoa nhẹ nhàng (*Uppercase*), font size nhỏ, letter-spacing giãn nhẹ (`+0.05em đến +0.1em`) để tạo cấu trúc gọn gàng phía trên tiêu đề chính.
+
+
+
+---
+
+## 4. Ngôn ngữ Thị giác & Chất liệu Đồ họa (Visual Language & Imagery)
+
+
+
+* **Phong cách Hình ảnh (Art Direction / Photography):**
+* Bối cảnh Studio tĩnh vật (*Still-life*), ánh sáng khuếch tán mềm (diffused light) với bóng đổ tự nhiên, dài và mờ (soft organic shadows).
+* Sản phẩm/chủ thể được đặt cùng các vật thể có chất cảm mộc: gốm mờ (matte ceramic), thạch cao, vải lanh, hoa cỏ khô hoặc trái cây tươi có độ bóng nhẹ.
+* Xử lý nền ảnh cắt ghép hoặc tách lớp (cutout) tinh tế, hòa hợp liền mạch vào nền kem bơ `#FFF8E7` hoặc khối xanh `#95BBEA` mà không tạo cảm giác viền cứng.
+
+
+* **Hình khối & Đường nét (Shapes & Radii):**
+* Bán kính cong lớn và tự nhiên: Áp dụng bo góc mềm mại (*Large Border-Radius: 16px – 32px*) cho các card và khối ảnh.
+* Các nút bấm và nhãn tag sử dụng dạng viên nhộng mềm (*Fully rounded / Pill shape*).
+* Hạn chế tuyệt đối đường kẻ viền (border) dày nặng; thay vào đó phân biệt các tầng giao diện bằng sự tương phản sắc độ nền hoặc viền mờ siêu mỏng (*subtle 1px border with low opacity*).
+
+
+* **Bóng đổ & Chiều sâu (Elevation & Lighting):**
+* Ưu tiên đổ bóng tàng hình (*Ambient Diffused Shadows*): Không dùng bóng đen gắt; bóng đổ phải có sắc độ pha từ chính màu nền (tone ấm mờ hoặc xám ấm), độ mờ lớn (`blur > 24px`) với độ trong suốt cực thấp (`opacity: 4% – 8%`) để vật thể nổi nhẹ nhàng như lơ lửng trên mặt phẳng.
+
+
+
+---
+
+## 5. Quy chuẩn Tương tác & Trải nghiệm (Interaction & Motion Feel)
+
+
+
+* **Nhịp điệu chuyển động (Motion Tone):**
+* Chuyển động lướt êm, mượt mà và chậm rãi (Slow-ease, duration từ `300ms` đến `500ms`, dùng curve `cubic-bezier(0.25, 1, 0.5, 1)`).
+* Hiệu ứng hover cho card hoặc ảnh: Scale phóng to cực nhẹ (`scale(1.015 – 1.02)`) hoặc nâng bóng mờ mượt mà, gợi sự ân cần và trân trọng chi tiết.
+
+
+* **Tương tác Nút bấm & CTA:**
+* Trạng thái mặc định: CTA chính dùng màu đỏ `#930500` nổi bật trên nền kem, hoặc nút dạng outline thanh lịch.
+* Phản hồi tương tác (Feedback): Chuyển sắc độ đằm thắm, không dùng các hiệu ứng nhấp nháy hay rung giật mạnh nhằm giữ trọn trạng thái an yên cho mắt người xem.
