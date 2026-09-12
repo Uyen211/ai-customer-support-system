@@ -34,29 +34,55 @@
 
 ## 3. Kiến trúc Luồng Thực hiện Dự án
 
+Sơ đồ luồng phát triển và tích hợp theo từng giai đoạn dựa trên sự phụ thuộc dữ liệu giữa **4 Khối Chức năng Cốt lõi**:
+
+```text
+[GIAI ĐOẠN 0: KẾT NỐI NỀN TẢNG DÙNG CHUNG]
+- Khởi tạo Repository & Cấu hình Docker / Docker Compose
+- Khởi tạo CSDL Supabase PostgreSQL & kích hoạt Extension `pgvector`
+- Khởi chạy Redis Event Queue & Pub/Sub
+- Thiết lập Migration 9 bảng dữ liệu & Chuẩn hóa Schema/DTO dùng chung
+                               │
+        ┌──────────────────────┴──────────────────────┐
+        │                                             │
+[GIAI ĐOẠN 1: PHÁT TRIỂN SONG SONG BẬC 1]     [GIAI ĐOẠN 1: PHÁT TRIỂN SONG SONG BẬC 1]
+● Khối 1: Trợ lý Tra cứu Khách hàng           ● Khối 4: Điều phối, SLA Engine & Kanban
+  - Đăng ký/Đăng nhập Khách hàng                - Quản lý Hồ sơ & Trạng thái Nhân viên
+  - RAG Search (Supabase `knowledge_chunks`)     - Cấu hình Cấp độ SLA & Đếm ngược thời gian
+  - Trả lời Streaming & Citation                 - Giao diện Bảng Kanban Quản lý Ticket (Mock)
+● Khối 3: Cổng Hỗ trợ Trực tiếp (Phần 1)
+  - Đăng ký/Đăng nhập Nhân viên CSKH
+  - Khung Màn hình Trực ca (Live Console)
+        │                                             │
+        └──────────────────────┬──────────────────────┘
+                               │
+                 [GIAI ĐOẠN 2: TÍCH HỢP TỰ ĐỘNG PHÂN LOẠI]
+                 ● Khối 2: Trợ lý Đánh giá Cảm xúc & Auto-Triage
+                   - Phân tích Cảm xúc Tin nhắn (Từ Khối 1)
+                   - Phát hiện Khách hàng Tiêu cực / Yêu cầu Gặp Người
+                   - Tự động Mở Ticket & Gán Mức độ Ưu tiên (Liên kết Cấu trúc Ticket từ Khối 4)
+                   - Kích hoạt Cờ Chuyển chế độ sang `WAITING_HUMAN` (Tự động Tạm dừng Bot Khối 1)
+                               │
+                 [GIAI ĐOẠN 3: TÍCH HỢP ĐIỀU PHỐI & REAL-TIME GATEWAY]
+                 ● Khối 3: Cổng Hỗ trợ Trực tiếp (Phần 2)
+                   - WebSocket Gateway tiếp quản Cuộc hội thoại ngay khi nhận Cờ Chuyển chế độ từ Khối 2
+                   - Nhắn tin 2 chiều thời gian thực Khách - Nhân viên
+                 ● Khối 4: Thuật toán Điều phối Ticket
+                   - Thuật toán Phân việc Tải tối thiểu (Least-Loaded Dispatcher)
+                   - Phân bổ Ticket mới mở (từ Khối 2) tới Nhân viên Online (từ Khối 3)
+                   - Cảnh báo vi phạm SLA Real-time qua Redis / Notification
+                               │
+                 [GIAI ĐOẠN 4: ĐÓNG GÓI DOCKER, KIỂM THỬ E2E & BÁO CÁO]
+                 - Kiểm thử Toàn trình (End-to-End Testing) luồng Khách chat -> AI Triage -> Phân Ticket -> Agent Tiếp quản
+                 - Đóng gói Container Docker (`cs_frontend`, `cs_backend`, `cs_redis`)
+                 - Hoàn thiện Tài liệu Phân tích & Báo cáo Thống kê Hiệu suất
 ```
-[GIAI ĐOẠN 0: NỀN TẢNG DÙNG CHUNG]
-(Khởi tạo Repo, Cấu hình Supabase PostgreSQL, Extension pgvector, Migration bảng, Chuẩn hóa DTO/Schemas)
-                               |
-       +-----------------------+-----------------------+
-       |                                               |
-[GIAI ĐOẠN 1: SONG SONG BẬC 1]                 [GIAI ĐOẠN 1: SONG SONG BẬC 1]
-TV1: Auth Khách + RAG Engine (Supabase Vector)  TV4: CRUD Nhân viên, SLA & Bảng Kanban
-TV3: Auth Nhân viên + Khung Live Console       (Chạy độc lập trên dữ liệu Ticket Mock)
-       |                                               |
-       +-----------------------+-----------------------+
-                               |
-                 [GIAI ĐOẠN 2: SONG SONG BẬC 2]
-                 TV2: AI Sentiment + Auto-Triage
-                 (Cần tin nhắn của TV1 để phân tích,
-                  cần cấu trúc Ticket của TV4 để mở Ticket)
-                               |
-                 [GIAI ĐOẠN 3: TÍCH HỢP ĐIỀU PHỐI & REAL-TIME]
-                 TV3: WebSocket Takeover (Cần cờ của TV2)
-                 TV4: Least-Loaded Dispatcher (Cần Ticket từ TV2, Agent Online từ TV3)
-                               |
-                 [GIAI ĐOẠN 4: ĐÓNG GÓI DOCKER, TEST E2E & BÁO CÁO]
-```
+
+### Mô tả Chi tiết Phụ thuộc Kỹ thuật giữa Các Khối Chức năng:
+1. **Khối 1 (Trợ lý Tra cứu Khách hàng)** & **Khối 3 (Cổng Hỗ trợ Trực tiếp)** khởi tạo độc lập ban đầu, đảm bảo giao diện & cơ chế Auth cho 2 đối tượng người dùng (Khách hàng và Nhân viên CSKH).
+2. **Khối 2 (Đánh giá Cảm xúc & Auto-Triage)** đóng vai trò cầu nối dữ liệu trung gian: Đọc tin nhắn nhập vào từ Khối 1 để phân tích cảm xúc, sử dụng cấu trúc Ticket của Khối 4 để tự động mở Ticket. Khi phát hiện cảm xúc tiêu cực, Khối 2 đổi trạng thái cuộc trò chuyện sang `WAITING_HUMAN`, giúp tạm dừng bot Khối 1.
+3. **Khối 3 (Cổng Hỗ trợ Real-time)** & **Khối 4 (Điều phối & SLA Engine)** hợp nhất luồng xử lý thực tế: Thuật toán của Khối 4 truy vấn danh sách Nhân viên đang Online ở Khối 3 để tự động gán Ticket (từ Khối 2) theo cơ chế tải tối thiểu (Least-Loaded), đồng thời mở WebSocket Gateway ở Khối 3 để Nhân viên trực ca trò chuyện trực tiếp với Khách hàng.
+
 
 ---
 
