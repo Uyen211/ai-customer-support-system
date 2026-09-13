@@ -140,25 +140,28 @@ Lưu trữ toàn bộ các đoạn văn bản chia nhỏ từ tài liệu chính
 |`metadata`|JSONB|NULL|Siêu dữ liệu: Số trang, chương, điều khoản phục vụ trích dẫn Citations|
 |`created_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời điểm lưu dữ liệu|
 
-* **DDL Khởi tạo Extension & Chỉ mục HNSW cho Vector:**
-```sql
-CREATE EXTENSION IF NOT EXISTS vector;
+Dựa theo chuẩn định dạng và phong cách trình bày trong tài liệu `phantichhethong.md` của bạn, dưới đây là bảng đặc tả chi tiết cho **Bảng `products**` cùng câu lệnh DDL hoàn chỉnh để bạn đưa trực tiếp vào phần thiết kế cơ sở dữ liệu:
 
--- Bảng lưu trữ các đoạn tài liệu RAG
-CREATE TABLE IF NOT EXISTS knowledge_chunks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    document_name VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    embedding VECTOR(1536),
-    metadata JSONB NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+---
 
--- Chỉ mục HNSW tối ưu tốc độ tìm kiếm tương đồng Cosine (Cosine Similarity)
-CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_embedding 
-ON knowledge_chunks 
-USING hnsw (embedding vector_cosine_ops);
-```
+**10. Bảng `products` (Danh mục & Tồn kho sản phẩm thú cưng)**
+Lưu trữ thông tin định lượng, phân loại và trạng thái kho thực tế của các sản phẩm đồ dùng thú cưng phục vụ kiểm tra tức thời (Real-time catalog lookup) kết hợp cùng mô hình RAG.
+
+| **Tên trường (Column)** | **Kiểu dữ liệu (PostgreSQL)** | **Ràng buộc (Constraints)** | **Mô tả nghiệp vụ** |
+| --- | --- | --- | --- |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh duy nhất của sản phẩm |
+| `sku` | VARCHAR(50) | NOT NULL, UNIQUE | Mã quản lý kho hàng (VD: `CAT-ROYAL-INDOOR-2KG`) |
+| `name` | VARCHAR(255) | NOT NULL | Tên thương mại đầy đủ của sản phẩm |
+| `category` | VARCHAR(100) | NOT NULL | Danh mục sản phẩm (VD: Thức ăn, Cát vệ sinh, Phụ kiện, Đồ chơi) |
+| `pet_type` | VARCHAR(50) | NOT NULL, CHECK (`pet_type` IN ('DOG', 'CAT', 'BIRD', 'ALL', 'OTHER')) | Đối tượng vật nuôi áp dụng |
+| `price` | NUMERIC(12, 2) | NOT NULL, CHECK (`price` >= 0) | Giá niêm yết bán lẻ hiện tại |
+| `sale_price` | NUMERIC(12, 2) | NULL, CHECK (`sale_price` >= 0) | Giá khuyến mãi (nếu có chương trình giảm giá) |
+| `stock_quantity` | INT | NOT NULL, Default: 0, CHECK (`stock_quantity` >= 0) | Số lượng tồn kho thực tế |
+| `status` | VARCHAR(20) | NOT NULL, Default: 'IN_STOCK', CHECK (`status` IN ('IN_STOCK', 'OUT_OF_STOCK', 'DISCONTINUED')) | Trạng thái kinh doanh sản phẩm |
+| `attributes` | JSONB | NULL | Thuộc tính linh hoạt cho đồ thú cưng: trọng lượng, kích cỡ, hương vị, xuất xứ |
+| `description` | TEXT | NULL | Tóm tắt thông tin sản phẩm hiển thị nhanh |
+| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm tạo sản phẩm trong hệ thống |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm cập nhật giá/tồn kho gần nhất |
 
 ---
 
