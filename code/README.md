@@ -2,6 +2,10 @@
 
 Thư mục `code/` chứa toàn bộ mã nguồn ứng dụng bao gồm **Backend**, **Frontend**, cấu hình **Docker Compose** và môi trường **.env**.
 
+> [!IMPORTANT]
+> **Quy tắc Mã nguồn (Rule)**:
+> Toàn bộ phần mã nguồn (source code) chính để xây dựng, vận hành và chạy toàn bộ phần mềm/hệ thống nằm **duy nhất trong thư mục `code/` này**.
+
 ---
 
 ## 📁 Cấu trúc Thư mục Mã nguồn (`code/`)

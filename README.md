@@ -44,6 +44,10 @@ project/
 └── 📄 README.md                   # Tài liệu tổng quan dự án (File hiện tại)
 ```
 
+> [!IMPORTANT]
+> **Quy tắc Kiến trúc Codebase (Architecture Rule)**:
+> Toàn bộ phần mã nguồn (source code) chính để xây dựng, vận hành và khởi chạy hệ thống/phần mềm nằm **duy nhất trong thư mục [`code/`](file:///d:/Study/TLU/kiemthu/project/code/)** (bao gồm `code/backend/`, `code/frontend/`, `code/docker-compose.yml`, `code/.env`). Các thư mục khác (như `docs/`) chỉ dùng cho mục đích lưu trữ tài liệu phân tích, hướng dẫn, sơ đồ CSDL, dữ liệu thô và các artifact dữ liệu RAG tiền xử lý.
+
 ---
 
 ## 🛠️ Công nghệ Sử dụng (Tech Stack)
