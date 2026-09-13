@@ -178,10 +178,21 @@ CREATE TABLE IF NOT EXISTS knowledge_chunks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    embedding VECTOR(1536),
+    embedding VECTOR(1024),
     metadata JSONB NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Đổi kiểu dữ liệu sang 768 chiều
+ALTER TABLE knowledge_chunks 
+ALTER COLUMN embedding TYPE vector(768);
+
+-- Tái tạo chỉ mục HNSW cho vector 768 chiều
+DROP INDEX IF EXISTS idx_knowledge_chunks_embedding_hnsw;
+CREATE INDEX idx_knowledge_chunks_embedding_hnsw 
+ON knowledge_chunks 
+USING hnsw (embedding vector_cosine_ops)
+WITH (m = 16, ef_construction = 64);
 
 -- Chỉ mục HNSW tối ưu tốc độ tìm kiếm tương đồng Cosine (Cosine Similarity)
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_embedding 

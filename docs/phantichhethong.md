@@ -136,7 +136,7 @@ Lưu trữ toàn bộ các đoạn văn bản chia nhỏ từ tài liệu chính
 |`id`|UUID|PK, Default: `gen_random_uuid()`|Mã định danh đoạn trích tài liệu|
 |`document_name`|VARCHAR(255)|NOT NULL|Tên tài liệu/chính sách (VD: `Chinh_sach_doi_tra.pdf`)|
 |`content`|TEXT|NOT NULL|Nội dung đoạn văn bản đã chia nhỏ (chunk)|
-|`embedding`|VECTOR(1536)|NULL|Vector nhúng ngữ nghĩa (1536 chiều OpenAI / 768 chiều BGE)|
+|`embedding`|VECTOR(1024)|NULL|Vector nhúng ngữ nghĩa (1024 chiều)|
 |`metadata`|JSONB|NULL|Siêu dữ liệu: Số trang, chương, điều khoản phục vụ trích dẫn Citations|
 |`created_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời điểm lưu dữ liệu|
 
