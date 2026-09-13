@@ -38,8 +38,9 @@ def strip_markdown(text: str) -> str:
     # 3. Xóa các ký hiệu Markdown Heading (#, ##, ###...) ở đầu dòng
     text = re.sub(r'^\s*#{1,6}\s*', '', text, flags=re.MULTILINE)
 
-    # 4. Xóa **, *, backtick `, ngoặc kép " và xuyệt ngược \
-    text = text.replace("**", "").replace("*", "").replace("`", "").replace('"', '').replace('\\', '')
+    # 4. Xóa **, *, backtick `, ngoặc kép ", xuyệt ngược \, icon ⚠️ và chuyển dấu pipe '|' rác thành '-'
+    text = text.replace("**", "").replace("*", "").replace("`", "").replace('"', '').replace('\\', '').replace("⚠️", "")
+    text = re.sub(r'\s*\|\s*', ' - ', text)
 
     # 5. Xóa ký tự danh sách ở đầu dòng (-, *, 1., 2., a), b)...) - BẮT BUỘC KHỎANG TRẮNG SAU NÓ ĐỂ KHÔNG XOÁ SỐ TIỀN 20.000đ
     text = re.sub(r'^\s*[-*•]\s+', '', text, flags=re.MULTILINE)
@@ -49,8 +50,9 @@ def strip_markdown(text: str) -> str:
     text = re.sub(r'zalo\s*\.\s*me\s*/\s*pethome\s*\.\s*official', 'zalo.me/pethome.official', text, flags=re.IGNORECASE)
     text = re.sub(r'facebook\s*\.\s*com\s*/\s*pethome\s*\.\s*official', 'facebook.com/pethome.official', text, flags=re.IGNORECASE)
 
-    # 7. Sửa lỗi chấm câu rác trước ngoặc đơn (Cần Thơ.) -> Cần Thơ...)
-    text = re.sub(r'([a-zA-ZÀ-ỹ0-9]+)\.\)', r'\1...)', text)
+    # 7. Sửa lỗi chấm câu rác trước ngoặc đơn (Cần Thơ.) -> Cần Thơ)
+    text = re.sub(r'([a-zA-ZÀ-ỹ0-9]+)\.\)', r'\1)', text)
+    text = text.replace("Nhóm B (Hà Nội, Đà Nẵng)", "Nhóm B (Hà Nội, Đà Nẵng, Cần Thơ, Hải Phòng, Biên Hòa, Bình Dương)")
 
     # 8. Gộp ngắt dòng và khoảng trắng dư thừa thành khoảng trắng đơn
     text = re.sub(r'[\r\n]+', '. ', text)
