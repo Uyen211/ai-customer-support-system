@@ -1,0 +1,189 @@
+[
+  {
+    "sku": "CAT-ROYAL-INDOOR-2KG",
+    "name": "Thức ăn hạt Royal Canin Indoor cho mèo trưởng thành 2kg",
+    "category": "Thức ăn",
+    "pet_type": "CAT",
+    "price": 285000,
+    "sale_price": null,
+    "stock_quantity": 120,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "Royal Canin",
+      "weight": "2kg",
+      "target_age": "ADULT",
+      "origin": "Pháp"
+    },
+    "description": "Thức ăn hạt dành cho mèo trưởng thành sống trong nhà, hỗ trợ tiêu hóa và kiểm soát búi lông."
+  },
+  {
+    "sku": "CAT-PETKIT-CATLIT-10L",
+    "name": "Cát vệ sinh cho mèo PetKit Cat Litter 10L",
+    "category": "Vệ sinh",
+    "pet_type": "CAT",
+    "price": 165000,
+    "sale_price": 150000,
+    "stock_quantity": 200,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "PetKit",
+      "volume": "10L",
+      "target_age": "ALL",
+      "type": "Tofu & Carbon"
+    },
+    "description": "Cát vệ sinh vón cục nhanh, khử mùi tốt, ít bụi, an toàn cho mèo và người nuôi."
+  },
+  {
+    "sku": "DOG-ROYAL-MINI-4KG",
+    "name": "Thức ăn hạt Royal Canin Mini Adult cho chó nhỏ 4kg",
+    "category": "Thức ăn",
+    "pet_type": "DOG",
+    "price": 420000,
+    "sale_price": null,
+    "stock_quantity": 85,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "Royal Canin",
+      "weight": "4kg",
+      "target_age": "ADULT",
+      "suitable_breed": "Poodle, Pug, Corgi, Pom, Chihuahua (<10kg)"
+    },
+    "description": "Thức ăn hạt cho chó trưởng thành giống nhỏ dưới 10kg, hỗ trợ tiêu hóa và lông da khỏe mạnh."
+  },
+  {
+    "sku": "DOG-KONG-CLASSIC-M",
+    "name": "Đồ chơi Kong Classic size M cho chó",
+    "category": "Đồ chơi",
+    "pet_type": "DOG",
+    "price": 320000,
+    "sale_price": null,
+    "stock_quantity": 60,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "Kong",
+      "size": "M",
+      "material": "Cao su tự nhiên",
+      "target_age": "ALL"
+    },
+    "description": "Đồ chơi cao su tự nhiên bền bỉ, giúp chó giải trí, giảm stress và hạn chế cắn phá đồ đạc."
+  },
+  {
+    "sku": "CAT-PETKIT-FOUNTAIN-2L",
+    "name": "Máy uống nước tự động PetKit Eversweet 2L cho mèo",
+    "category": "Phụ kiện",
+    "pet_type": "CAT",
+    "price": 890000,
+    "sale_price": 799000,
+    "stock_quantity": 45,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "PetKit",
+      "capacity": "2L",
+      "target_age": "ALL",
+      "warranty": "12 tháng"
+    },
+    "description": "Máy uống nước tự động giúp mèo uống nhiều nước hơn, hỗ trợ sức khỏe thận và tiết niệu."
+  },
+  {
+    "sku": "DOG-BIO-PETSHAMPOO-500ML",
+    "name": "Sữa tắm Bio Pet Shampoo cho chó 500ml",
+    "category": "Chăm sóc",
+    "pet_type": "DOG",
+    "price": 185000,
+    "sale_price": null,
+    "stock_quantity": 150,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "Bio Pet",
+      "volume": "500ml",
+      "target_age": "ALL",
+      "scent": "Thảo dược dịu nhẹ"
+    },
+    "description": "Sữa tắm thảo dược giúp làm sạch, khử mùi và giảm ngứa cho chó, an toàn cho da nhạy cảm."
+  },
+  {
+    "sku": "BIRD-VERSELE-LAGA-PARROT-1KG",
+    "name": "Thức ăn hạt Versele-Laga cho vẹt 1kg",
+    "category": "Thức ăn",
+    "pet_type": "BIRD",
+    "price": 195000,
+    "sale_price": null,
+    "stock_quantity": 70,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "Versele-Laga",
+      "weight": "1kg",
+      "target_age": "ADULT",
+      "origin": "Bỉ"
+    },
+    "description": "Thức ăn hỗn hợp hạt dinh dưỡng dành cho vẹt cảnh, hỗ trợ tiêu hóa và lông sáng khỏe."
+  },
+  {
+    "sku": "CAT-TRIXIE-SCRATCHER-L",
+    "name": "Trụ cào móng Trixie cho mèo size L",
+    "category": "Phụ kiện",
+    "pet_type": "CAT",
+    "price": 450000,
+    "sale_price": 399000,
+    "stock_quantity": 40,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "Trixie",
+      "size": "L (Cao 50cm)",
+      "material": "Dây thừng Sisal tự nhiên",
+      "target_age": "ALL"
+    },
+    "description": "Trụ cào móng giúp mèo mài móng, bảo vệ sofa và đồ đạc trong nhà, kèm đồ chơi treo."
+  },
+  {
+    "sku": "DOG-FRONTLINE-SPOTON-3PIP",
+    "name": "Thuốc nhỏ gáy Frontline Spot On cho chó 3 pipet",
+    "category": "Chăm sóc",
+    "pet_type": "DOG",
+    "price": 350000,
+    "sale_price": null,
+    "stock_quantity": 90,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "Frontline",
+      "specification": "Hộp 3 ống (3 pipet)",
+      "target_age": "ADULT (Trên 8 tuần tuổi)"
+    },
+    "description": "Thuốc nhỏ gáy phòng và trị ve, bọ chét cho chó, hiệu quả kéo dài 1 tháng mỗi ống."
+  },
+  {
+    "sku": "CAT-WHISKAS-PATE-12GX12",
+    "name": "Pate Whiskas cho mèo vị cá ngừ 12 gói x 80g",
+    "category": "Thức ăn",
+    "pet_type": "CAT",
+    "price": 145000,
+    "sale_price": 135000,
+    "stock_quantity": 180,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "Whiskas",
+      "specification": "Hộp 12 gói x 80g",
+      "flavor": "Cá ngừ",
+      "target_age": "ADULT"
+    },
+    "description": "Pate mềm cho mèo trưởng thành, vị cá ngừ thơm ngon, giàu dinh dưỡng và độ ẩm."
+  },
+  {
+    "sku": "DOG-PETKIT-FEEDER-6L",
+    "name": "Máy cho ăn tự động PetKit Fresh Element 6L cho chó mèo",
+    "category": "Phụ kiện",
+    "pet_type": "DOG",
+    "price": 1450000,
+    "sale_price": 1390000,
+    "stock_quantity": 30,
+    "status": "IN_STOCK",
+    "attributes": {
+      "brand": "PetKit",
+      "capacity": "6L",
+      "target_age": "ALL",
+      "connection": "Wi-Fi App Control",
+      "warranty": "12 tháng"
+    },
+    "description": "Máy cho ăn tự động 6L, hẹn giờ, điều khiển qua app điện thoại, phù hợp cho chó mèo."
+  }
+]

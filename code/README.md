@@ -81,5 +81,5 @@ npm run dev
 ## 🔗 Liên kết Nhanh
 
 - 🏠 [Về README Gốc của Dự án](../README.md)
-- ⚙️ [Chi tiết Cài đặt & Khởi chạy](../docs/setup.md)
-- 📐 [Phân tích Hệ thống & Cơ sở Dữ liệu](../docs/phantichhethong.md)
+- ⚙️ [Chi tiết Cài đặt & Khởi chạy](../docs/overview/setup.md)
+- 📐 [Phân tích Hệ thống & Cơ sở Dữ liệu](../docs/overview/phantichhethong.md)

@@ -29,11 +29,17 @@ project/
 │   ├── 📄 docker-compose.yml      # Cấu hình khởi chạy toàn bộ 3 dịch vụ qua 1 lệnh
 │   └── 📄 README.md               # Hướng dẫn chi tiết thư mục code
 │
-├── 📁 docs/                       # Tài liệu Phân tích, Thiết kế & Hướng dẫn
-│   ├── 📄 gioithieuduan.md        # Tổng quan dự án, 4 khối chức năng & Use Cases
-│   ├── 📄 phantichhethong.md      # Phân tích kỹ thuật chi tiết, ERD, DDL (Supabase pgvector) & Sequence Diagrams
-│   ├── 📄 setup.md                # Hướng dẫn chi tiết Cài đặt, Khởi chạy & Tắt hệ thống
-│   └── 📄 design pattern.md       # Quy chuẩn Visual Language & Design Tokens (Organic Minimalism)
+├── 📁 docs/                       # Thư mục Tài liệu Dự án (Đã phân loại 3 phần)
+│   ├── 📁 overview/               # Tài liệu Phân tích, Tổng quan & Setup
+│   │   ├── 📄 gioithieuduan.md    # Tổng quan dự án, 4 khối chức năng & Use Cases
+│   │   ├── 📄 phantichhethong.md  # Phân tích kỹ thuật chi tiết, ERD & Sequence Diagrams
+│   │   ├── 📄 setup.md            # Hướng dẫn chi tiết Cài đặt, Khởi chạy & Tắt hệ thống
+│   │   └── 📄 design_pattern.md   # Quy chuẩn Visual Language & Design Tokens
+│   ├── 📁 database/               # Cấu trúc CSDL & DDL SQL
+│   │   └── 📄 sql.md              # Câu lệnh DDL khởi tạo Schema PostgreSQL / Supabase
+│   └── 📁 rag/                    # Bộ dữ liệu Chatbot RAG (Raw & Processed)
+│       ├── 📁 raw/                # Dữ liệu thô (dataset-rag.md, prompt.md)
+│       └── 📁 processed/          # Dữ liệu đã làm sạch & bóc tách (knowledge_chunks_prepared.json, insert_products.sql...)
 │
 └── 📄 README.md                   # Tài liệu tổng quan dự án (File hiện tại)
 ```
@@ -74,8 +80,10 @@ docker compose down
 
 ## 📖 Tài liệu Tham khảo Chi tiết
 
-- 📘 [Tài liệu Giới thiệu Dự án](file:///d:/Study/TLU/kiemthu/project/docs/gioithieuduan.md)
-- 📐 [Tài liệu Phân tích & Thiết kế Hệ thống](file:///d:/Study/TLU/kiemthu/project/docs/phantichhethong.md)
-- ⚙️ [Hướng dẫn Setup & Thao tác Vận hành](file:///d:/Study/TLU/kiemthu/project/docs/setup.md)
-- 🎨 [Quy chuẩn Thiết kế Giao diện UI/UX](file:///d:/Study/TLU/kiemthu/project/docs/design pattern.md)
+- 📘 [Tài liệu Giới thiệu Dự án](file:///d:/Study/TLU/kiemthu/project/docs/overview/gioithieuduan.md)
+- 📐 [Tài liệu Phân tích & Thiết kế Hệ thống](file:///d:/Study/TLU/kiemthu/project/docs/overview/phantichhethong.md)
+- ⚙️ [Hướng dẫn Setup & Thao tác Vận hành](file:///d:/Study/TLU/kiemthu/project/docs/overview/setup.md)
+- 🎨 [Quy chuẩn Thiết kế Giao diện UI/UX](file:///d:/Study/TLU/kiemthu/project/docs/overview/design_pattern.md)
+- 🗄️ [Tài liệu Cơ sở Dữ liệu & SQL](file:///d:/Study/TLU/kiemthu/project/docs/database/sql.md)
+- 🤖 [Tập Dữ liệu RAG & Tiền xử lý](file:///d:/Study/TLU/kiemthu/project/docs/rag/processed/README_prepared_data.md)
 - 💻 [Hướng dẫn Mã nguồn Codebase](file:///d:/Study/TLU/kiemthu/project/code/README.md)
