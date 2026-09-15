@@ -2,6 +2,10 @@
 
 Thư mục `code/` chứa toàn bộ mã nguồn ứng dụng bao gồm **Backend**, **Frontend**, cấu hình **Docker Compose** và môi trường **.env**.
 
+> [!IMPORTANT]
+> **Quy tắc Mã nguồn (Rule)**:
+> Toàn bộ phần mã nguồn (source code) chính để xây dựng, vận hành và chạy toàn bộ phần mềm/hệ thống nằm **duy nhất trong thư mục `code/` này**.
+
 ---
 
 ## 📁 Cấu trúc Thư mục Mã nguồn (`code/`)
@@ -81,5 +85,5 @@ npm run dev
 ## 🔗 Liên kết Nhanh
 
 - 🏠 [Về README Gốc của Dự án](../README.md)
-- ⚙️ [Chi tiết Cài đặt & Khởi chạy](../docs/setup.md)
-- 📐 [Phân tích Hệ thống & Cơ sở Dữ liệu](../docs/phantichhethong.md)
+- ⚙️ [Chi tiết Cài đặt & Khởi chạy](../docs/overview/setup.md)
+- 📐 [Phân tích Hệ thống & Cơ sở Dữ liệu](../docs/overview/phantichhethong.md)
