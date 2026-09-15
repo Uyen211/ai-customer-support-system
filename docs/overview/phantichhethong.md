@@ -1,180 +1,187 @@
-# I. Thiết kế cơ sở dữ liệu (Supabase PostgreSQL & pgvector)
+# THIẾT KẾ & PHÂN TÍCH HỆ THỐNG CHI TIẾT (SYSTEM ANALYSIS & TECHNICAL SPECIFICATION)
 
-**1. Bảng `users` (Tài khoản & Nhân sự hệ thống)**
-
-|**Tên trường (Column)**|**Kiểu dữ liệu (PostgreSQL)**|**Ràng buộc (Constraints)**|**Mô tả nghiệp vụ**|
-|---|---|---|---|
-|`id`|UUID|PK, Default: `gen_random_uuid()`|Mã định danh nhân viên/quản trị|
-|`email`|VARCHAR(255)|NOT NULL, UNIQUE|Email đăng nhập và nhận thông báo|
-|`password_hash`|VARCHAR(255)|NOT NULL|Mật khẩu tài khoản băm an toàn|
-|`full_name`|VARCHAR(100)|NOT NULL|Họ và tên nhân viên|
-|`phone`|VARCHAR(20)|NULL|Số điện thoại liên hệ|
-|`role`|VARCHAR(20)|NOT NULL, Default: 'AGENT', CHECK (`role` IN ('AGENT', 'MANAGER', 'ADMIN'))|Vai trò nhân sự trong hệ thống|
-|`status`|VARCHAR(20)|NOT NULL, Default: 'OFFLINE', CHECK (`status` IN ('ONLINE', 'BUSY', 'OFFLINE'))|Trạng thái làm việc của nhân viên|
-|`skills`|JSONB|NULL|Danh sách các kỹ năng/danh mục xử lý chuyên môn|
-|`is_active`|BOOLEAN|NOT NULL, Default: `TRUE`|Trạng thái tài khoản (khóa/mở)|
-|`created_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời gian tạo tài khoản|
-|`updated_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời gian cập nhật thông tin gần nhất|
+> **Tên hệ thống:** Website tư vấn khách hàng tự động và điều phối hỗ trợ thông minh cho chuỗi cửa hàng đồ dùng thú cưng.  
+> **Tài liệu chuẩn mực kỹ thuật (Single Source of Truth):** Chứa đầy đủ các quy tắc CSDL, kiến trúc sự kiện thời gian thực, quy trình API, logic xử lý nội bộ, ngoại lệ và thuật toán cho toàn bộ 14 Use Cases phục vụ trực tiếp công tác phát triển phần mềm (Mã nguồn full-stack).
 
 ---
 
-**2. Bảng `customers` (Khách hàng)**
-Lưu trữ định danh người dùng vãng lai hoặc tài khoản khách truy cập cổng trò chuyện.
+# I. Thiết kế Cơ sở Dữ liệu (Supabase PostgreSQL & pgvector Engine)
 
-| Tên trường (Column) | Kiểu dữ liệu (PostgreSQL) | Ràng buộc (Constraints) | Mô tả nghiệp vụ |
+Hệ thống sử dụng **Supabase PostgreSQL** làm CSDL trung tâm, tích hợp extension `pgvector` cho dữ liệu RAG. Dưới đây là đặc tả chi tiết 10 bảng CSDL master:
+
+### 1. Bảng `users` (Tài khoản & Nhân sự hệ thống)
+Lưu trữ thông tin tài khoản nhân sự (Agent, Manager, Admin), trạng thái trực ca và danh mục kỹ năng xử lý chuyên môn.
+
+| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
 | --- | --- | --- | --- |
-| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh khách hàng |
-| `email` | VARCHAR(255) | NOT NULL, UNIQUE | Email đăng nhập và nhận thông báo |
-| `password_hash` | VARCHAR(255) | NOT NULL | Mật khẩu tài khoản băm an toàn |
-| `full_name` | VARCHAR(100) | NOT NULL | Họ và tên khách hàng |
-| `phone` | VARCHAR(20) | NULL | Số điện thoại liên hệ |
-| `is_active` | BOOLEAN | NOT NULL, Default: `TRUE` | Trạng thái tài khoản (khóa/mở) |
-| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời gian đăng ký tài khoản |
-| `updated_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời gian cập nhật thông tin gần nhất |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh duy nhất của nhân viên |
+| `email` | VARCHAR(255) | NOT NULL, UNIQUE | Email nội bộ đăng nhập và nhận báo động |
+| `password_hash` | VARCHAR(255) | NOT NULL | Chuỗi mật khẩu băm an toàn (Bcrypt/Argon2) |
+| `full_name` | VARCHAR(100) | NOT NULL | Họ và tên đầy đủ của nhân viên (2-100 ký tự) |
+| `phone` | VARCHAR(20) | NULL | Số điện thoại liên hệ (10 chữ số, bắt đầu bằng 0) |
+| `role` | VARCHAR(20) | NOT NULL, Default: 'AGENT', CHECK (`role` IN ('AGENT', 'MANAGER', 'ADMIN')) | Vai trò nhân sự trong hệ thống |
+| `status` | VARCHAR(20) | NOT NULL, Default: 'OFFLINE', CHECK (`status` IN ('ONLINE', 'BUSY', 'OFFLINE')) | Trạng thái làm việc trực ca thời gian thực |
+| `skills` | JSONB | NULL | Mảng JSON các danh mục nghiệp vụ phụ trách (VD: `["Lỗi đơn hàng", "Đổi trả/Hoàn tiền", "Sản phẩm lỗi/Hư hại"]`) |
+| `is_active` | BOOLEAN | NOT NULL, Default: `TRUE` | Trạng thái kích hoạt tài khoản (TRUE: Hoạt động, FALSE: Khóa) |
+| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm tạo tài khoản |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm cập nhật thông tin gần nhất |
 
 ---
 
-**3. Bảng `conversations` (Phiên hội thoại)**
+### 2. Bảng `customers` (Tài khoản & Định danh Khách hàng)
+Lưu trữ định danh người dùng đăng ký hoặc vãng lai truy cập website tư vấn đồ dùng thú cưng.
 
-|**Tên trường (Column)**|**Kiểu dữ liệu (PostgreSQL)**|**Ràng buộc (Constraints)**|**Mô tả nghiệp vụ**|
-|---|---|---|---|
-|`id`|UUID|PK, Default: `gen_random_uuid()`|Mã định danh phiên hội thoại|
-|`customer_id`|UUID|FK $\rightarrow$ `customers(id)`, NOT NULL|Khách hàng sở hữu phiên chat|
-|`assigned_agent_id`|UUID|FK $\rightarrow$ `users(id)`, NULL|Nhân viên đang tiếp quản phiên (NULL nếu AI đang chat)|
-|`mode`|VARCHAR(20)|NOT NULL, Default: 'BOT', CHECK (`mode` IN ('BOT', 'HUMAN', 'WAITING_HUMAN'))|Chế độ hội thoại: Trợ lý ảo hay Nhân viên trực tiếp|
-|`is_flagged`|BOOLEAN|NOT NULL, Default: `FALSE`|Cờ cảnh báo nguy cơ khủng hoảng/cảm xúc tiêu cực|
-|`last_sentiment`|VARCHAR(20)|NULL, CHECK (`last_sentiment` IN ('POSITIVE', 'NEUTRAL', 'NEGATIVE', 'CRITICAL'))|Đánh giá cảm xúc ở tin nhắn gần nhất|
-|`created_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời gian bắt đầu phiên|
-|`updated_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời gian có cập nhật tin nhắn mới|
-
----
-
-**4. Bảng `messages` (Tin nhắn hội thoại)**
-Lưu vết chi tiết trao đổi, hỗ trợ trích dẫn RAG và dữ liệu ngữ cảnh cho giám sát AI.
-
-| **Tên trường (Column)** | **Kiểu dữ liệu (PostgreSQL)** | **Ràng buộc (Constraints)** | **Mô tả nghiệp vụ** |
+| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
 | --- | --- | --- | --- |
-| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh tin nhắn |
-| `conversation_id` | UUID | FK $\rightarrow$ `conversations(id)` ON DELETE CASCADE, NOT NULL | Phiên chat chứa tin nhắn này |
-| `sender_type` | VARCHAR(10) | NOT NULL, CHECK (`sender_type` IN ('CUSTOMER', 'BOT', 'AGENT')) | Đối tượng gửi tin |
-| `sender_id` | UUID | NULL | ID nhân viên (nếu `sender_type` = 'AGENT') |
-| `content` | TEXT | NOT NULL | Nội dung văn bản của tin nhắn |
-| `citations` | JSONB | NULL | Dữ liệu trích dẫn nguồn RAG (Metadata chunk, tài liệu tham khảo) |
-| `sentiment_score` | NUMERIC(4, 2) | NULL | Điểm số cảm xúc của tin nhắn (tính toán ngầm từ AI) |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh duy nhất của khách hàng |
+| `email` | VARCHAR(255) | NOT NULL, UNIQUE | Email đăng nhập tiêu chuẩn (gồm `@` và domain, max 255 chars) |
+| `password_hash` | VARCHAR(255) | NOT NULL | Chuỗi mật khẩu băm bảo vệ tài khoản |
+| `full_name` | VARCHAR(100) | NOT NULL | Họ và tên khách hàng (2-50 ký tự, chữ Việt/Anh và khoảng trắng) |
+| `phone` | VARCHAR(20) | NULL | Số điện thoại liên hệ (10 chữ số, bắt đầu bằng 0) |
+| `is_active` | BOOLEAN | NOT NULL, Default: `TRUE` | Trạng thái tài khoản (TRUE: Hoạt động, FALSE: Khóa tạm thời) |
+| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm đăng ký tài khoản |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm cập nhật hồ sơ gần nhất |
+
+---
+
+### 3. Bảng `conversations` (Phiên hội thoại CSKH)
+Quản lý các phiên trò chuyện giữa Khách hàng và Trợ lý ảo AI hoặc Nhân viên tư vấn trực tiếp.
+
+| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
+| --- | --- | --- | --- |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh duy nhất của phiên trò chuyện |
+| `customer_id` | UUID | FK $\rightarrow$ `customers(id)`, NOT NULL | Mã khách hàng sở hữu phiên trò chuyện |
+| `assigned_agent_id` | UUID | FK $\rightarrow$ `users(id)`, NULL | Nhân viên tiếp quản (NULL nếu đang phục vụ bởi AI Bot) |
+| `mode` | VARCHAR(20) | NOT NULL, Default: 'BOT', CHECK (`mode` IN ('BOT', 'HUMAN', 'WAITING_HUMAN')) | Chế độ phục vụ (`BOT`: AI tự động, `HUMAN`: Nhân viên chat, `WAITING_HUMAN`: Chờ tiếp quản) |
+| `is_flagged` | BOOLEAN | NOT NULL, Default: `FALSE` | Cờ cảnh báo đỏ nguy cơ bức xúc/khiếu nại nghiêm trọng |
+| `last_sentiment` | VARCHAR(20) | NULL, CHECK (`last_sentiment` IN ('POSITIVE', 'NEUTRAL', 'NEGATIVE', 'CRITICAL')) | Đánh giá cảm xúc ở lượt tin nhắn gần nhất |
+| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm bắt đầu phiên hội thoại |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm có tin nhắn mới gần nhất |
+
+---
+
+### 4. Bảng `messages` (Chi tiết Tin nhắn Hội thoại)
+Lưu vết từng lượt tin nhắn trao đổi, kết quả phân tích cảm xúc ngầm và dữ liệu trích dẫn RAG.
+
+| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
+| --- | --- | --- | --- |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh duy nhất của tin nhắn |
+| `conversation_id` | UUID | FK $\rightarrow$ `conversations(id)` ON DELETE CASCADE, NOT NULL | Phiên trò chuyện chứa tin nhắn này |
+| `sender_type` | VARCHAR(10) | NOT NULL, CHECK (`sender_type` IN ('CUSTOMER', 'BOT', 'AGENT')) | Đối tượng gửi tin nhắn |
+| `sender_id` | UUID | NULL | Mã nhân viên gửi tin (NULL nếu `sender_type` là `CUSTOMER` hoặc `BOT`) |
+| `content` | TEXT | NOT NULL | Nội dung văn bản tin nhắn (1 đến 4.000 ký tự) |
+| `citations` | JSONB | NULL | Mảng JSON trích dẫn nguồn RAG (Tên file, điều khoản, trang, trích đoạn) |
+| `sentiment_score` | NUMERIC(4, 2) | NULL | Điểm cảm xúc AI đo lường từ -1.00 đến +1.00 |
 | `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm gửi tin nhắn |
 
 ---
 
-**5. Bảng `tickets` (Phiếu khiếu nại & yêu cầu hỗ trợ)**
-Lưu trữ thông tin xử lý sự cố, phân tích cấu trúc AI, phân công và kiểm soát SLA.
+### 5. Bảng `tickets` (Phiếu Khiếu nại & Yêu cầu Hỗ trợ)
+Lưu trữ hồ sơ sự cố, kết quả trích xuất AI, phân công xử lý và theo dõi cam kết SLA.
 
-|**Tên trường (Column)**|**Kiểu dữ liệu (PostgreSQL)**|**Ràng buộc (Constraints)**|**Mô tả nghiệp vụ**|
-|---|---|---|---|
-|`id`|UUID|PK, Default: `gen_random_uuid()`|Mã định danh Ticket|
-|`conversation_id`|UUID|FK $\rightarrow$ `conversations(id)`, NOT NULL|Phiên chat phát sinh Ticket|
-|`assigned_to`|UUID|FK $\rightarrow$ `users(id)`, NULL|Nhân viên tiếp nhận xử lý (NULL nếu đang chờ phân bổ)|
-|`category`|VARCHAR(50)|NOT NULL|Danh mục sự cố (VD: Đổi trả hàng, Bảo hành, Giao hàng)|
-|`priority`|VARCHAR(10)|NOT NULL, CHECK (`priority` IN ('P1', 'P2', 'P3'))|Mức độ ưu tiên do AI gán (P1: Khẩn cấp, P2: Cao, P3: Vừa)|
-|`status`|VARCHAR(20)|NOT NULL, Default: 'PENDING', CHECK (`status` IN ('PENDING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'))|Trạng thái tiến độ trên bảng Kanban|
-|`summary`|TEXT|NOT NULL|Tóm tắt sự cố được AI trích xuất tự động|
-|`ai_metadata`|JSONB|NULL|Cấu trúc phân tích AI: Sentiment, intent, lý do phân loại|
-|`sla_deadline`|TIMESTAMPTZ|NOT NULL|Hạn chót cam kết giải quyết Ticket|
-|`sla_breached`|BOOLEAN|NOT NULL, Default: `FALSE`|Đánh dấu vi phạm quá hạn cam kết xử lý|
-|`resolved_at`|TIMESTAMPTZ|NULL|Thời điểm Ticket chuyển sang trạng thái RESOLVED|
-|`created_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời điểm tạo ticket|
-|`updated_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời gian cập nhật trạng thái gần nhất|
-
----
-
-**6. Bảng `sla_policies` (Chính sách cam kết chất lượng)**
-Cung cấp căn cứ tính toán thời hạn xử lý tự động cho động cơ SLA.
-
-|**Tên trường (Column)**|**Kiểu dữ liệu (PostgreSQL)**|**Ràng buộc (Constraints)**|**Mô tả nghiệp vụ**|
-|---|---|---|---|
-|`id`|UUID|PK, Default: `gen_random_uuid()`|Mã chính sách SLA|
-|`priority`|VARCHAR(10)|UNIQUE, NOT NULL, CHECK (`priority` IN ('P1', 'P2', 'P3'))|Mức độ ưu tiên áp dụng|
-|`resolution_time_minutes`|INT|NOT NULL|Thời gian tối đa quy định phải xử lý xong (phút)|
-|`escalation_notify_to`|VARCHAR(20)|NOT NULL, Default: 'MANAGER'|Đối tượng nhận cảnh báo khi vi phạm (Lead/Manager)|
-|`created_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời gian cấu hình chính sách|
-
----
-
-**7. Bảng `canned_responses` (Mẫu phản hồi nhanh)**
-Hỗ trợ nhân viên gửi nhanh các mẫu trả lời chuẩn bị sẵn qua bàn làm việc thời gian thực.
-
-| **Tên trường (Column)** | **Kiểu dữ liệu (PostgreSQL)** | **Ràng buộc (Constraints)** | **Mô tả nghiệp vụ** |
+| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
 | --- | --- | --- | --- |
-| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã mẫu phản hồi |
-| `shortcut` | VARCHAR(50) | NOT NULL, UNIQUE | Phím tắt kích hoạt nhanh (VD: `/chao`, `/xloi`) |
-| `title` | VARCHAR(150) | NOT NULL | Tiêu đề danh mục câu trả lời |
-| `content` | TEXT | NOT NULL | Nội dung định dạng sẵn tự động điền vào ô chat |
-| `category` | VARCHAR(50) | NOT NULL | Danh mục nghiệp vụ của mẫu trả lời |
-| `created_by` | UUID | FK $\rightarrow$ `users(id)`, NOT NULL | Quản lý/Nhân viên khởi tạo |
-| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm tạo câu phản hồi mẫu |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh duy nhất của Ticket |
+| `conversation_id` | UUID | FK $\rightarrow$ `conversations(id)`, NOT NULL | Phiên trò chuyện phát sinh khiếu nại/yêu cầu |
+| `assigned_to` | UUID | FK $\rightarrow$ `users(id)`, NULL | Nhân viên tiếp nhận xử lý (NULL nếu chờ phân bổ) |
+| `category` | VARCHAR(50) | NOT NULL | Danh mục sự cố (`Lỗi đơn hàng`, `Đổi trả/Hoàn tiền`, `Sản phẩm lỗi/Hư hại`, `Lỗi thanh toán`, `Thái độ phục vụ`, `Vấn đề khác`) |
+| `priority` | VARCHAR(10) | NOT NULL, CHECK (`priority` IN ('P1', 'P2', 'P3')) | Mức độ ưu tiên (`P1`: Cực kỳ khẩn cấp, `P2`: Khẩn cấp cao, `P3`: Trung bình) |
+| `status` | VARCHAR(20) | NOT NULL, Default: 'PENDING', CHECK (`status` IN ('PENDING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED')) | Trạng thái tiến độ Kanban |
+| `summary` | TEXT | NOT NULL | Đoạn tóm tắt sự cố được AI trích xuất (20-255 ký tự) |
+| `ai_metadata` | JSONB | NULL | Dữ liệu cấu trúc AI (Bằng chứng trích dẫn, điểm sentiment, lý do gán P1/P2/P3) |
+| `sla_deadline` | TIMESTAMPTZ | NOT NULL | Thời điểm hạn chót cam kết hoàn tất xử lý |
+| `sla_breached` | BOOLEAN | NOT NULL, Default: `FALSE` | Đánh dấu vi phạm quá hạn cam kết xử lý |
+| `resolved_at` | TIMESTAMPTZ | NULL | Thời điểm chính thức chuyển sang `RESOLVED` |
+| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm tạo phiếu hỗ trợ |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm cập nhật trạng thái gần nhất |
 
 ---
 
-**8. Bảng `ai_rules` (Quy tắc kích hoạt & Ngưỡng cảm xúc AI)**
-Cho phép Quản lý CSKH tùy biến điều kiện tạo ticket tự động mà không cần sửa code.
+### 6. Bảng `sla_policies` (Chính sách Khung Thời gian Cam kết SLA)
+Định nghĩa quy chuẩn thời gian giải quyết khẩn cấp tối đa theo mức độ ưu tiên.
 
-|**Tên trường (Column)**|**Kiểu dữ liệu (PostgreSQL)**|**Ràng buộc (Constraints)**|**Mô tả nghiệp vụ**|
-|---|---|---|---|
-|`id`|UUID|PK, Default: `gen_random_uuid()`|Mã quy tắc phân loại|
-|`rule_name`|VARCHAR(100)|NOT NULL|Tên định danh quy tắc (VD: Phát hiện giận dữ cấp độ cao)|
-|`sentiment_threshold`|NUMERIC(4, 2)|NOT NULL|Ngưỡng điểm cảm xúc kích hoạt mở ticket ngầm|
-|`target_priority`|VARCHAR(10)|NOT NULL, CHECK (`target_priority` IN ('P1', 'P2', 'P3'))|Mức độ ưu tiên sẽ gán tự động khi chạm ngưỡng|
-|`is_active`|BOOLEAN|NOT NULL, Default: `TRUE`|Trạng thái kích hoạt áp dụng của quy tắc|
-|`created_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời gian tạo quy tắc|
-
----
-
-**9. Bảng `knowledge_chunks` (Lưu trữ tài liệu RAG & Vector Embedding - Supabase pgvector)**
-Lưu trữ toàn bộ các đoạn văn bản chia nhỏ từ tài liệu chính sách cùng vector nhúng ngữ nghĩa.
-
-|**Tên trường (Column)**|**Kiểu dữ liệu (PostgreSQL)**|**Ràng buộc (Constraints)**|**Mô tả nghiệp vụ**|
-|---|---|---|---|
-|`id`|UUID|PK, Default: `gen_random_uuid()`|Mã định danh đoạn trích tài liệu|
-|`document_name`|VARCHAR(255)|NOT NULL|Tên tài liệu/chính sách (VD: `Chinh_sach_doi_tra.pdf`)|
-|`content`|TEXT|NOT NULL|Nội dung đoạn văn bản đã chia nhỏ (chunk)|
-|`embedding`|VECTOR(1024)|NULL|Vector nhúng ngữ nghĩa (1024 chiều)|
-|`metadata`|JSONB|NULL|Siêu dữ liệu: Số trang, chương, điều khoản phục vụ trích dẫn Citations|
-|`created_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời điểm lưu dữ liệu|
-
-Dựa theo chuẩn định dạng và phong cách trình bày trong tài liệu `phantichhethong.md` của bạn, dưới đây là bảng đặc tả chi tiết cho **Bảng `products**` cùng câu lệnh DDL hoàn chỉnh để bạn đưa trực tiếp vào phần thiết kế cơ sở dữ liệu:
-
----
-
-**10. Bảng `products` (Danh mục & Tồn kho sản phẩm thú cưng)**
-Lưu trữ thông tin định lượng, phân loại và trạng thái kho thực tế của các sản phẩm đồ dùng thú cưng phục vụ kiểm tra tức thời (Real-time catalog lookup) kết hợp cùng mô hình RAG.
-
-| **Tên trường (Column)** | **Kiểu dữ liệu (PostgreSQL)** | **Ràng buộc (Constraints)** | **Mô tả nghiệp vụ** |
+| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
 | --- | --- | --- | --- |
-| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh duy nhất của sản phẩm |
-| `sku` | VARCHAR(50) | NOT NULL, UNIQUE | Mã quản lý kho hàng (VD: `CAT-ROYAL-INDOOR-2KG`) |
-| `name` | VARCHAR(255) | NOT NULL | Tên thương mại đầy đủ của sản phẩm |
-| `category` | VARCHAR(100) | NOT NULL | Danh mục sản phẩm (VD: Thức ăn, Cát vệ sinh, Phụ kiện, Đồ chơi) |
-| `pet_type` | VARCHAR(50) | NOT NULL, CHECK (`pet_type` IN ('DOG', 'CAT', 'BIRD', 'ALL', 'OTHER')) | Đối tượng vật nuôi áp dụng |
-| `price` | NUMERIC(12, 2) | NOT NULL, CHECK (`price` >= 0) | Giá niêm yết bán lẻ hiện tại |
-| `sale_price` | NUMERIC(12, 2) | NULL, CHECK (`sale_price` >= 0) | Giá khuyến mãi (nếu có chương trình giảm giá) |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh chính sách SLA |
+| `priority` | VARCHAR(10) | UNIQUE, NOT NULL, CHECK (`priority` IN ('P1', 'P2', 'P3')) | Mức ưu tiên áp dụng (`P1`, `P2`, `P3`) |
+| `resolution_time_minutes` | INT | NOT NULL | Thời gian xử lý tối đa cho phép (P1: 15 phút, P2: 60 phút, P3: 240 phút) |
+| `escalation_notify_to` | VARCHAR(20) | NOT NULL, Default: 'MANAGER' | Cấp bậc nhận cảnh báo leo thang khi vi phạm (`MANAGER`, `ADMIN`) |
+| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm khởi tạo quy chuẩn SLA |
+
+---
+
+### 7. Bảng `canned_responses` (Kho Mẫu Phản hồi Nhanh)
+Lưu trữ các câu trả lời chuẩn hóa hỗ trợ nhân viên gửi nhanh bằng phím tắt.
+
+| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
+| --- | --- | --- | --- |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh mẫu phản hồi |
+| `shortcut` | VARCHAR(50) | NOT NULL, UNIQUE | Phím tắt kích hoạt (Bắt buộc bắt đầu bằng `/`, không khoảng trắng, VD: `/chao`, `/xloi_giaohang`) |
+| `title` | VARCHAR(150) | NOT NULL | Tiêu đề gợi nhớ mục đích (3-150 ký tự) |
+| `content` | TEXT | NOT NULL | Nội dung câu trả lời chuẩn (5-2.000 ký tự) |
+| `category` | VARCHAR(50) | NOT NULL | Danh mục nghiệp vụ (VD: `Đơn hàng`, `Vận chuyển`, `Đổi trả`, `Sản phẩm`) |
+| `created_by` | UUID | FK $\rightarrow$ `users(id)`, NOT NULL | Mã nhân viên/quản lý khởi tạo mẫu câu |
+| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm tạo mẫu phản hồi |
+
+---
+
+### 8. Bảng `ai_rules` (Quy tắc Kích hoạt & Ngưỡng Cảm xúc AI)
+Cấu hình ngưỡng cảm xúc và quy tắc mở ticket tự động cho AI Auto-Triage Engine.
+
+| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
+| --- | --- | --- | --- |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh quy tắc AI |
+| `rule_name` | VARCHAR(100) | NOT NULL | Tên quy tắc gợi nhớ (1-100 ký tự) |
+| `sentiment_threshold` | NUMERIC(4, 2) | NOT NULL | Ngưỡng điểm số cảm xúc kích hoạt số âm (-1.00 đến 0.00, mặc định -0.60) |
+| `target_priority` | VARCHAR(10) | NOT NULL, CHECK (`target_priority` IN ('P1', 'P2', 'P3')) | Mức độ ưu tiên gán tự động khi chạm ngưỡng |
+| `is_active` | BOOLEAN | NOT NULL, Default: `TRUE` | Trạng thái bật/tắt kích hoạt áp dụng |
+| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm tạo quy tắc |
+
+---
+
+### 9. Bảng `knowledge_chunks` (Tài liệu RAG & Vector Embedding Supabase `pgvector`)
+Lưu trữ các đoạn văn bản chính sách/hướng dẫn đã bóc tách cùng Vector nhúng ngữ nghĩa.
+
+| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
+| --- | --- | --- | --- |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh đoạn trích tài liệu |
+| `document_name` | VARCHAR(255) | NOT NULL | Tên file văn bản gốc (VD: `Chinh_sach_doi_tra.pdf`) |
+| `content` | TEXT | NOT NULL | Nội dung đoạn văn bản đã chia nhỏ (Chunk) |
+| `embedding` | VECTOR(1024) | NULL | Vector nhúng ngữ nghĩa 1024 chiều (BGE/OpenAI) |
+| `metadata` | JSONB | NULL | JSON chứa: `page_number`, `section_title`, `clause` để trích dẫn |
+| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm lưu vector dữ liệu |
+
+---
+
+### 10. Bảng `products` (Danh mục & Tồn kho Sản phẩm Thú cưng)
+Lưu trữ thông tin mặt hàng, đối tượng vật nuôi, giá bán và tồn kho cửa hàng.
+
+| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
+| --- | --- | --- | --- |
+| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh sản phẩm |
+| `sku` | VARCHAR(50) | NOT NULL, UNIQUE | Mã quản lý kho hàng (VD: `DOG-ROYAL-MAXI-3KG`) |
+| `name` | VARCHAR(255) | NOT NULL | Tên thương mại sản phẩm thú cưng |
+| `category` | VARCHAR(100) | NOT NULL | Danh mục (`Thức ăn`, `Cát vệ sinh`, `Phụ kiện`, `Đồ chơi`, `Chăm sóc`) |
+| `pet_type` | VARCHAR(50) | NOT NULL, CHECK (`pet_type` IN ('DOG', 'CAT', 'BIRD', 'ALL', 'OTHER')) | Đối tượng thú cưng áp dụng |
+| `price` | NUMERIC(12, 2) | NOT NULL, CHECK (`price` >= 0) | Giá niêm yết bán lẻ |
+| `sale_price` | NUMERIC(12, 2) | NULL, CHECK (`sale_price` >= 0) | Giá khuyến mãi (nếu có) |
 | `stock_quantity` | INT | NOT NULL, Default: 0, CHECK (`stock_quantity` >= 0) | Số lượng tồn kho thực tế |
-| `status` | VARCHAR(20) | NOT NULL, Default: 'IN_STOCK', CHECK (`status` IN ('IN_STOCK', 'OUT_OF_STOCK', 'DISCONTINUED')) | Trạng thái kinh doanh sản phẩm |
-| `attributes` | JSONB | NULL | Thuộc tính linh hoạt cho đồ thú cưng: trọng lượng, kích cỡ, hương vị, xuất xứ |
-| `description` | TEXT | NULL | Tóm tắt thông tin sản phẩm hiển thị nhanh |
-| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm tạo sản phẩm trong hệ thống |
-| `updated_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm cập nhật giá/tồn kho gần nhất |
+| `status` | VARCHAR(20) | NOT NULL, Default: 'IN_STOCK', CHECK (`status` IN ('IN_STOCK', 'OUT_OF_STOCK', 'DISCONTINUED')) | Trạng thái kinh doanh |
+| `attributes` | JSONB | NULL | JSON chứa trọng lượng, kích thước, xuất xứ, hương vị |
+| `description` | TEXT | NULL | Tóm tắt mô tả sản phẩm |
+| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm tạo bản ghi sản phẩm |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm cập nhật giá/kho gần nhất |
 
 ---
 
 # II. Kiến trúc Kỹ thuật Thời gian thực & Xử lý Sự kiện (Real-time Architecture)
 
-Hệ thống được thiết kế theo kiến trúc hướng sự kiện (Event-Driven Architecture) kết hợp với **Supabase PostgreSQL** làm cơ sở dữ liệu trung tâm lưu trữ cả dữ liệu quan hệ lẫn vector nhúng `pgvector`:
-
-```
+```text
                       +----------------------------------+
                       |         Khách hàng (Client UI)   |
                       +----------------------------------+
                              /            |            \
-                   Auth JWT /             | SSE Stream  \ WebSocket (2-way)
+                    Auth JWT /             | SSE Stream  \ WebSocket (2-way)
                            /              |              \
                           v               v               v
                 +--------------------------------------------------+
@@ -186,7 +193,7 @@ Hệ thống được thiết kế theo kiến trúc hướng sự kiện (Event
    +------------------+  +-----------------+  +------------+  +-------------------+
    | Supabase Vector  |  |  Structured LLM |  | PostgreSQL |  | WebSocket Manager |
    | (knowledge_chunks|  |  Sentiment Engine|  | (Supabase  |  | (Rooms & Sockets) |
-   | HNSW Index)      |  |                 |  |  8 Tables) |  |                   |
+   | HNSW Index)      |  |                 |  | 10 Tables) |  |                   |
    +------------------+  +-----------------+  +------------+  +-------------------+
                                   |                                     ^
                          Bắn sự kiện Ticket                              |
@@ -203,212 +210,319 @@ Hệ thống được thiết kế theo kiến trúc hướng sự kiện (Event
                          +-----------------+
 ```
 
-### 1. Cơ chế Truyền dữ liệu Phản hồi gõ chữ (SSE - Server-Sent Events)
-* **Phân hệ sử dụng:** Khối 1 — Trợ lý Tra cứu Thông tin Khách hàng (RAG Chatbot).
-* **Nguyên lý hoạt động:**
-  * Khách hàng gửi câu hỏi thông qua HTTP POST request tới endpoint `/api/chat/stream`.
-  * Gateway kiểm tra `conversations.mode`. Nếu `mode == 'WAITING_HUMAN'`, Gateway bỏ qua luồng LLM và trả về phản hồi giữ nguyên trạng thái chờ nhân viên.
-  * Nếu `mode == 'BOT'`, Gateway chuyển câu hỏi thành vector nhúng, thực hiện truy vấn tương đồng Cosine (`vector_cosine_ops`) trên bảng `knowledge_chunks` của **Supabase PostgreSQL** qua ORM.
-  * Đưa ngữ cảnh đoạn trích kết quả vào Prompt gọi LLM RAG Engine dưới dạng luồng (Streaming API).
-  * FastAPI trả về cho Client một HTTP Response với Header `Content-Type: text/event-stream`.
-  * Các mảng ký tự (chunks) câu trả lời do LLM sinh ra được đẩy ngay lập tức về Client theo định dạng `data: {"token": "..."}\n\n`.
-  * Trình duyệt Client lắng nghe sự kiện `onmessage` và ghép từng ký tự vào khung chat theo thời gian thực mà không cần duy trì kết nối hai chiều đắt đỏ như WebSocket.
-
-### 2. Kênh Kết nối Thời gian thực hai chiều (WebSocket Gateway)
-* **Phân hệ sử dụng:** Khối 3 (Live Support Console) & Khối 1 (Khi nhân viên tiếp quản).
-* **Nguyên lý hoạt động:**
-  * **Quản lý kết nối (Connection Pool & Rooms):** Hệ thống WebSocket Server duy trì các phòng chat theo mã cuộc trò chuyện `room_conversation_{id}` và phòng cá nhân nhân viên `room_agent_{id}`.
-  * **Đồng bộ tin nhắn hai chiều:** Khi phiên chat chuyển sang `mode = 'HUMAN'`, toàn bộ tin nhắn từ khách hàng hoặc nhân viên được truyền qua kết nối WebSocket song lập (`/ws/chat/{conversation_id}`).
-  * **Thông báo sự kiện thời gian thực (Event Broadcast):**
-    * Khi phát hiện nguy cơ CRITICAL ở Khối 2, hệ thống đẩy sự kiện `BOT_PAUSED_NOTICE` báo khách hàng chờ tư vấn viên và cập nhật `mode = 'WAITING_HUMAN'`.
-    * Khi nhân viên bấm tiếp quản, WebSocket gửi sự kiện `TAKEOVER_SUCCESS` về phía khách hàng và ngắt hoàn toàn máy bot.
-    * Khi có phiên chat mới bị gắn cờ cảnh báo (`is_flagged = TRUE`), WebSocket Server phát tín hiệu `FLAGGED_CONVERSATION` tới toàn bộ màn hình của các nhân viên đang `ONLINE`.
-
-### 3. Hàng đợi Sự kiện & Pub/Sub ngầm (Redis Event Queue & Pub/Sub)
-* **Phân hệ sử dụng:** Tích hợp giữa Khối 2 (AI Auto-Triage), Khối 4 (Ticket Dispatcher) và Khối 3 (Live Support Console).
-* **Nguyên lý hoạt động:**
-  * **Redis Queue (`queue:tickets:pending`):** Khi Khối 2 tự động mở một Ticket khẩn cấp mới, thông điệp JSON chứa thông tin Ticket được đẩy (`LPUSH`) vào hàng đợi Redis. Tiến trình ngầm *Ticket Dispatcher Worker* chờ nhận thông điệp (`RPOPLPUSH`) để thực hiện thuật toán chia việc Least-Loaded bất đồng bộ mà không làm nghẽn luồng xử lý chính.
-  * **Redis Pub/Sub (`channel:sla_alerts`):** Động cơ SLA quét định kỳ phát hiện Ticket vi phạm quá hạn (`sla_breached = TRUE`), lập tức `PUBLISH` thông điệp vi phạm vào kênh Redis. Kênh này được WebSocket Gateway lắng nghe và chuyển tiếp ngay lập tức đến giao diện của Quản lý CSKH dưới dạng chuông/thông báo đỏ khẩn cấp.
-  * **Redis Cache Trạng thái Nhân viên:** Lưu trữ trạng thái hoạt động tức thời của nhân viên (`agent:status:{user_id}` = ONLINE/BUSY/OFFLINE) và đếm số việc đang mở giúp thuật toán Least-Loaded phân chia công việc nhanh trong $O(1)$.
-
-### 4. Lưu trữ & Truy vấn Vector Ngữ nghĩa (Supabase pgvector Engine)
-* **Phân hệ sử dụng:** Khối 1 — Trợ lý Tra cứu Thông tin Khách hàng.
-* **Nguyên lý hoạt động:**
-  * Dữ liệu tài liệu chính sách (PDF/Docx) được chia nhỏ thành các đoạn văn bản (chunks).
-  * Hệ thống tạo vector nhúng (Embedding) và chèn dữ liệu vào bảng `knowledge_chunks` trên **Supabase PostgreSQL**.
-  * Chỉ mục **HNSW Index (`vector_cosine_ops`)** đảm bảo truy vấn khoảng cách Cosine đạt tốc độ vài miligiây.
-  * Khi khách hàng đặt câu hỏi, Gateway tạo vector query và thực hiện phép so sánh khoảng cách Cosine trực tiếp bằng SQL/ORM trên Supabase:
-    ```sql
-    SELECT id, document_name, content, metadata
-    FROM knowledge_chunks
-    ORDER BY embedding <=> query_embedding
-    LIMIT 3;
-    ```
-  * Siêu dữ liệu trong trường `metadata` (số trang, chương, điều khoản) được trích xuất để đóng gói vào trường `citations` (JSONB) trong bảng `messages`.
+1. **Server-Sent Events (SSE):** Sử dụng Header `Content-Type: text/event-stream` tại `/api/chat/stream` đẩy luồng ký tự `data: {"token": "..."}\n\n` cho RAG Response.
+2. **WebSocket Gateway:** Quản lý Connection Pool, chia room `room_conversation_{id}` và `room_agent_{id}`, truyền tin nhắn 2 chiều khi `mode = 'HUMAN'` và phát sự kiện `FLAGGED_CONVERSATION`, `TAKEOVER_SUCCESS`.
+3. **Redis Event Bus:**
+   - **Queue (`queue:tickets:pending`):** Nhận sự kiện `TICKET_CREATED` từ Auto-Triage để *Ticket Dispatcher Worker* xử lý bất đồng bộ theo thuật toán Least-Loaded.
+   - **Pub/Sub (`channel:sla_alerts`):** *SLA Worker* quét quá hạn đẩy thông điệp vi phạm tới WebSocket Manager để bắn thông báo chuông đỏ nhấp nháy cho Manager.
+   - **Cache (`agent:status:{user_id}`):** Lưu trạng thái ONLINE/BUSY/OFFLINE và số lượng ticket đang gánh để thuật toán chia việc truy xuất nhanh $O(1)$.
+4. **Supabase `pgvector` Engine:** Thực hiện phép tìm kiếm tương đồng Cosine:
+   ```sql
+   SELECT id, document_name, content, metadata
+   FROM knowledge_chunks
+   ORDER BY embedding <=> query_embedding
+   LIMIT 3;
+   ```
 
 ---
 
-# III. Phân tích Chi tiết Danh mục Chức năng Hệ thống
+# III. Phân tích Chi tiết Danh mục Chức năng Hệ thống (Đầy đủ 14 Use Cases)
 
-Dưới đây là mô tả chi tiết quy trình xử lý nội bộ, dữ liệu đầu vào/đầu ra và cách các cấu phần hệ thống (API Gateway, Supabase PostgreSQL, Redis, WebSocket) tương tác với nhau để thực hiện từng chức năng theo 4 khối:
+---
 
 ## KHỐI 1: TRỢ LÝ TRA CỨU THÔNG TIN KHÁCH HÀNG (CUSTOMER RAG CHATBOT)
 
-### 1.1. Chức năng: Đăng ký / Đăng nhập & Khởi tạo Phiên trò chuyện
-* **Tác nhân:** Khách hàng (Client UI).
-* **Dữ liệu đầu vào:** Email, mật khẩu, họ tên, số điện thoại (khi đăng ký) hoặc Email, mật khẩu (khi đăng nhập).
+### 1.1. Chức năng (UC 1.1): Quản lý Tài khoản Khách hàng (Đăng ký & Đăng nhập)
+* **API Endpoints & Auth:** `POST /api/auth/customer/register`, `POST /api/auth/customer/login`.
+* **Dữ liệu đầu vào & Validation:**
+  * `full_name`: String, 2-50 ký tự, Regex: chỉ chứa chữ cái tiếng Việt/Anh và khoảng trắng.
+  * `email`: String, max 255 chars, đúng định dạng `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`.
+  * `phone`: String, 10 chữ số, Regex: `^0[0-9]{9}$` (Tùy chọn).
+  * `password`: String, min 8 chars, bắt buộc có ít nhất 1 chữ cái và 1 chữ số.
 * **Quy trình xử lý nội bộ:**
-  1. Gateway tiếp nhận request tại `/auth/customer/register` hoặc `/auth/customer/login`.
-  2. Truy vấn bảng `customers` trên Supabase kiểm tra email và mật khẩu băm (`password_hash`).
-  3. Khi đăng nhập thành công, sinh mã Token JWT chứa Payload `customer_id`.
-  4. Client truy cập khung chat, gửi JWT token qua WebSocket hoặc HTTP Header.
-  5. Gateway giải mã JWT, lấy `customer_id` và truy vấn bảng `conversations` tìm phiên chat gần nhất có `mode != 'CLOSED'`.
-  6. Nếu chưa có phiên, chèn bản ghi mới vào bảng `conversations` (`mode = 'BOT'`, `customer_id`). Nếu đã có, truy vấn bảng `messages` kéo 50 tin nhắn gần nhất trả về Client UI.
-* **Kết quả đầu ra:** Chuỗi JWT Token, thông tin khách hàng và lịch sử tin nhắn của phiên chat hiện tại.
-* **Xử lý ngoại lệ:** Email trùng báo lỗi `400 Bad Request`; Sai mật khẩu báo lỗi `401 Unauthorized`.
+  1. **Đăng ký:**
+     - Đọc dữ liệu request, kiểm tra validation. Nếu sai trả về HTTP `422 Unprocessable Entity`.
+     - Query `SELECT id FROM customers WHERE email = :email`. Nếu đã tồn tại, trả về HTTP `400 Bad Request` (`detail: "Email đã tồn tại"`).
+     - Băm mật khẩu bằng Bcrypt (`password_hash = hash(password)`).
+     - Chèn dòng mới vào bảng `customers` (`full_name`, `email`, `phone`, `password_hash`, `is_active = TRUE`).
+     - Tạo JWT Access Token chứa payload `{ "sub": customer.id, "role": "CUSTOMER" }`.
+  2. **Đăng nhập:**
+     - Query `SELECT * FROM customers WHERE email = :email`. Nếu không tìm thấy, trả về HTTP `401 Unauthorized`.
+     - Kiểm tra `is_active`. Nếu `FALSE`, trả về HTTP `403 Forbidden` (`detail: "Tài khoản bị tạm khóa"`).
+     - Xác thực mật khẩu `verify_hash(password, password_hash)`. Nếu sai, tăng biến đếm số lần sai trong Redis (`failed_login:{email}`). Nếu chạm 5 lần/15 phút, cập nhật `is_active = FALSE` tạm thời 15 phút, trả về HTTP `401 Unauthorized` kèm số lượt còn lại.
+     - Xác thực thành công: Đặt đếm sai về 0, sinh JWT Token, truy vấn phiên trò chuyện gần nhất trong `conversations` trả về kèm lịch sử 50 tin nhắn trong `messages`.
+* **Kết quả & Mã lỗi HTTP:** `200 OK` (Token + Customer Info), `400`, `401`, `403`, `422`.
 
-### 1.2. Chức năng: Tra cứu Tri thức RAG & Sinh câu trả lời Streaming (Bao gồm Citations & Fallback)
-* **Tác nhân:** Khách hàng.
-* **Dữ liệu đầu vào:** Câu hỏi văn bản, mã phiên chat (`conversation_id`).
+---
+
+### 1.2. Chức năng (UC 1.2): Quản lý Phiên trò chuyện
+* **API Endpoints:** `GET /api/customer/conversations`, `POST /api/customer/conversations`, `GET /api/customer/conversations/{id}/messages`.
 * **Quy trình xử lý nội bộ:**
-  1. Ghi nhận tin nhắn người dùng vào bảng `messages` (`sender_type = 'CUSTOMER'`).
-  2. Gateway truy vấn bảng `conversations` kiểm tra `mode`. Nếu `mode == 'WAITING_HUMAN'` hoặc `mode == 'HUMAN'`, bỏ qua luồng gọi AI RAG, dừng trả lời tự động để chờ nhân viên trực tiếp hỗ trợ.
-  3. Nếu `mode == 'BOT'`, Gateway gọi mô hình Embedding mã hóa câu hỏi thành Vector.
-  4. Thực hiện truy vấn Vector Search trực tiếp bằng HNSW Index trên bảng **`knowledge_chunks` (Supabase)** lấy Top 3 đoạn tài liệu chính sách có khoảng cách Cosine nhỏ nhất.
-  5. Nếu không tìm thấy đoạn trích phù hợp:
-     * Hệ thống ghi nhận tin nhắn BOT mặc định lịch sự: *"Rất tiếc, thông tin này chưa có trong tài liệu chính sách của chúng tôi. Bạn có muốn kết nối với nhân viên hỗ trợ không?"*.
-     * Đưa ra gợi ý chuyển cuộc trò chuyện sang trạng thái chờ nhân viên (`mode = 'WAITING_HUMAN'`, `is_flagged = TRUE`).
-  6. Khi có ngữ cảnh phù hợp, ghép đoạn trích + câu hỏi vào Prompt gửi sang LLM Engine.
-  7. Mở luồng **SSE (`text/event-stream`)** hoặc WebSocket đẩy từng token câu trả lời về cho Client UI.
-  8. Khi LLM sinh xong toàn bộ văn bản, tạo bản ghi mới trong bảng `messages`: `sender_type = 'BOT'`, `content` = văn bản hoàn chỉnh, `citations` = JSONB chứa thông tin trích dẫn từ `metadata` của `knowledge_chunks`.
-* **Kết quả đầu ra:** Luồng gõ chữ trực tiếp trên khung chat, thông tin trích dẫn minh bạch và bản ghi tin nhắn mới trong CSDL Supabase.
-* **Xử lý ngoại lệ:** Lỗi kết nối LLM/Supabase $\rightarrow$ trả về câu thông báo lỗi hệ thống tạm thời.
+  1. **Tải danh sách phiên chat:**
+     - Decode JWT lấy `customer_id`. Truy vấn `SELECT * FROM conversations WHERE customer_id = :customer_id ORDER BY updated_at DESC`.
+     - Đối với mỗi phiên, kéo dòng tin nhắn cuối cùng trong `messages` (trích 15 từ đầu) và nhãn `mode` (`BOT`, `HUMAN`, `WAITING_HUMAN`).
+  2. **Tải tin nhắn của phiên cũ (Tải phân đoạn - Pagination):**
+     - Tiếp nhận `conversation_id`, query `SELECT * FROM messages WHERE conversation_id = :id ORDER BY created_at DESC LIMIT 50 OFFSET :offset`.
+     - Kiểm tra `conversations.mode`:
+       - Nếu `mode == 'CLOSED'`, trả về cờ `is_readonly = TRUE`.
+       - Nếu `mode == 'WAITING_HUMAN'`, trả về `notice: "Cuộc trò chuyện đang chờ nhân viên hỗ trợ"`.
+  3. **Tạo phiên trò chuyện mới:**
+     - Chèn dòng mới vào `conversations`: `customer_id`, `mode = 'BOT'`, `is_flagged = FALSE`.
+     - Chèn tin nhắn chào mừng mặc định vào `messages`: `sender_type = 'BOT'`, `content = 'Xin chào! Mình là Trợ lý tư vấn đồ dùng thú cưng. Bạn cần hỗ trợ thông tin nào hôm nay?'`.
+     - Trả về `conversation_id` mới khởi tạo.
+  4. **Tự động đóng phiên (Cron Job):**
+     - Cron Service quét định kỳ mỗi giờ: `UPDATE conversations SET mode = 'CLOSED' WHERE updated_at < NOW() - INTERVAL '24 hours' AND mode = 'HUMAN'`.
+
+---
+
+### 1.3. Chức năng (UC 1.3): Tư vấn Sản phẩm & Giải đáp Chính sách Tự động (RAG Streaming & Citations)
+* **API Endpoints:** `POST /api/chat/stream` (SSE Stream).
+* **Dữ liệu đầu vào:** `{ "conversation_id": "UUID", "query": "String (2-1000 chars)" }`.
+* **Quy trình xử lý nội bộ:**
+  1. Kiểm tra validation `query`. Chèn bản ghi tin nhắn khách hàng vào `messages` (`sender_type = 'CUSTOMER'`, `content = query`).
+  2. Truy vấn `conversations.mode` theo `conversation_id`:
+     - Nếu `mode IN ('WAITING_HUMAN', 'HUMAN')`: Bỏ qua RAG Engine, không sinh lời đáp AI. Trả về SSE event: `data: {"status": "WAITING_HUMAN", "message": "Nhân viên đang trực tiếp hỗ trợ, vui lòng đợi..."}\n\n`. Kết thúc.
+  3. Nếu `mode == 'BOT'`:
+     - Gọi Embedding API chuyển `query` thành vector 1024 chiều `query_vec`.
+     - Thực hiện Vector Search trên Supabase:
+       ```sql
+       SELECT id, document_name, content, metadata, (1 - (embedding <=> :query_vec)) AS similarity
+       FROM knowledge_chunks
+       WHERE (1 - (embedding <=> :query_vec)) >= 0.65
+       ORDER BY similarity DESC LIMIT 3;
+       ```
+     - Đồng thời, nếu `query` chứa các từ khóa sản phẩm (thức ăn, hạt, cát vệ sinh, vòng cổ, chuồng, giá, còn hàng): Query bảng `products` tra cứu thông tin tồn kho `stock_quantity`, `price`, `sale_price` theo SKU/Tên.
+  4. **Xử lý Fallback khi không có dữ liệu phù hợp:**
+     - Nếu không có chunk nào thỏa mãn `similarity >= 0.65`:
+       - Chèn tin nhắn BOT vào `messages`: `content = 'Rất tiếc, thông tin này chưa có trong tài liệu hướng dẫn của cửa hàng. Bạn có muốn kết nối trực tiếp với nhân viên tư vấn không?'`.
+       - Trả về gói SSE kèm 2 nút gợi ý: `["Kết nối nhân viên", "Hỏi câu khác"]`.
+       - Nếu khách chọn "Kết nối nhân viên": Thực hiện `UPDATE conversations SET mode = 'WAITING_HUMAN', is_flagged = TRUE WHERE id = :id`.
+  5. **Streaming & Citations khi có dữ liệu:**
+     - Đóng gói Prompt RAG: `Context = [Chunks + Product Catalog Data]`, `User Query = query`.
+     - Mở luồng HTTP Response Header `Content-Type: text/event-stream`.
+     - Đẩy từng token sinh ra bởi LLM về Client: `data: {"token": "..."}\n\n`.
+     - Khi sinh xong, chèn bản ghi BOT vào `messages`: `sender_type = 'BOT'`, `content = full_text`, `citations = JSONB([document_name, page_number, clause, snippet])`.
 
 ---
 
 ## KHỐI 2: GIÁM SÁT HỘI THOẠI & KHỞI TẠO TICKET TỰ ĐỘNG (AI AUTO-TRIAGE)
 
-### 2.1. Chức năng: Giám sát Hội thoại Ngầm, Phân tích Cảm xúc & Tự động Khởi tạo Ticket Khẩn cấp
-* **Tác nhân:** Tiến trình ngầm (Event Listener Hook & AI Engine).
-* **Dữ liệu đầu vào:** Tin nhắn mới từ phía khách hàng (`message_id`, `content`, `conversation_id`).
+### 2.1. Chức năng (UC 2.1): Phân tích Cảm xúc & Phát hiện Khiếu nại Ngầm
+* **Tiến trình:** Background Listener Hook kích hoạt ngay khi có tin nhắn mới `sender_type = 'CUSTOMER'` được lưu vào `messages`.
 * **Quy trình xử lý nội bộ:**
-  1. Khi tin nhắn `sender_type = 'CUSTOMER'` được chèn vào bảng `messages`, Listener bắt sự kiện và truy vấn 3 tin nhắn liền trước trong cùng `conversation_id`.
-  2. Đóng gói chuỗi hội thoại gửi tới mô hình AI Phân tích Cảm xúc (Structured Output LLM) để tính chỉ số `sentiment_score` (-1.00 đến +1.00) và xếp loại (POSITIVE, NEUTRAL, NEGATIVE, CRITICAL).
-  3. Cập nhật `sentiment_score` trong bảng `messages` và `last_sentiment` trong bảng `conversations`.
-  4. Nạp các quy tắc kích hoạt từ bảng `ai_rules`. So sánh `sentiment_score` với ngưỡng `sentiment_threshold`.
-  5. Nếu chạm/vượt ngưỡng nguy cơ:
-     * Gọi LLM trích xuất dữ liệu có cấu trúc: tóm tắt sự cố (`summary`), danh mục lỗi (`category`), mức ưu tiên (`priority` = P1/P2/P3).
-     * Tra cứu bảng `sla_policies` để tính `sla_deadline = NOW() + resolution_time_minutes`.
-     * Chèn bản ghi mới vào bảng `tickets`: `conversation_id`, `category`, `priority`, `summary`, `status = 'PENDING'`, `sla_deadline`, `ai_metadata`.
-     * Cập nhật bảng `conversations`: bật cờ `is_flagged = TRUE`.
-     * **Xử lý ngắt Bot AI ngay lập tức khi gặp nguy cơ CRITICAL:** Khi phát hiện mức độ giận dữ ở cấp độ nghiêm trọng (CRITICAL):
-       * Hệ thống cập nhật bảng `conversations`: `mode = 'WAITING_HUMAN'`.
-       * Tự động tạo một tin nhắn hệ thống trong bảng `messages`: `sender_type = 'BOT'`, `content = 'Hệ thống nhận thấy bạn cần hỗ trợ chuyên sâu, vui lòng chờ trong giây lát tư vấn viên đang vào hỗ trợ bạn.'`.
-       * Đẩy thông điệp tin nhắn hệ thống qua WebSocket tới giao diện khách hàng. Các lượt chat tiếp theo của khách hàng sẽ không kích hoạt AI trả lời tự động nữa.
-     * Đẩy gói thông điệp `TICKET_CREATED` vào **Redis Queue (`queue:tickets:pending`)**.
-* **Kết quả đầu ra:** Điểm cảm xúc được ghi nhận, Ticket khẩn cấp được khởi tạo ngầm, AI Bot ngắt trả lời tự động nếu khẩn cấp và bắn sự kiện qua Redis Queue.
-* **Xử lý ngoại lệ:** Nếu điểm cảm xúc ở ngưỡng an toàn $\rightarrow$ kết thúc tiến trình, không mở Ticket.
+  1. Đọc tin nhắn mới vừa lưu + 3 tin nhắn liền trước trong cùng `conversation_id` để tạo mạch ngữ cảnh.
+  2. Scann từ khóa nguy cơ khẩn cấp trong tin nhắn (`lừa đảo`, `dọa kiện`, `báo công an`, `tẩy chay`, `trả tiền đây`...):
+     - Nếu chứa từ khóa nguy cơ: Ép điểm `sentiment_score = -1.00`, gán nhãn `CRITICAL`. Chuyển ngay sang Bước 5.
+  3. Nếu không dính từ khóa: Gọi AI Sentiment Classifier (LLM Structured Output) tính điểm `sentiment_score` (-1.00 đến +1.00) và xếp nhãn:
+     - `POSITIVE`: +0.30 đến +1.00
+     - `NEUTRAL`: -0.29 đến +0.29
+     - `NEGATIVE`: -0.59 đến -0.30
+     - `CRITICAL`: -1.00 đến -0.60
+  4. Cập nhật `UPDATE messages SET sentiment_score = :score WHERE id = :msg_id` và `UPDATE conversations SET last_sentiment = :label WHERE id = :conv_id`.
+  5. So sánh `sentiment_score` với mốc ngưỡng cảnh báo trong `ai_rules` (mặc định -0.60):
+     - Nếu `sentiment_score <= -0.60`: Cập nhật `UPDATE conversations SET is_flagged = TRUE WHERE id = :conv_id`. Phát tín hiệu WebSocket `FLAGGED_CONVERSATION` tới tất cả Agent đang `ONLINE`. Kích hoạt tiến trình UC 2.2 tự động mở Ticket.
+     - **Quy tắc khóa an toàn cờ đỏ:** Khi `is_flagged` đã là `TRUE`, dù các tin nhắn tiếp theo có điểm `POSITIVE`, hệ thống không được tự động xóa cờ đỏ (chỉ xóa khi Agent tiếp quản hoặc đóng Ticket).
 
-### 2.2. Chức năng: Cấu hình Linh hoạt Quy tắc AI Rules
-* **Tác nhân:** Quản lý CSKH (Manager / Admin).
-* **Dữ liệu đầu vào:** Thông tin quy tắc mới hoặc cập nhật (tên quy tắc, ngưỡng cảm xúc, mức ưu tiên gán, trạng thái kích hoạt).
+---
+
+### 2.2. Chức năng (UC 2.2): Trích xuất Thông tin & Khởi tạo Ticket Khẩn cấp
+* **Tiến trình:** Background Worker tiếp nhận tín hiệu từ UC 2.1.
 * **Quy trình xử lý nội bộ:**
-  1. Quản lý truy cập trang Cấu hình AI Rules trên màn hình Admin.
-  2. Gửi request `POST /api/admin/ai-rules` hoặc `PUT /api/admin/ai-rules/{id}`.
-  3. Gateway kiểm tra quyền tài khoản (`role IN ('MANAGER', 'ADMIN')`).
-  4. Cập nhật/Chèn bản ghi vào bảng `ai_rules`.
-  5. Xóa Cache quy tắc cũ trong Redis để tiến trình AI Auto-Triage tự nạp quy tắc mới ngay lập tức.
-* **Kết quả đầu ra:** Bản ghi quy tắc phân loại mới áp dụng tức thì cho hệ thống.
+  1. Kiểm tra xem phiên `conversation_id` này đã có Ticket chưa hoàn thành (`status IN ('PENDING', 'IN_PROGRESS')`) hay chưa.
+  2. **Trường hợp ĐÃ CÓ Ticket chưa đóng (Chống tạo trùng lặp - UC 2.2 Luồng con A-1):**
+     - Bổ sung ID tin nhắn mới vào trường `ai_metadata.additional_messages` của Ticket cũ.
+     - Nếu tin nhắn mới thuộc cấp P1 (điểm <= -0.80 hoặc chứa từ khóa đe dọa): Nâng mức ưu tiên của Ticket cũ lên `priority = 'P1'`, tính lại `sla_deadline = NOW() + INTERVAL '15 minutes'`, phát thông báo WebSocket cập nhật thẻ Ticket cho Agent.
+  3. **Trường hợp CHƯA CÓ Ticket:**
+     - Gọi LLM trích xuất dữ liệu JSON cấu trúc từ 1-10 tin nhắn gần nhất:
+       - `summary`: Tóm tắt sự cố (20-255 ký tự).
+       - `category`: 1 trong 6 loại (`Lỗi đơn hàng`, `Đổi trả/Hoàn tiền`, `Sản phẩm lỗi/Hư hại`, `Lỗi thanh toán`, `Thái độ phục vụ`, `Vấn đề khác`).
+       - `priority`: `P1` (khi giận dữ đe dọa nặng/lỗi thanh toán), `P2` (sự cố giao hàng/sản phẩm hỏng/bức xúc vừa), `P3` (thắc mắc tiêu cực nhẹ).
+  4. **Tính hạn chót SLA (Tra cứu `sla_policies`):**
+     - `P1`: `sla_deadline = NOW() + INTERVAL '15 minutes'`
+     - `P2`: `sla_deadline = NOW() + INTERVAL '60 minutes'`
+     - `P3`: `sla_deadline = NOW() + INTERVAL '240 minutes'`
+  5. Chèn bản ghi mới vào bảng `tickets` (`conversation_id`, `category`, `priority`, `status = 'PENDING'`, `summary`, `sla_deadline`, `ai_metadata`).
+  6. **Cơ chế ngắt Bot AI ngay lập tức khi khẩn cấp (CRITICAL / P1):**
+     - Nếu `priority == 'P1'` hoặc `last_sentiment == 'CRITICAL'`:
+       - `UPDATE conversations SET mode = 'WAITING_HUMAN' WHERE id = :conv_id`.
+       - Chèn tin nhắn hệ thống vào `messages`: `sender_type = 'BOT'`, `content = 'Hệ thống nhận thấy bạn cần hỗ trợ chuyên sâu, vui lòng chờ trong giây lát tư vấn viên đang vào hỗ trợ bạn.'`.
+       - Đẩy sự kiện WebSocket `BOT_PAUSED_NOTICE` tới Client khách hàng.
+  7. Đẩy thông điệp `TICKET_CREATED` vào **Redis Queue (`queue:tickets:pending`)**.
+  8. **Fallback dự phòng khi AI lỗi (UC 2.2 Ngoại lệ E-1):** Nếu LLM trích xuất thất bại, chèn Ticket mặc định: `summary = "Cần kiểm tra thủ công - Lỗi trích xuất tự động"`, `category = "Vấn đề khác"`, `priority = "P2"`, `sla_deadline = NOW() + 60m`.
+
+---
+
+### 2.3. Chức năng (UC 2.3): Cấu hình Linh hoạt Quy tắc AI Rules
+* **API Endpoints:** `GET /api/admin/ai-rules`, `POST /api/admin/ai-rules`, `PUT /api/admin/ai-rules/{id}`.
+* **Quy trình xử lý nội bộ:**
+  1. Auth Middleware giải mã JWT, kiểm tra `role IN ('MANAGER', 'ADMIN')`. Nếu là `AGENT`, trả về HTTP `403 Forbidden`.
+  2. Validation trường thông tin:
+     - `rule_name`: String, 1-100 chars, NOT NULL.
+     - `sentiment_threshold`: Numeric, bắt buộc phải là số âm trong đoạn [-1.00, 0.00]. Nếu nhập số dương, trả về HTTP `422 Unprocessable Entity` (`detail: "Ngưỡng điểm phải là số âm từ -1.00 đến 0.00"`).
+     - `target_priority`: String, CHECK (`target_priority IN ('P1', 'P2', 'P3')`).
+  3. Cập nhật hoặc chèn bản ghi vào bảng `ai_rules`.
+  4. Xóa Cache Redis quy tắc cũ `DEL cache:ai_rules`. Lần giám sát ngầm tiếp theo sẽ tự nạp lại quy tắc mới từ DB tức thì.
+  5. Ghi nhật ký Lịch sử Cấu hình (Audit Log): Đơn vị thực hiện, thời gian, giá trị cũ và mới.
 
 ---
 
 ## KHỐI 3: CỔNG KẾT NỐI THỜI GIAN THỰC & BÀN LÀM VIỆC NHÂN VIÊN (LIVE SUPPORT CONSOLE)
 
-### 3.1. Chức năng: Giám sát Hàng đợi & Tiếp quản Cuộc trò chuyện
-* **Tác nhân:** Nhân viên CSKH (Agent).
-* **Dữ liệu đầu vào:** Trạng thái trực tuyến của nhân viên và thao tác nhấn nút "Tiếp quản" trên phiên chat (`conversation_id`).
+### 3.1. Chức năng (UC 3.1): Quản lý Tài khoản Nhân viên (Tạo mới & Đăng nhập)
+* **API Endpoints:** `POST /api/admin/users` (Tạo tài khoản), `POST /api/auth/agent/login` (Đăng nhập).
 * **Quy trình xử lý nội bộ:**
-  1. Màn hình Console truy vấn `GET /api/agent/conversations?is_flagged=true` và lắng nghe kênh WebSocket để lấy danh sách cuộc trò chuyện cần hỗ trợ (các phiên `is_flagged = TRUE` hoặc `mode = 'WAITING_HUMAN'`).
-  2. Nhân viên bấm tiếp quản, gửi request `POST /api/agent/conversations/{id}/takeover`.
-  3. Gateway thực hiện khóa dòng (`SELECT FOR UPDATE`) trong `conversations`.
-  4. Kiểm tra `assigned_agent_id`:
-     * Nếu đã có người tiếp quản trước đó $\rightarrow$ Trả về `409 Conflict`, đặt màn hình của Agent hiện tại về "Read-only".
-     * Nếu chưa ai nhận $\rightarrow$ Cập nhật `assigned_agent_id = current_user_id`, `mode = 'HUMAN'`, `is_flagged = FALSE`.
-  5. Phát thông điệp qua WebSocket Server đến khách hàng: sự kiện `CHAT_MODE_CHANGED` báo *"Nhân viên hỗ trợ đã tham gia"*, đồng thời duy trì việc ngắt bộ máy trả lời tự động của BOT.
-* **Kết quả đầu ra:** Quyền điều khiển thuộc về nhân viên; khách hàng nhận thông báo chuyển giao qua WebSocket.
+  1. **Tạo tài khoản nhân sự mới (Admin/Manager):**
+     - Verify JWT `role IN ('MANAGER', 'ADMIN')`.
+     - Validate input: `email` (định dạng email nội bộ, unique), `full_name` (2-100 chars), `role` (`AGENT`/`MANAGER`/`ADMIN`), `skills` (Bắt buộc với AGENT: JSON Array các danh mục xử lý), `password` (min 8 chars, có chữ và số).
+     - Băm mật khẩu, chèn vào bảng `users` với `status = 'OFFLINE'`, `is_active = TRUE`.
+  2. **Đăng nhập Bàn làm việc CSKH (Agent Login):**
+     - Verify `email` và `password_hash`. Nếu sai, trả về HTTP `401 Unauthorized`.
+     - Kiểm tra `is_active`. Nếu `FALSE`, trả về HTTP `403 Forbidden` (`detail: "Tài khoản bị khóa"`).
+     - Khởi tạo JWT Session làm việc (hiệu lực 24 giờ) chứa `{ "sub": user.id, "role": user.role }`.
+     - Trả về Token JWT + Thông tin User. Đặt trạng thái mặc định ban đầu là `OFFLINE`.
 
-### 3.2. Chức năng: Nhắn tin Hai chiều Thời gian thực & Phản hồi Nhanh theo Mẫu
-* **Tác nhân:** Khách hàng và Nhân viên CSKH.
-* **Dữ liệu đầu vào:** Tin nhắn văn bản hoặc phím tắt (VD: `/chao`, `/xloi`) qua kết nối WebSocket.
-* **Quy trình xử lý nội bộ:**
-  1. Khi nhân viên gõ phím tắt `/`, Client đọc bảng `canned_responses` tự động điền mẫu câu trả lời chuẩn bị sẵn vào ô nhập tin nhắn.
-  2. Khi gửi tin nhắn, WebSocket Gateway lưu bản ghi mới vào bảng `messages` (`sender_type` = 'AGENT' hoặc 'CUSTOMER', `sender_id`, `content`).
-  3. Cập nhật mốc thời gian `updated_at` trong bảng `conversations`.
-  4. Đẩy gói tin qua kênh WebSocket để hiển thị tức thì trên cả màn hình Khách hàng và Nhân viên.
-* **Kết quả đầu ra:** Tin nhắn hiển thị tức thì hai chiều giữa Khách hàng và Nhân viên.
+---
 
-### 3.3. Chức năng: Quản lý Trạng thái Làm việc Nhân viên (Agent Presence)
-* **Tác nhân:** Nhân viên CSKH.
-* **Dữ liệu đầu vào:** Thao tác chọn trạng thái (ONLINE, BUSY, OFFLINE) trên Console.
+### 3.2. Chức năng (UC 3.2): Quản lý Trạng thái Làm việc Nhân viên (Agent Presence)
+* **API Endpoints:** `PUT /api/agent/status`.
+* **Dữ liệu đầu vào:** `{ "status": "ONLINE" | "BUSY" | "OFFLINE" }`.
 * **Quy trình xử lý nội bộ:**
-  1. Gửi request `PUT /api/agent/status` với Payload `status`.
-  2. Cập nhật trường `status` trong bảng `users`.
-  3. Cập nhật trạng thái tức thời vào **Redis Cache (`agent:status:{user_id}`)**.
-  4. Bắn sự kiện `AGENT_STATUS_CHANGED` sang bộ điều phối Ticket Dispatcher để cập nhật danh sách trực ca.
-* **Kết quả đầu ra:** Trạng thái làm việc mới của nhân viên được ghi nhận toàn hệ thống.
+  1. Verify JWT Agent Token.
+  2. Cập nhật CSDL: `UPDATE users SET status = :status, updated_at = NOW() WHERE id = :user_id`.
+  3. Cập nhật Redis Cache: `SET agent:status:{user_id} :status`.
+  4. Bắn sự kiện Pub/Sub `AGENT_STATUS_CHANGED` tới Ticket Dispatcher Worker để cập nhật ngay danh sách nhân viên sẵn sàng nhận việc.
+  5. **Tự động ngắt mạng (Ngoại lệ E-1):** Khi kết nối WebSocket của Agent bị rớt quá 30 giây, Heartbeat Monitor tự động cập nhật `status = 'OFFLINE'` trong Redis và DB để ngắt gán việc tự động.
+
+---
+
+### 3.3. Chức năng (UC 3.3): Theo dõi Hàng đợi & Tiếp quản Cuộc trò chuyện
+* **API Endpoints & WS:** `GET /api/agent/conversations/queue`, `POST /api/agent/conversations/{id}/takeover`, `WS /ws/chat/{conversation_id}`.
+* **Quy trình xử lý nội bộ:**
+  1. **Tải danh sách Hàng đợi:**
+     - Query `SELECT * FROM conversations WHERE is_flagged = TRUE OR mode = 'WAITING_HUMAN' ORDER BY updated_at DESC`.
+  2. **Tiếp quản cuộc trò chuyện (Anti-Collision Takeover):**
+     - Agent bấm "Tiếp quản", gửi `POST /api/agent/conversations/{id}/takeover`.
+     - Gateway mở gỉa dịch với khóa dòng chống tranh chấp:
+       ```sql
+       SELECT assigned_agent_id, mode FROM conversations WHERE id = :id FOR UPDATE;
+       ```
+     - Kiểm tra `assigned_agent_id`:
+       - Nếu `assigned_agent_id IS NOT NULL` và khác `current_user_id`: Rollback giao dịch, trả về HTTP `409 Conflict` (`detail: "Cuộc trò chuyện đã được nhận bởi nhân viên khác"`). Đặt màn hình của Agent hiện tại về `Read-only`.
+       - Nếu `assigned_agent_id IS NULL`:
+         ```sql
+         UPDATE conversations
+         SET assigned_agent_id = :current_user_id, mode = 'HUMAN', is_flagged = FALSE, updated_at = NOW()
+         WHERE id = :id;
+         ```
+  3. **Phát thông báo WebSocket:**
+     - WebSocket Server đẩy thông điệp `CHAT_MODE_CHANGED` vào room khách hàng: `"Nhân viên tư vấn [Tên] đã tham gia cuộc trò chuyện"`.
+     - Ngắt hoàn toàn bộ máy trả lời tự động của Bot AI cho các tin nhắn tiếp theo.
+  4. **Trao đổi tin nhắn 2 chiều thời gian thực:**
+     - Mọi tin nhắn từ Agent hoặc Customer gửi qua WebSocket `/ws/chat/{id}` được lưu vào `messages` (`sender_type = 'AGENT'`, `sender_id`, `content`) và broadcast ngay lập tức sang phía đối diện.
+
+---
+
+### 3.4. Chức năng (UC 3.4): Quản lý & Sử dụng Mẫu Phản hồi Nhanh (Canned Responses)
+* **API Endpoints:** `GET /api/canned-responses`, `POST /api/canned-responses`.
+* **Quy trình xử lý nội bộ:**
+  1. **Gợi ý nhanh khi gõ `/`:**
+     - Client bắt ký tự `/`, gọi `GET /api/canned-responses?q=shortcut` (hoặc đọc từ Cache Local).
+     - Query `SELECT * FROM canned_responses WHERE shortcut ILIKE :q OR title ILIKE :q`.
+     - Chọn mẫu: Điền nguyên văn trường `content` vào ô soạn thảo của Agent.
+  2. **Tạo mẫu phản hồi mới (Admin/Manager/Agent - UC 3.4 Luồng con A-1):**
+     - Input Validation: `shortcut` (bắt buộc bắt đầu bằng `/`, không chứa khoảng trắng, 2-50 chars), `title` (3-150 chars), `category` (2-50 chars), `content` (5-2000 chars).
+     - Query `SELECT id FROM canned_responses WHERE shortcut = :shortcut`. Nếu đã tồn tại, trả về HTTP `400 Bad Request` (`detail: "Phím tắt đã tồn tại"`).
+     - Chèn bản ghi mới vào `canned_responses` (`created_by = current_user_id`).
+     - Bắn sự kiện WebSocket `CANNED_RESPONSE_CREATED` để đồng bộ bảng gợi ý cho tất cả Agent đang trực ca.
 
 ---
 
 ## KHỐI 4: ĐIỀU PHỐI PHÂN VIỆC, GIÁM SÁT SLA & BÁO CÁO HIỆU SUẤT (DISPATCHER & SLA ENGINE)
 
-### 4.1. Chức năng: Tự động Phân chia Ticket Thông minh (Least-Loaded Dispatcher Algorithm)
-* **Tác nhân:** Tiến trình ngầm (Ticket Dispatcher Worker).
-* **Dữ liệu đầu vào:** Sự kiện `TICKET_CREATED` từ Redis Queue (`queue:tickets:pending`).
-* **Quy trình xử lý nội bộ:**
-  1. Dispatcher Worker nhận `ticket_id` từ Redis Queue.
-  2. Truy vấn bảng `tickets` lấy thông tin `category` và `priority` của Ticket.
-  3. Quét bảng `users` (hoặc đọc Redis Cache) lọc các nhân viên thỏa mãn: `status = 'ONLINE'` và `skills` chứa `category`.
-  4. Nếu không có ai phù hợp $\rightarrow$ Đặt Ticket ở trạng thái `assigned_to = NULL`, `status = 'PENDING'` và phát cảnh báo lên màn hình Admin.
-  5. Nếu có nhân viên phù hợp $\rightarrow$ Đếm số lượng Ticket đang xử lý của từng người, chọn nhân viên có ít việc nhất (Least-Loaded).
-  6. Cập nhật `tickets`: `assigned_to = selected_agent_id`, `status = 'IN_PROGRESS'`.
-  7. Đẩy thông báo WebSocket `TICKET_ASSIGNED` về màn hình của nhân viên được gán.
-* **Kết quả đầu ra:** Ticket được gán cho nhân viên phù hợp và hiển thị trên bảng việc cá nhân.
-
-### 4.2. Chức năng: Giám sát Cam kết SLA & Báo động Vi phạm (SLA Engine & Escalation)
-* **Tác nhân:** Tiến trình ngầm (SLA Worker) & Redis Pub/Sub.
-* **Dữ liệu đầu vào:** Mốc thời gian đếm ngược `sla_deadline` của Ticket.
-* **Quy trình xử lý nội bộ:**
-  1. SLA Worker chạy chu kỳ quét bảng `tickets` kiểm tra trạng thái xử lý và `sla_deadline`.
-  2. Nếu nhân viên hoàn thành Ticket trước mốc hạn $\rightarrow$ Cập nhật `status = 'RESOLVED'`, `resolved_at = NOW()`, ghi nhận đạt chuẩn `SLA Met`.
-  3. Nếu `NOW() > sla_deadline` mà Ticket chưa hoàn thành và `sla_breached = FALSE`:
-     * Đánh dấu `sla_breached = TRUE` trong bảng `tickets`.
-     * Tra cứu `sla_policies` xác định cấp báo động (`escalation_notify_to` = 'MANAGER').
-     * Đẩy thông điệp vi phạm vào **Redis Pub/Sub (`channel:sla_alerts`)**.
-     * WebSocket Manager nhận từ Pub/Sub và phát sự kiện `SLA_BREACH_ALERT` làm thẻ Ticket trên Kanban đổi sang màu đỏ nhấp nháy trên màn hình Quản lý.
-* **Kết quả đầu ra:** Đánh dấu chỉ số vi phạm trong CSDL và báo động đỏ thời gian thực lên giao diện quản trị.
-
-### 4.3. Chức năng: Quản lý Tiến độ trên Bảng Kanban & Báo cáo Thống kê Hiệu suất
-* **Tác nhân:** Nhân viên CSKH & Quản lý CSKH.
-* **Dữ liệu đầu vào:** Thao tác kéo thả chuyển trạng thái Ticket trên Kanban hoặc yêu cầu lọc báo cáo.
-* **Quy trình xử lý nội bộ:**
-  1. Khi kéo thả Ticket: Gửi `PATCH /api/tickets/{id}/status`, cập nhật bảng `tickets`, đồng bộ trạng thái Kanban qua WebSocket.
-  2. Khi xem báo cáo: Gửi `GET /api/reports/analytics`, Gateway thực hiện các câu truy vấn gom nhóm (Aggregation) trên PostgreSQL tính tỷ lệ vi phạm SLA, năng suất nhân viên và phân bổ cảm xúc để trả về dạng biểu đồ trực quan.
-* **Kết quả đầu ra:** Trạng thái Ticket được đồng bộ tức thì trên Kanban và các biểu đồ báo cáo hiệu suất vận hành hiển thị trực quan.
+### 4.1. Chức năng (UC 4.1): Tự động Phân chia Ticket Thông minh (Least-Loaded Dispatcher Algorithm)
+* **Tiến trình:** *Ticket Dispatcher Worker* lắng nghe Redis Queue `queue:tickets:pending`.
+* **Thuật toán Phân việc Tải tối thiểu (Least-Loaded Algorithm):**
+  1. Worker thực hiện `RPOPLPUSH queue:tickets:pending queue:tickets:processing` lấy `ticket_id`.
+  2. Query `SELECT category, priority FROM tickets WHERE id = :ticket_id`.
+  3. Lọc danh sách nhân viên đủ điều kiện:
+     ```sql
+     SELECT id, full_name FROM users
+     WHERE role = 'AGENT' AND status = 'ONLINE' AND is_active = TRUE
+       AND (skills @> jsonb_build_array(:category) OR skills IS NULL);
+     ```
+  4. **Xử lý Không có nhân viên hợp lệ (UC 4.1 Luồng rẽ nhánh E-1):**
+     - Nếu danh sách lọc rỗng: Cập nhật `UPDATE tickets SET status = 'PENDING', assigned_to = NULL WHERE id = :ticket_id`.
+     - Phát tín hiệu báo động đỏ WebSocket `UNASSIGNED_TICKET_ALERT` lên màn hình Admin để phân công thủ công (UC 4.1 Luồng con A-1 via `POST /api/admin/tickets/{id}/assign`).
+  5. **Tính tải công việc và Phân công (Khi có ứng viên):**
+     - Đếm số lượng Ticket chưa đóng (`status IN ('PENDING', 'IN_PROGRESS')`) của từng nhân viên hợp lệ.
+     - Chọn Agent có số lượng Ticket ít nhất. Nếu bằng nhau, chọn Agent có thời điểm nhận việc gần nhất xa nhất (`ORDER BY last_assigned_at ASC`).
+     - Gán Ticket:
+       ```sql
+       UPDATE tickets SET assigned_to = :selected_agent_id, status = 'IN_PROGRESS', updated_at = NOW() WHERE id = :ticket_id;
+       ```
+     - Bắn sự kiện WebSocket `TICKET_ASSIGNED` về màn hình Console của Agent được nhận việc.
 
 ---
 
-# IV. Phân tích Luồng Tuần tự Kỹ thuật (Technical Sequence Flows)
+### 4.2. Chức năng (UC 4.2): Giám sát Thời hạn Xử lý Cam kết SLA & Báo động Vi phạm
+* **Tiến trình:** *SLA Worker Cron Job* chạy định kỳ mỗi 30 giây.
+* **Quy trình xử lý nội bộ:**
+  1. Quét toàn bộ các Ticket đang mở:
+     ```sql
+     SELECT id, assigned_to, priority, sla_deadline, sla_breached
+     FROM tickets WHERE status IN ('PENDING', 'IN_PROGRESS');
+     ```
+  2. **Cảnh báo Sắp hết hạn (< 20% thời lượng):**
+     - Nếu `(sla_deadline - NOW()) / total_sla_duration < 0.20`: Bắn sự kiện WebSocket `SLA_WARNING` làm thẻ Ticket trên giao diện Agent chuyển sang màu vàng cam.
+  3. **Xử lý Hoàn thành Đúng hạn (UC 4.2 Luồng chính step 4):**
+     - Khi Agent bấm "Hoàn tất", gửi `POST /api/tickets/{id}/resolve` kèm `resolution_summary` (10-1000 chars).
+     - If `NOW() <= sla_deadline`: `UPDATE tickets SET status = 'RESOLVED', resolved_at = NOW(), sla_breached = FALSE`. Ghi nhận `SLA Met`.
+  4. **Xử lý Vi phạm Quá hạn SLA (UC 4.2 Luồng rẽ nhánh E-1 - SLA Breach):**
+     - If `NOW() > sla_deadline` AND `sla_breached == FALSE`:
+       - `UPDATE tickets SET sla_breached = TRUE WHERE id = :ticket_id`.
+       - Đẩy thông điệp vi phạm vào **Redis Pub/Sub (`channel:sla_alerts`)**.
+       - WebSocket Manager lắng nghe kênh Pub/Sub, chuyển tiếp tín hiệu `SLA_BREACH_ALERT` làm thẻ Ticket trên Kanban đổi sang màu đỏ nhấp nháy, bắn thông báo âm thanh báo động lên màn hình Quản lý CSKH.
+       - Ghi nhận điểm trừ vi phạm SLA vào báo cáo hiệu suất của Agent phụ trách.
 
-### LUỒNG TUẦN TỰ 1: Tra cứu chính sách và hỏi đáp tự động (RAG Streaming Flow)
+---
 
-**Các thành phần nội bộ tương tác:**
-* `Customer UI`: Giao diện khách hàng.
-* `FastAPI Gateway`: Kênh API & Middleware xác thực JWT.
-* `Supabase DB (knowledge_chunks)`: CSDL PostgreSQL với HNSW Index vector nhúng.
-* `LLM RAG Engine`: Bộ sinh câu trả lời tự nhiên.
-* `PostgreSQL (Supabase)`: CSDL các bảng `conversations`, `messages`.
+### 4.3. Chức năng (UC 4.3): Quản lý Tiến độ trên Bảng Kanban
+* **API Endpoints:** `PATCH /api/tickets/{id}/status`.
+* **Dữ liệu đầu vào:** `{ "status": "PENDING" | "IN_PROGRESS" | "RESOLVED" | "CLOSED", "resolution_summary": "String (10-1000 chars)" }`.
+* **Quy trình xử lý nội bộ:**
+  1. Verify JWT User Token và Phân quyền:
+     - Nếu người thao tác là `AGENT`: Kiểm tra `tickets.assigned_to == current_user_id`. Nếu khác, trả về HTTP `403 Forbidden` (`detail: "Bạn không có quyền sửa ticket của nhân viên khác"`).
+     - Nếu là `MANAGER` hoặc `ADMIN`: Cho phép cập nhật mọi Ticket.
+  2. Kiểm tra Quy tắc Luân chuyển Tiến độ 1 chiều:
+     - Hợp lệ: `PENDING` $\rightarrow$ `IN_PROGRESS` $\rightarrow$ `RESOLVED` $\rightarrow$ `CLOSED`.
+     - Nếu kéo ngược (VD: `RESOLVED` $\rightarrow$ `IN_PROGRESS`), trả về HTTP `400 Bad Request` (`detail: "Tiến độ chỉ được phép luân chuyển tiến lên"`).
+  3. Kiểm tra điều kiện chuyển `RESOLVED`: Bắt buộc `resolution_summary` không được để trống (10-1000 chars). Nếu trống, trả về HTTP `422 Unprocessable Entity`.
+  4. Cập nhật `tickets`: Đặt `status = :new_status`. Nếu chuyển `RESOLVED`, dừng đồng hồ SLA đếm ngược, đặt `resolved_at = NOW()`.
+  5. Broadcast sự kiện `KANBAN_TICKET_UPDATED` qua WebSocket để đồng bộ thẻ công việc trên màn hình tất cả nhân viên.
 
-```
+---
+
+### 4.4. Chức năng (UC 4.4): Báo cáo Thống kê Hiệu suất
+* **API Endpoints:** `GET /api/reports/analytics`, `GET /api/reports/export-excel`.
+* **Dữ liệu đầu vào (Query Params):** `from_date` (YYYY-MM-DD), `to_date` (YYYY-MM-DD), `agent_id` (Optional), `priority` (Optional), `category` (Optional).
+* **Quy trình xử lý nội bộ:**
+  1. Verify JWT `role IN ('MANAGER', 'ADMIN')`. Nếu là `AGENT`, trả về HTTP `403 Forbidden`.
+  2. Validation khoảng thời gian: `to_date >= from_date`, `(to_date - from_date) <= 365 days`, `to_date <= CURRENT_DATE`. Nếu sai, trả về HTTP `400 Bad Request`.
+  3. Thực hiện các câu lệnh SQL gom nhóm (Aggregation) trên PostgreSQL:
+     - **Tổng số phiếu & Phân bổ:** `SELECT category, priority, count(*) FROM tickets WHERE created_at BETWEEN :from_date AND :to_date GROUP BY category, priority;`
+     - **Tỷ lệ vi phạm SLA (%):**
+       $$\text{Tỷ lệ vi phạm (\%)} = \left( \frac{\text{Số phiếu } sla\_breached = \text{TRUE}}{\text{Tổng số phiếu phát sinh}} \right) \times 100\%$$
+     - **Năng suất theo Agent:** Số phiếu đã giải quyết đúng hạn vs quá hạn của từng `assigned_to`.
+     - **Phân bổ cảm xúc:** Gom nhóm `last_sentiment` từ `conversations`.
+  4. Trả về Response JSON chi tiết cho UI dựng biểu đồ tròn/cột. Hỗ trợ xuất file Excel qua stream binary `.xlsx`.
+
+---
+
+# IV. Sơ đồ Luồng Tuần tự Kỹ thuật (Technical Sequence Flows)
+
+### LUỒNG TUẦN TỰ 1: Tra cứu Tri thức RAG & Sinh câu trả lời Streaming (UC 1.3)
+
+```text
 Customer UI            FastAPI Gateway       Supabase Vector        LLM RAG Engine       Supabase DB
     |                         |              (knowledge_chunks)           |                   |
     |--- 1. POST /chat/stream>|                      |                    |                   |
@@ -436,15 +550,9 @@ Customer UI            FastAPI Gateway       Supabase Vector        LLM RAG Engi
 
 ---
 
-### LUỒNG TUẦN TỰ 2: Giám sát hội thoại ngầm & Tự động khởi tạo Ticket khẩn cấp (AI Auto-Triage Flow)
+### LUỒNG TUẦN TỰ 2: Giám sát Hội thoại Ngầm & Khởi tạo Ticket Khẩn cấp (UC 2.1 & UC 2.2)
 
-**Các thành phần nội bộ tương tác:**
-* `Event Listener`: Tiến trình lắng nghe tin nhắn mới.
-* `AI Classifier`: LLM phân tích cảm xúc & trích xuất JSON cấu trúc.
-* `Supabase DB`: Lưu vết `messages`, `conversations`, `tickets`, `ai_rules`.
-* `Redis Queue`: Hàng đợi thông điệp sự kiện (`queue:tickets:pending`).
-
-```
+```text
 Event Listener         Supabase DB           AI Classifier           Redis Queue
       |                    |                       |                      |
       |-- 1. On Message -->|                       |                      |
@@ -479,16 +587,9 @@ Event Listener         Supabase DB           AI Classifier           Redis Queue
 
 ---
 
-### LUỒNG TUẦN TỰ 3: Tiếp quản phiên trò chuyện từ AI (Agent Takeover Flow)
+### LUỒNG TUẦN TỰ 3: Tiếp quản Phiên trò chuyện từ AI (UC 3.3)
 
-**Các thành phần nội bộ tương tác:**
-* `Agent UI`: Giao diện làm việc của tư vấn viên.
-* `FastAPI Gateway`: Xử lý logic nghiệp vụ và khóa giao dịch.
-* `Supabase DB`: CSDL các bảng `conversations`, `users`, `messages`, `canned_responses`.
-* `WebSocket Manager`: Bộ điều phối kết nối thời gian thực.
-* `Customer UI`: Giao diện chat phía khách hàng.
-
-```
+```text
 Agent UI           FastAPI Gateway          Supabase DB         WebSocket Manager       Customer UI
    |                      |                      |                      |                    |
    |-- 1. POST Takeover ->|                      |                      |                    |
@@ -518,17 +619,9 @@ Agent UI           FastAPI Gateway          Supabase DB         WebSocket Manage
 
 ---
 
-### LUỒNG TUẦN TỰ 4: Tự động phân chia Ticket, Giám sát SLA & Báo động Vi phạm (Dispatcher & SLA Engine Flow)
+### LUỒNG TUẦN TỰ 4: Tự động Phân chia Ticket, Giám sát SLA & Báo động Vi phạm (UC 4.1 & UC 4.2)
 
-**Các thành phần nội bộ tương tác:**
-* `Redis Queue / PubSub`: Hàng đợi thông điệp và kênh phát sóng sự kiện.
-* `Ticket Dispatcher`: Tiến trình phân chia công việc ngầm.
-* `SLA Worker`: Tiến trình ngầm quét vi phạm hạn xử lý.
-* `Supabase DB`: CSDL các bảng `tickets`, `users`, `sla_policies`.
-* `WebSocket Manager`: Đẩy thông báo thời gian thực.
-* `Agent / Admin UI`: Giao diện người dùng.
-
-```
+```text
 Redis Queue/PubSub     Dispatcher Worker        SLA Worker          Supabase DB        WebSocket / UI
         |                      |                    |                    |                   |
         |-- 1. RPOPLPUSH ----->|                    |                    |                   |
