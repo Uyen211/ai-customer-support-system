@@ -39,7 +39,7 @@ class MultiContextSynthesizerService:
         )
 
         # Stream từng token từ LLM
-        async for token in self.llm.generate_stream(prompt):
+        async for token in self.llm.stream_text(prompt):
             yield token
 
 synthesizer_service = MultiContextSynthesizerService()

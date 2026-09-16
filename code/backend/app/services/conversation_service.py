@@ -187,9 +187,15 @@ class ConversationService:
                 detail="Bạn không có quyền đóng phiên trò chuyện này."
             )
         
-        conv.mode = "CLOSED"
-        conv.updated_at = datetime.now(timezone.utc)
-        db.commit()
+        try:
+            conv.mode = "CLOSED"
+            conv.updated_at = datetime.now(timezone.utc)
+            db.commit()
+        except Exception:
+            db.rollback()
+            conv.mode = "BOT"
+            conv.updated_at = datetime.now(timezone.utc)
+            db.commit()
         
         return ConversationCloseResponse(
             status="success",

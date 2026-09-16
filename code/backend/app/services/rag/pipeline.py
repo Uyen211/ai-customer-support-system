@@ -58,14 +58,23 @@ class RAGPipelineService:
                 conv.updated_at = datetime.now(timezone.utc)
                 db.commit()
 
-                # Lấy 6 tin nhắn gần nhất
+                # Lấy tin nhắn gần nhất và lọc bỏ các thông báo lỗi hệ thống
                 recent_msgs = db.query(Message).filter(
                     Message.conversation_id == conversation_id
-                ).order_by(Message.created_at.desc()).limit(6).all()
+                ).order_by(Message.created_at.desc()).limit(12).all()
                 
+                raw_history = []
                 for m in reversed(recent_msgs):
+                    if not m.content or not m.content.strip():
+                        continue
+                    # Lọc bỏ tin nhắn lỗi hệ thống cũ để tránh gây nhiễu Prompt LLM
+                    if "Xin lỗi, hệ thống gặp sự cố khi tổng hợp" in m.content:
+                        continue
                     role = "user" if m.sender_type == "CUSTOMER" else "assistant"
-                    chat_history.append({"role": role, "content": m.content})
+                    raw_history.append({"role": role, "content": m.content})
+
+                # KH-06 Windowing: Giữ tối đa 6 tin nhắn sạch gần nhất
+                chat_history = raw_history[-6:]
         finally:
             db.close()
 

@@ -22,8 +22,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Đăng ký API Routers với tiền tố /api
+# Đăng ký API Routers cho tất cả các tiền tố (/api/v1, /api và gốc /)
+app.include_router(api_router, prefix="/api/v1")
 app.include_router(api_router, prefix="/api")
+app.include_router(api_router)
 
 @app.get("/")
 def read_root():

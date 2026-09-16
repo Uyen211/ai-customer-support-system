@@ -21,10 +21,10 @@ project/
 │   │   ├── 📄 Dockerfile          # Dockerfile build backend container
 │   │   └── 📄 requirements.txt    # Thư viện Python (FastAPI, Supabase, Redis...)
 │   ├── 📁 frontend/               # Single Page Application (React + Vite)
-│   │   ├── 📁 src/                # Giao diện UI, Components & Styling
+│   │   ├── 📁 src/                # Giao diện UI, Components & Styling (Editorial Calm Style)
 │   │   ├── 📄 Dockerfile          # Dockerfile build frontend container
 │   │   ├── 📄 vite.config.js      # Cấu hình Vite Dev/Production Server
-│   │   └── 📄 package.json        # Thư viện Node.js (React, Tailwind CSS v4...)
+│   │   └── 📄 package.json        # Thư viện Node.js (React, Tailwind CSS, Lucide...)
 │   ├── 📄 .env                    # Biến môi trường hệ thống (Supabase DSN, Redis, API Keys)
 │   ├── 📄 docker-compose.yml      # Cấu hình khởi chạy toàn bộ 3 dịch vụ qua 1 lệnh
 │   └── 📄 README.md               # Hướng dẫn chi tiết thư mục code
@@ -34,12 +34,13 @@ project/
 │   │   ├── 📄 gioithieuduan.md    # Tổng quan dự án, 4 khối chức năng & Use Cases
 │   │   ├── 📄 phantichhethong.md  # Phân tích kỹ thuật chi tiết, ERD & Sequence Diagrams
 │   │   ├── 📄 setup.md            # Hướng dẫn chi tiết Cài đặt, Khởi chạy & Tắt hệ thống
-│   │   └── 📄 design_pattern.md   # Quy chuẩn Visual Language & Design Tokens
+│   │   └── 📄 design_pattern.md   # Quy chuẩn Visual Language Editorial Calm & Design Tokens
 │   ├── 📁 database/               # Cấu trúc CSDL & DDL SQL
-│   │   └── 📄 sql.md              # Câu lệnh DDL khởi tạo Schema PostgreSQL / Supabase
+│   │   ├── 📄 sql.md              # Câu lệnh DDL khởi tạo Schema PostgreSQL / Supabase
+│   │   └── 📄 accounts.md         # Danh sách tài khoản mẫu (Admin, Agent, Customer) & Mật khẩu 123456
 │   └── 📁 rag/                    # Bộ dữ liệu Chatbot RAG (Raw & Processed)
 │       ├── 📁 raw/                # Dữ liệu thô (dataset-rag.md, prompt.md)
-│       └── 📁 processed/          # Dữ liệu đã làm sạch & bóc tách (knowledge_chunks_prepared.json, insert_products.sql...)
+│       └── 📁 processed/          # Dữ liệu đã làm sạch & bóc tách (knowledge_chunks_prepared.json...)
 │
 └── 📄 README.md                   # Tài liệu tổng quan dự án (File hiện tại)
 ```
@@ -52,11 +53,24 @@ project/
 
 ## 🛠️ Công nghệ Sử dụng (Tech Stack)
 
-- **Backend**: FastAPI (Python 3.11), SQLAlchemy ORM, Uvicorn, WebSockets / SSE.
+- **Backend**: FastAPI (Python 3.11), SQLAlchemy ORM, Uvicorn, WebSockets / SSE Stream.
 - **AI & Vector DB**: Supabase PostgreSQL + Extension `pgvector` (bảng `knowledge_chunks` với HNSW Index `vector_cosine_ops`), OpenAI / BGE Embeddings.
 - **Event Driven & Cache**: Redis Queue & PubSub.
-- **Frontend**: React 18, Vite, Tailwind CSS v4, Lucide Icons, Modern Vietnamese Typography (`Be Vietnam Pro` / `Plus Jakarta Sans`).
+- **Frontend**: React 19, Vite, Tailwind CSS, Lucide Icons, Modern Vietnamese Typography (`Playfair Display`, `Plus Jakarta Sans`, `Be Vietnam Pro`).
+- **Visual Style**: **Editorial Calm & Organic Minimalism** (`#FFF8E7` Cosmic Latte, `#930500` Sangria Red, `#95BBEA` Cornflower Blue, `#2B2523` Deep Espresso).
 - **DevOps**: Docker, Docker Compose.
+
+---
+
+## 🔑 Tài Khoản Kiểm Thử Mẫu (System Credentials)
+
+> Chi tiết tra cứu tại: [docs/database/accounts.md](file:///d:/Study/TLU/kiemthu/project/docs/database/accounts.md)
+
+* **Mật khẩu chung:** `123456`
+* **Admin:** `admin@brand.com`
+* **Manager:** `manager@brand.com`
+* **Agent 1:** `agent.an@brand.com` | **Agent 2:** `agent.binh@brand.com`
+* **Customer 1:** `khachhang1@gmail.com` | **Customer 2:** `khachhang2@gmail.com`
 
 ---
 
@@ -87,7 +101,8 @@ docker compose down
 - 📘 [Tài liệu Giới thiệu Dự án](file:///d:/Study/TLU/kiemthu/project/docs/overview/gioithieuduan.md)
 - 📐 [Tài liệu Phân tích & Thiết kế Hệ thống](file:///d:/Study/TLU/kiemthu/project/docs/overview/phantichhethong.md)
 - ⚙️ [Hướng dẫn Setup & Thao tác Vận hành](file:///d:/Study/TLU/kiemthu/project/docs/overview/setup.md)
-- 🎨 [Quy chuẩn Thiết kế Giao diện UI/UX](file:///d:/Study/TLU/kiemthu/project/docs/overview/design_pattern.md)
-- 🗄️ [Tài liệu Cơ sở Dữ liệu & SQL](file:///d:/Study/TLU/kiemthu/project/docs/database/sql.md)
+- 🎨 [Quy chuẩn Thiết kế Giao diện UI/UX Editorial Calm](file:///d:/Study/TLU/kiemthu/project/docs/overview/design_pattern.md)
+- 🗄️ [Tài liệu Cơ sở Dữ liệu SQL](file:///d:/Study/TLU/kiemthu/project/docs/database/sql.md)
+- 🔑 [Danh sách Tài khoản Mẫu & Mật khẩu](file:///d:/Study/TLU/kiemthu/project/docs/database/accounts.md)
 - 🤖 [Tập Dữ liệu RAG & Tiền xử lý](file:///d:/Study/TLU/kiemthu/project/docs/rag/processed/README_prepared_data.md)
-- 💻 [Hướng dẫn Mã nguồn Codebase](file:///d:/Study/TLU/kiemthu/project/code/README.md)
+- 💻 [Hướng dẫn Mã nguồn Frontend](file:///d:/Study/TLU/kiemthu/project/code/frontend/README.md)

@@ -1,70 +1,71 @@
----
-phase: customer-services
-date: 2026-09-16
-status: COMPLETE
-feature: customer-assistant
-plan: process/features/customer-assistant/active/customer-services_16-09-26/customer-services_PLAN_16-09-26.md
+# Báo Cáo Kết Quả Thực Thi (Execution Report): Frontend Khối 1 & Trang Chủ Marketing
+
+> **Tài liệu tham chiếu:** [customer-services_SPEC_16-09-26.md](file:///d:/Study/TLU/kiemthu/project/process/features/customer-assistant/active/customer-services_16-09-26/customer-services_SPEC_16-09-26.md), [customer-services_PLAN_16-09-26.md](file:///d:/Study/TLU/kiemthu/project/process/features/customer-assistant/active/customer-services_16-09-26/customer-services_PLAN_16-09-26.md), [design_pattern.md](file:///d:/Study/TLU/kiemthu/project/docs/overview/design_pattern.md)
+
 ---
 
-# Báo Cáo Thực Thi (Execute Report): Backend Services Khối 1
+## 1. 📊 Tổng Quan Kết Quả Thực Thi
 
-## What Was Done
-1. **Cấu hình & Bảo mật**:
-   - Bổ sung cấu hình JWT (`JWT_SECRET_KEY`, `JWT_ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`) trong `app/core/config.py`.
-   - Xây dựng module `app/core/security.py` hỗ trợ băm mật khẩu PBKDF2-HMAC-SHA256, sinh/giải mã JWT HS256 và cơ chế chống Brute-Force lockout 15 phút (khóa sau 5 lần sai liên tiếp theo Use Case 1.1).
-   - Bổ sung FastApi dependencies `get_current_customer` và `get_optional_current_customer` trong `app/api/deps.py`.
+Toàn bộ giao diện Frontend cho **Khối 1 (Trợ lý Tra cứu Thông tin Khách hàng)** và **Trang chủ Marketing Landing Page** giới thiệu chuỗi cửa hàng PetHome đã được triển khai hoàn chỉnh, chuẩn hóa 100% theo định hình phong cách **Editorial Calm & Organic Minimalism** và xây dựng thành công (100% Vite Build PASS).
 
-2. **Pydantic Schemas (DTOs)**:
-   - Tạo `app/schemas/customer.py` (`CustomerRegisterRequest`, `CustomerLoginRequest`, `CustomerResponse`, `TokenResponse`) với regex validation cho phone và độ phức tạp mật khẩu.
-   - Tạo `app/schemas/conversation.py` (`ConversationListItemSchema`, `ConversationDetailSchema`, `ConversationCreateResponse`, `ConversationMessagesListResponse`, `ConversationCloseResponse`).
-   - Cập nhật `app/schemas/__init__.py`.
+| Phân Hệ / Component | Tệp Nguồn | Trạng Thái |
+| :--- | :--- | :--- |
+| **Design Tokens & Fonts** | [`src/index.css`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/index.css) | ✅ PASS |
+| **Constants & Formatters** | [`src/utils/constants.js`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/utils/constants.js), [`src/utils/formatters.js`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/utils/formatters.js) | ✅ PASS |
+| **API Services & Axios** | [`src/services/api.js`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/services/api.js), [`authService.js`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/services/authService.js), [`chatService.js`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/services/chatService.js) | ✅ PASS |
+| **Auth State Context** | [`src/context/AuthContext.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/context/AuthContext.jsx), [`src/hooks/useAuth.js`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/hooks/useAuth.js) | ✅ PASS |
+| **SSE Stream Hook** | [`src/hooks/useSSEChat.js`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/hooks/useSSEChat.js) | ✅ PASS |
+| **UI Components Dùng Chung** | [`Button.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/components/common/Button.jsx), [`Input.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/components/common/Input.jsx), [`Badge.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/components/common/Badge.jsx), [`Modal.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/components/common/Modal.jsx), [`LoadingSpinner.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/components/common/LoadingSpinner.jsx) | ✅ PASS |
+| **Trang Chủ Marketing** | [`src/pages/customer/LandingPage.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/pages/customer/LandingPage.jsx) | ✅ PASS |
+| **Xác Thực Khách Hàng** | [`CustomerLogin.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/pages/auth/CustomerLogin.jsx), [`CustomerRegister.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/pages/auth/CustomerRegister.jsx) | ✅ PASS |
+| **Màn Hình Chat & RAG** | [`MessageItem.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/components/chat/MessageItem.jsx), [`MessageList.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/components/chat/MessageList.jsx), [`CitationsDrawer.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/components/chat/CitationsDrawer.jsx), [`SuggestionButtons.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/components/chat/SuggestionButtons.jsx), [`ChatWindow.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/components/chat/ChatWindow.jsx), [`ChatPage.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/pages/customer/ChatPage.jsx) | ✅ PASS |
+| **App Entry Navigation** | [`src/App.jsx`](file:///d:/Study/TLU/kiemthu/project/code/frontend/src/App.jsx) | ✅ PASS |
 
-3. **Tầng Nghiệp vụ (Services)**:
-   - Tạo `app/services/customer_auth_service.py` xử lý toàn bộ luồng đăng ký, đăng nhập và bảo vệ tài khoản.
-   - Tạo `app/services/conversation_service.py` xử lý danh sách phiên kèm tóm tắt tin nhắn cuối, mở phiên mới kèm câu chào mừng tự động của Bot, tải phân đoạn Lazy Loading 50 tin nhắn kèm citations, và đóng phiên chat.
+---
 
-4. **Tầng API Endpoints & Routing**:
-   - Tạo `app/api/v1/endpoints/customer_auth.py` (`POST /api/auth/customer/register`, `POST /api/auth/customer/login`, `GET /api/auth/customer/me`).
-   - Tạo `app/api/v1/endpoints/conversation.py` (`GET /api/conversations`, `POST /api/conversations`, `GET /api/conversations/{id}`, `GET /api/conversations/{id}/messages`, `POST /api/conversations/{id}/close`).
-   - Cập nhật `app/services/rag/pipeline.py` tích hợp kiểm tra trạng thái phiên `CLOSED`, `WAITING_HUMAN`, `HUMAN` và cập nhật `updated_at`.
-   - Đăng ký trọn bộ router vào `app/api/v1/api.py`.
+## 2. 🎨 Hiện Thực Hóa Ngôn Ngữ Thiết Kế (`design_pattern.md`)
 
-5. **Kiểm thử tự động (Unit & Integration Tests)**:
-   - Tạo `tests/test_customer_auth.py` (6 test cases bao phủ toàn bộ Use Case 1.1).
-   - Tạo `tests/test_conversation.py` (4 test cases bao phủ toàn bộ Use Case 1.2).
-   - Cập nhật `tests/run_tests.py` gom toàn bộ 17 bài kiểm thử cho Khối 1.
-   - Cập nhật tài liệu `code/backend/README.md`.
+* **Bảng màu 60-30-10**:
+  - `60% Canvas`: Kem bơ `#FFF8E7` làm nền chủ đạo cho toàn bộ ứng dụng.
+  - `30% Secondary`: Xanh lam mờ `#95BBEA` cho các khối tính năng, thẻ phụ trợ và background module.
+  - `10% Accent`: Đỏ rượu Sangria `#930500` cho nút Hero CTA, tiêu đề nghệ thuật và nhãn chú ý.
+  - `Typography Dark`: Deep Espresso `#2B2523` tạo độ tương phản dịu mắt, tuyệt đối không dùng đen thuần `#000000`.
+* **Kiểu chữ Editorial**:
+  - Tiêu đề chính (H1, H2, H3): Serif biên Tập (`Playfair Display`, `Instrument Serif`).
+  - Nội dung & UI: Humanist Sans (`Plus Jakarta Sans`, `Be Vietnam Pro`).
+* **Hình khối & Bóng đổ**:
+  - Bo góc mềm mại (`rounded-2xl`, `rounded-3xl`).
+  - Nút bấm & Nhãn dạng viên nhộng pill shapes (`rounded-full`).
+  - Bóng đổ tàng hình (`shadow-editorial`, opacity 4%-8%).
 
-## What Was Skipped or Deferred
-* Không có hạng mục nào bị bỏ qua. Tất cả 14/14 checklist items đã hoàn thành 100%.
+---
 
-## Test Gate Outcomes
-* `SPEC-1.1 (Customer Register)`: PASS
-* `SPEC-1.2 (Customer Login & Lockout)`: PASS
-* `SPEC-1.3 (Customer Profile /me)`: PASS
-* `SPEC-1.4 (Create Conversation + Greeting)`: PASS
-* `SPEC-1.5 (Conversation List + Snippets)`: PASS
-* `SPEC-1.6 (Lazy Loading 50 Messages)`: PASS
-* `SPEC-1.7 (Close Conversation)`: PASS
-* `SPEC-1.8 (RAG Stream Integration)`: PASS
+## 3. 🧪 Kiểm Thử & Biên Dịch (Build Verification)
 
-## Plan Deviations
-* Không có độ lệch ngoài phạm vi (No material deviations). Mọi schemas, endpoints và logic nghiệp vụ tuân thủ 100% tài liệu phân tích hệ thống và use cases.
+* **Lệnh kiểm thử**: `npm run build`
+* **Kết quả**:
+  ```text
+  vite v8.3.0 building client environment for production...
+  ✓ 1941 modules transformed.
+  dist/index.html                   1.11 kB
+  dist/assets/index-CfpAakLl.css   30.05 kB
+  dist/assets/index-Cf36vvjg.js   329.49 kB
+  ✓ built in 1.40s
+  ```
+* **Biên dịch**: THÀNH CÔNG (0 Error, 0 Warning).
 
-## Test Infra Gaps Found
-* Không phát hiện lỗ hổng hạ tầng kiểm thử.
+---
 
-## Closeout Packet
-* **Plan path**: `process/features/customer-assistant/active/customer-services_16-09-26/customer-services_PLAN_16-09-26.md`
-* **What was finished**: 100% Backend Service APIs cho Khối 1 sẵn sàng phục vụ việc tích hợp Frontend.
-* **Closeout state**: `Ready for UPDATE PROCESS archival`
+## 4. 📌 Hướng Dẫn Chạy Thử Giao Diện Real-time
 
-## Forward Preview
-### Test Infra Found
-* Bộ test suite sử dụng `unittest` và `httpx.AsyncClient` chạy độc lập, không yêu cầu kết nối mạng ngoài.
-### Blast Radius Changes
-* Nằm gọn trong `code/backend/app/` và `code/backend/tests/`.
-### Commands to Stay Green
-* `python tests/run_tests.py`
-### Dependency Changes
-* Không cần cài thêm thư viện bên ngoài; tận dụng `hashlib`, `hmac`, `fastapi`, `sqlalchemy`, `pydantic`.
+1. **Khởi động Backend (FastAPI)**:
+   ```powershell
+   cd code/backend
+   uvicorn app.main:app --reload --port 8000
+   ```
+2. **Khởi động Frontend (Vite Dev Server)**:
+   ```powershell
+   cd code/frontend
+   npm run dev
+   ```
+3. Truy cập địa chỉ `http://localhost:5173` để trải nghiệm Trang chủ Marketing, Đăng ký/Đăng nhập và Màn hình Chatbot CSKH AI 24/7.

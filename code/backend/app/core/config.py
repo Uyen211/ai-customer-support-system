@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""
-    LLM_MODEL: str = "gemini-2.5-flash-lite"
+    LLM_MODEL: str = "gemini-3.5-flash-lite"
     EMBEDDING_MODEL_NAME: str = "dangvantuan/vietnamese-embedding"
     RAG_TOP_K: int = 3
     JWT_SECRET_KEY: str = "pethome-super-secret-jwt-key-customer-support-system-2026"

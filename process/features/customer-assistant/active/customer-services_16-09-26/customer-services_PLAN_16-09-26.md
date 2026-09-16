@@ -1,222 +1,184 @@
-# Kế hoạch Kỹ thuật: Backend Service APIs cho Khối 1 (Trợ lý Tra cứu Thông tin Khách hàng)
+# Kế hoạch Kỹ thuật (Implementation Plan): Xây Dựng Giao Diện Frontend Khối 1 & Trang Chủ Marketing
 
-> **TL;DR:** Xây dựng toàn bộ các Service API backend còn thiếu cho **Khối 1: Trợ lý Tra cứu Thông tin Khách hàng** bao gồm Quản lý Tài khoản Khách hàng (Use Case 1.1: Đăng ký, Đăng nhập JWT, Brute-force lockout), Quản lý Phiên trò chuyện (Use Case 1.2: Danh sách phiên, Tạo phiên kèm lời chào bot, Lịch sử 50 tin nhắn lazy loading, Đóng phiên), và Tích hợp kiểm soát phiên cho Tra cứu RAG Chatbot Streaming (Use Case 1.3).
-
----
-
-## 1. 🎯 Mục tiêu & Phạm vi (Goals & Scope)
-
-### 1.1. Mục tiêu Cốt lõi
-* Hiện thực hóa đầy đủ các nghiệp vụ của **Khối 1** theo đặc tả tại [`docs/overview/phantichhethong.md`](file:///d:/Study/TLU/kiemthu/project/docs/overview/phantichhethong.md) và [`docs/overview/usecase.md`](file:///d:/Study/TLU/kiemthu/project/docs/overview/usecase.md) (UC 1.1, UC 1.2, UC 1.3).
-* Cung cấp bộ RESTful API chuẩn mực cho Client UI (Frontend React của Khách hàng):
-  * **Auth Khách hàng (UC 1.1)**: Đăng ký tài khoản mới, Đăng nhập an toàn nhận JWT access token, Lấy profile (`/auth/customer/me`), bảo vệ tài khoản khi sai mật khẩu 5 lần liên tiếp (khóa tạm 15 phút).
-  * **Quản lý Phiên chat (UC 1.2)**: Xem danh sách các cuộc trò chuyện trước đây kèm tóm tắt tin nhắn cuối, Mở cuộc trò chuyện mới (tự động tạo bản ghi CSDL và gửi câu chào mừng mặc định), Tải lịch sử 50 tin nhắn (Lazy Loading) kèm trích dẫn `citations`, Đóng phiên chat (`mode = 'CLOSED'`).
-  * **Tích hợp RAG Chatbot (UC 1.3)**: Kiểm soát trạng thái phiên chat (`CLOSED` / `WAITING_HUMAN` / `BOT`) và xác thực khách hàng khi gọi luồng SSE Streaming `POST /api/chat/stream`.
-
-### 1.2. Ngoài phạm vi (Out of Scope)
-* Nghiệp vụ của Nhân viên CSKH & Quản lý (Khối 3: Live Support Console, Quản lý tài khoản nhân sự).
-* Nghiệp vụ AI Auto-Triage & Mở Ticket khẩn cấp (Khối 2) và SLA Engine / Dispatcher (Khối 4).
+> **TL;DR:** Xây dựng toàn bộ giao diện Frontend cho **Khối 1 (Trợ lý Tra cứu Thông tin Khách hàng)** và **Trang chủ Marketing Landing Page** giới thiệu chuỗi cửa hàng PetHome. Chuẩn hóa 100% ngôn ngữ thiết kế **Editorial Calm & Organic Minimalism** ([`design_pattern.md`](file:///d:/Study/TLU/kiemthu/project/docs/overview/design_pattern.md)) sử dụng React 18, Vite, Tailwind CSS, Lucide Icons, Axios API Services, React Context (`AuthContext`), và Custom Hook `useSSEChat` kết nối luồng SSE streaming token-by-token từ Backend.
 
 ---
 
-## 2. 🏗️ Kiến trúc Kỹ thuật & Luồng Dữ liệu (Architecture & Data Flow)
+## 1. 🎨 Ngôn Ngữ Thiết Kế & Design Tokens (Editorial Calm Style)
 
-### 2.1. Sơ đồ Luồng Dữ liệu Khối 1
+Hệ thống giao diện tuân thủ tuyệt đối triết lý thẩm mỹ và quy chuẩn thị giác tại [`docs/overview/design_pattern.md`](file:///d:/Study/TLU/kiemthu/project/docs/overview/design_pattern.md):
+
+### 1.1. Bảng Màu chuẩn (Color Tokens & Quy tắc 60 - 30 - 10)
+* **60% Canvas / Background (`Cosmic Latte` - `#FFF8E7`):** Nền kem bơ ấm áp bao phủ toàn bộ trang web và ứng dụng chat, thay thế màu trắng tinh khiết (`#FFFFFF`) để tạo chiều sâu mộc mạc, dịu mắt.
+* **30% Secondary / Atmospheric (`Cornflower Blue` - `#95BBEA`):** Màu xanh lam pastel mờ dùng cho mảng nền phân khối (background blocks), khối phụ trợ, thẻ tính năng, container tin nhắn phụ để tạo nhịp nghỉ thị giác mát mẻ.
+* **10% Primary Accent / Statement (`Sangria Red` - `#930500`):** Màu đỏ rượu đậm dùng cho Hero CTA buttons, điểm nhấn highlight, tiêu đề đặc biệt, nhãn thông báo quan trọng.
+* **Neutral Dark / Typography (`Deep Espresso` - `#2B2523`):** Màu chữ chính tương phản cao trên nền bơ kem, tuyệt đối không dùng đen thuần `#000000`.
+* **Neutral Light / Border (`Muted Cream / Hairline` - `rgba(147, 5, 0, 0.08)` / `#EFE7D3`):** Đường viền card mờ 1px và vệt phân cách mảnh tinh tế.
+
+### 1.2. Kiểu Chữ Biên Tập (Editorial Typography Stack)
+* **Display & Headings (H1, H2, H3):** Serif Biên Tập (`Playfair Display`, `Instrument Serif`) uốn lượn nghệ thuật, sang trọng.
+* **Body & UI Elements:** Humanist Sans-serif (`Plus Jakarta Sans`, `Inter`), nét chữ mảnh-vừa, độ giãn dòng rộng thoáng (`leading-relaxed` / `line-height: 1.6 - 1.8`).
+* **Eyebrow / Overline:** Nhãn phụ phía trên tiêu đề viết hoa nhẹ (`uppercase`), letter-spacing giãn nhẹ (`tracking-widest` / `+0.08em`).
+
+### 1.3. Hình Khối & Bóng Đổ (Organic Geometry & Ambient Shadows)
+* **Bo góc mềm mại (Large Radii):** Bo góc lớn (`16px - 32px` / `rounded-2xl`, `rounded-3xl`) cho card, modal và khung chat window. Nút bấm và nhãn status dùng dạng viên nhộng mềm (`rounded-full` / `pill shape`).
+* **Bóng đổ tàng hình (Ambient Diffused Shadows):** Độ mờ lớn (`blur > 24px`), độ trong suốt cực thấp (`opacity: 4% - 8%`), hòa hợp tự nhiên vào nền bơ kem.
+* **Chuyển động êm ái (Motion Tone):** Dynamic transition `300ms - 500ms` (`cubic-bezier(0.25, 1, 0.5, 1)`), hiệu ứng hover card phóng to cực nhẹ (`scale(1.015)`).
+
+---
+
+## 2. 🎯 Mục tiêu & Phạm vi (Goals & Scope)
+
+### 2.1. Mục tiêu Cốt lõi
+* **Trang chủ Marketing Landing Page (`LandingPage.jsx`)**: Trang giới thiệu phong cách biên tập cao cấp cho chuỗi PetHome trước khi đăng nhập. Bao gồm Banner Hero giới thiệu Trợ lý CSKH AI 24/7, Khối tính năng nổi bật nền xanh `#95BBEA`, Danh mục sản phẩm tiêu biểu bối cảnh Still-life, Chính sách đổi trả/freeship, và Nút bấm CTA đỏ `#930500` dẫn sang Đăng ký / Đăng nhập / Chat ngay.
+* **Xác thực Khách hàng (`pages/auth/`)**: Màn hình Đăng ký (`CustomerRegister.jsx`) và Đăng nhập (`CustomerLogin.jsx`) trên nền kem `#FFF8E7` với card bo tròn `rounded-3xl`, form validation real-time, xử lý thông báo lỗi (email trùng, sai mật khẩu, tài khoản bị tạm khóa 15 phút).
+* **Bàn Chat & Lịch sử Hội thoại (`pages/customer/ChatPage.jsx`)**:
+  - Thanh Sidebar màu kem/bơ chứa danh sách phiên trò chuyện cũ, nhãn viên nhộng pill badges (`BOT`, `WAITING_HUMAN`, `HUMAN`, `CLOSED`).
+  - Nút "Bắt đầu cuộc trò chuyện mới" khởi tạo phiên chat với lời chào tự động của AI Bot và các viên nhộng gợi ý câu hỏi (`SuggestionButtons.jsx`).
+  - Tải phân đoạn Lazy Loading (50 tin nhắn gần nhất) khi cuộn lên trên.
+* **Tích hợp Luồng Gõ chữ SSE & Trích dẫn RAG (`components/chat/`)**:
+  - Bong bóng tin nhắn với hiệu ứng gõ chữ thời gian thực (token-by-token).
+  - Popover/Drawer (`CitationsDrawer.jsx`) hiển thị trích dẫn tài liệu gốc (tên PDF, trang, điều khoản, snippet text).
+  - Khóa ô nhập liệu khi phiên `CLOSED` và hiển thị dải thông báo khi `WAITING_HUMAN`.
+
+### 2.2. Ngoài phạm vi (Out of Scope)
+* Giao diện Bàn làm việc của Nhân viên CSKH (Khối 3: `LiveConsolePage.jsx`).
+* Giao diện Bảng quản lý tiến độ Kanban và SLA Engine (Khối 4: `KanbanPage.jsx`).
+* Giao diện Cấu hình AI Rules và Báo cáo Thống kê (Khối 2 & 4).
+
+---
+
+## 3. 🏗️ Kiến trúc Kỹ thuật & Luồng Dữ liệu Frontend
+
+### 3.1. Cấu trúc Component & Data Flow
 ```text
-[Khách hàng (Client UI)]
-       │
-       ├── 1. POST /api/auth/customer/register hoặc /login ──► [customer_auth_service] ──► [bảng customers]
-       │   ◄── Nhận JWT Access Token (customer_id) ────────────┘
-       │
-       ├── 2. GET /api/conversations ────────────────────────► [conversation_service] ──► [bảng conversations & messages]
-       │   ◄── Danh sách phiên & tóm tắt tin nhắn cuối ───────┘
-       │
-       ├── 3. POST /api/conversations (Tạo phiên mới) ────────► [conversation_service] ──► [INSERT conversation (BOT)]
-       │   ◄── Phiên mới + Tin nhắn chào mặc định của Bot ─────┘                      └──► [INSERT message (BOT chào)]
-       │
-       ├── 4. GET /api/conversations/{id}/messages (Lazy Load) ► [conversation_service] ──► [SELECT 50 messages]
-       │   ◄── Lịch sử tin nhắn + citations ──────────────────┘
-       │
-       └── 5. POST /api/chat/stream (Hỏi đáp RAG) ────────────► [RAGPipelineService] ───► [SQL + pgvector HNSW]
-           ◄── SSE Token Stream (text/event-stream) ──────────┘
+[App.jsx] (React Router / Layout Provider - Canvas #FFF8E7)
+   │
+   ├── [LandingPage.jsx] (Trang chủ Marketing - Style Editorial Calm)
+   │       ├── Editorial Hero Banner (Phông Serif, CTA Đỏ Sangria #930500)
+   │       ├── Feature Cards Grid (Nền Xanh Pastel #95BBEA, Bo Góc rounded-3xl)
+   │       └── Product Showcase & Pill CTA Buttons
+   │
+   ├── [CustomerAuth Pages] (CustomerLogin.jsx / CustomerRegister.jsx)
+   │       └── Card bo tròn rounded-3xl, viền mist 1px ──► authService.js ──► Save JWT in AuthContext
+   │
+   └── [ChatPage.jsx] (Giao diện Chat Khách hàng - Stylised UI)
+           ├── [Sidebar / ConversationList] (Màu bơ sáng, Pill Badges) ──► chatService.getConversations()
+           │       └── [NewChatButton] (Pill CTA Sangria Red) ──────────► chatService.createConversation()
+           │
+           └── [ChatWindow.jsx]
+                   ├── [MessageList.jsx] ───► chatService.getMessages(limit=50)
+                   │       ├── [MessageItem.jsx] (SSE Streaming Token-by-Token, Bong bóng kem/xanh)
+                   │       └── [CitationsDrawer.jsx] (Drawer trích dẫn RAG bo góc mềm)
+                   │
+                   ├── [StatusBanner.jsx] (WAITING_HUMAN / CLOSED warning pill banner)
+                   └── [ChatInput.jsx] ─────► useSSEChat() ──► [POST /api/chat/stream]
 ```
 
 ---
 
-## 3. 📂 Touchpoints (Danh sách Tệp Tác động)
+## 4. 📂 Touchpoints (Danh sách Tệp Tác động)
 
-### 3.1. Các Tệp Tạo mới
-* `code/backend/app/core/security.py`: Module mã hóa mật khẩu (`hashlib`/`bcrypt`), sinh/giải mã JWT token, kiểm soát brute-force lockout 15 phút.
-* `code/backend/app/schemas/customer.py`: Pydantic Schemas (`CustomerRegisterRequest`, `CustomerLoginRequest`, `CustomerResponse`, `TokenResponse`).
-* `code/backend/app/schemas/conversation.py`: Pydantic Schemas (`ConversationCreateRequest`, `ConversationResponse`, `ConversationListItemSchema`, `MessageItemSchema`, `ConversationMessagesListResponse`).
-* `code/backend/app/services/customer_auth_service.py`: Service xử lý logic đăng ký, đăng nhập, xác thực và kiểm soát brute force.
-* `code/backend/app/services/conversation_service.py`: Service quản lý phiên trò chuyện, tin nhắn chào mừng, lazy loading lịch sử tin nhắn và đóng phiên.
-* `code/backend/app/api/v1/endpoints/customer_auth.py`: Router các API Auth khách hàng (`/api/auth/customer/*`).
-* `code/backend/app/api/v1/endpoints/conversation.py`: Router các API Quản lý phiên chat (`/api/conversations/*`).
-* `code/backend/tests/test_customer_auth.py`: Bộ kiểm thử tự động cho Use Case 1.1.
-* `code/backend/tests/test_conversation.py`: Bộ kiểm thử tự động cho Use Case 1.2.
+### 4.1. Các Tệp Tạo Mới & Cấu Hình Design Tokens
+* `code/frontend/src/index.css`: Cấu hình Google Fonts (`Playfair Display`, `Plus Jakarta Sans`), variables màu sắc CSS (`--color-canvas: #FFF8E7`, `--color-primary-accent: #930500`, `--color-secondary-block: #95BBEA`, `--color-neutral-dark: #2B2523`, `--color-muted-border: #EFE7D3`).
+* `code/frontend/src/utils/constants.js`: Khai báo hằng số API URL, Enum Mode, Enum Status, Suggestion Prompts.
+* `code/frontend/src/utils/formatters.js`: Định dạng tiền VNĐ (`145.000đ`), định dạng ngày giờ (`DD/MM/YYYY HH:mm`).
+* `code/frontend/src/services/api.js`: Khởi tạo Axios Instance với Interceptor tự động gán Bearer Token.
+* `code/frontend/src/services/authService.js`: Gọi API register, login, get current user (`/api/auth/customer/*`).
+* `code/frontend/src/services/chatService.js`: Gọi API lấy danh sách phiên, mở phiên mới, lấy 50 tin nhắn, đóng phiên (`/api/conversations/*`).
+* `code/frontend/src/context/AuthContext.jsx`: State quản lý thông tin khách hàng, JWT token, login/logout functions.
+* `code/frontend/src/hooks/useAuth.js`: Custom Hook dùng AuthContext nhanh.
+* `code/frontend/src/hooks/useSSEChat.js`: Custom Hook xử lý fetch SSE Stream token-by-token.
+* `code/frontend/src/components/common/Button.jsx`: Component Nút bấm chuẩn hóa Design System (Pill shape `rounded-full`, Primary Red `#930500`, Secondary Blue `#95BBEA`, Ghost Outline).
+* `code/frontend/src/components/common/Input.jsx`: Component Ô nhập liệu bo góc `rounded-2xl`, viền mờ `rgba(147, 5, 0, 0.08)`.
+* `code/frontend/src/components/common/Modal.jsx`: Component Hộp thoại Popup Modal bo góc `rounded-3xl` với hiệu ứng diffused shadow.
+* `code/frontend/src/components/common/Badge.jsx`: Component Nhãn viên nhộng pill status (BOT, WAITING_HUMAN, CLOSED).
+* `code/frontend/src/components/common/LoadingSpinner.jsx`: Component Icon chờ nạp dữ liệu tông đỏ rượu/xanh mờ.
+* `code/frontend/src/components/chat/MessageItem.jsx`: Bong bóng chat (User: Nền bơ đậm/đỏ rượu nhẹ; Bot: Nền xanh pastel `#95BBEA` hoặc bơ sáng `#FFF8E7`) kèm hiệu ứng gõ từng từ.
+* `code/frontend/src/components/chat/MessageList.jsx`: Khung chứa tin nhắn & cuộn tự động / lazy loading.
+* `code/frontend/src/components/chat/CitationsDrawer.jsx`: Drawer xem chi tiết trích dẫn tài liệu bo góc `rounded-3xl`.
+* `code/frontend/src/components/chat/SuggestionButtons.jsx`: Các nút dạng viên nhộng pill chips gợi ý câu hỏi nhanh.
+* `code/frontend/src/components/chat/ChatWindow.jsx`: Khung hội thoại chính ghép nối tin nhắn & ô nhập trên nền bơ `#FFF8E7`.
+* `code/frontend/src/pages/customer/LandingPage.jsx`: Trang chủ Marketing phong cách Editorial Calm giới thiệu PetHome & CSKH AI.
+* `code/frontend/src/pages/auth/CustomerLogin.jsx`: Trang Đăng nhập Khách hàng phong cách organic minimalism.
+* `code/frontend/src/pages/auth/CustomerRegister.jsx`: Trang Đăng ký Tài khoản Khách hàng.
+* `code/frontend/src/pages/customer/ChatPage.jsx`: Màn hình Chat tổng thể (Sidebar màu bơ sáng + ChatWindow).
 
-### 3.2. Các Tệp Cập nhật
-* `code/backend/app/core/config.py`: Bổ sung `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`.
-* `code/backend/app/api/deps.py`: Bổ sung dependency `get_current_customer` và `get_optional_current_customer`.
-* `code/backend/app/schemas/__init__.py`: Export các schemas mới.
-* `code/backend/app/api/v1/api.py`: Đăng ký `customer_auth.py` và `conversation.py` vào `api_router`.
-* `code/backend/app/api/v1/endpoints/chat.py`: Kiểm tra phiên `mode == 'CLOSED'` và tích hợp thông báo giữ chỗ khi `WAITING_HUMAN`.
-* `code/backend/tests/run_tests.py`: Gom các test suites mới vào runner tự động.
-
----
-
-## 4. 📜 Public Contracts (Giao diện & Schemas)
-
-### 4.1. Schemas Request & Response (`app/schemas/customer.py`)
-```python
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
-from datetime import datetime
-from uuid import UUID
-
-class CustomerRegisterRequest(BaseModel):
-    full_name: str = Field(..., min_length=2, max_length=50)
-    email: EmailStr
-    password: str = Field(..., min_length=8)
-    phone: Optional[str] = Field(None, pattern=r"^0\d{9}$")
-
-class CustomerLoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-class CustomerResponse(BaseModel):
-    id: UUID
-    email: str
-    full_name: str
-    phone: Optional[str] = None
-    is_active: bool
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    customer: CustomerResponse
-```
-
-### 4.2. Schemas Request & Response (`app/schemas/conversation.py`)
-```python
-from pydantic import BaseModel
-from typing import List, Optional, Any, Dict
-from datetime import datetime
-from uuid import UUID
-
-class MessageItemSchema(BaseModel):
-    id: UUID
-    conversation_id: UUID
-    sender_type: str
-    content: str
-    citations: Optional[List[Dict[str, Any]]] = None
-    sentiment_score: Optional[float] = None
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class ConversationListItemSchema(BaseModel):
-    id: UUID
-    mode: str
-    is_flagged: bool
-    last_sentiment: Optional[str] = None
-    last_message_content: Optional[str] = None
-    last_message_time: Optional[datetime] = None
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class ConversationMessagesListResponse(BaseModel):
-    conversation_id: UUID
-    mode: str
-    is_flagged: bool
-    messages: List[MessageItemSchema]
-    total: int
-    has_more: bool
-```
-
-### 4.3. RESTful API Endpoints Chi Tiết
-* `POST /api/auth/customer/register`: Đăng ký tài khoản khách hàng mới.
-* `POST /api/auth/customer/login`: Đăng nhập, trả về JWT access token.
-* `GET /api/auth/customer/me`: Lấy thông tin tài khoản hiện tại (Header `Authorization: Bearer <token>`).
-* `GET /api/conversations`: Lấy danh sách lịch sử các phiên chat của khách hàng hiện tại.
-* `POST /api/conversations`: Mở phiên chat mới (tự động nhận tin chào mừng của Bot).
-* `GET /api/conversations/{id}`: Xem chi tiết trạng thái phiên chat.
-* `GET /api/conversations/{id}/messages`: Lấy lịch sử tin nhắn (hỗ trợ `limit=50` lazy loading).
-* `POST /api/conversations/{id}/close`: Đóng phiên trò chuyện.
+### 4.2. Các Tệp Cập Nhật
+* `code/frontend/src/App.jsx`: Điều phối Navigation & bọc Provider Wrappers.
 
 ---
 
-## 5. 💥 Blast Radius (Phạm vi Ảnh hưởng)
+## 5. 📝 Implementation Checklist (Danh Sách Bước Thực Thi Chi Tiết)
 
-* **Packages**: `code/backend/app/core/`, `code/backend/app/schemas/`, `code/backend/app/services/`, `code/backend/app/api/v1/`, `code/backend/tests/`.
-* **Risk Class**: **Thấp (Low)**.
-* **Compatibility**: Không làm thay đổi cấu trúc bảng CSDL hiện hữu (10 models đã khớp 100%), không gây xung đột với module RAG Assistant.
+### Giai Đoạn 1: Tiện ích, Design System Tokens & API Services
+1. [ ] Cập nhật `code/frontend/src/index.css`: Cấu hình Google Fonts (`Playfair Display`, `Plus Jakarta Sans`), định nghĩa CSS custom properties cho Canvas `#FFF8E7`, Accent `#930500`, Secondary `#95BBEA`, Neutral Dark `#2B2523`, viền `#EFE7D3`.
+2. [ ] Tạo `code/frontend/src/utils/constants.js`: Định nghĩa Base URL (`http://localhost:8000`), Enums `MODE`, `CONVERSATION_STATUS`, các gợi ý câu hỏi mẫu.
+3. [ ] Tạo `code/frontend/src/utils/formatters.js`: Hàm `formatVND(amount)`, `formatDateTime(isoStr)`, `formatTimeAgo(isoStr)`.
+4. [ ] Tạo `code/frontend/src/services/api.js`: Cấu hình Axios instance với Interceptors đọc JWT từ localStorage và gán Header `Authorization: Bearer <token>`.
+5. [ ] Tạo `code/frontend/src/services/authService.js`: Viết các hàm `registerCustomer(data)`, `loginCustomer(data)`, `getMe()`.
+6. [ ] Tạo `code/frontend/src/services/chatService.js`: Viết các hàm `getConversations()`, `createConversation()`, `getMessages(conversationId, limit, beforeId)`, `closeConversation(conversationId)`.
+7. [ ] Tạo `code/frontend/src/context/AuthContext.jsx` & `code/frontend/src/hooks/useAuth.js`: Quản lý `user`, `token`, `isLoggedIn`, hàm `login()`, `logout()`.
 
----
+### Giai Đoạn 2: UI Components Dùng Chung (Editorial Style) & Custom Hooks
+8. [ ] Tạo `code/frontend/src/components/common/Button.jsx`, `Input.jsx`, `Badge.jsx`, `Modal.jsx`, `LoadingSpinner.jsx`: Chuẩn hóa 100% hình khối bo tròn `rounded-full` / `rounded-3xl`, bóng mờ diffused shadow, màu sắc `#930500` và `#95BBEA`.
+9. [ ] Tạo Custom Hook `code/frontend/src/hooks/useSSEChat.js`: Xử lý gửi tin nhắn tới `/api/chat/stream`, đọc stream token-by-token từ `response.body.getReader()`, lưu trạng thái `isStreaming`, `streamedContent`, `citations`.
 
-## 6. 📝 Implementation Checklist
+### Giai Đoạn 3: Trang Chủ Marketing Landing Page (Editorial Calm & Organic Minimalism)
+10. [ ] Tạo `code/frontend/src/pages/customer/LandingPage.jsx`:
+    - **Header/Navbar**: Logo PetHome, font Serif, nút "Đăng nhập", "Đăng ký" và "Trợ lý AI 24/7" dạng viên nhộng pill.
+    - **Hero Section**: Tiêu đề Serif lớn "Chuỗi Cửa Hàng Đồ Dùng Thú Cưng PetHome & Trợ Lý CSKH AI 24/7", nền bơ `#FFF8E7`, nút CTA nổi bật màu đỏ rượu `#930500`.
+    - **Features Grid**: 4 khối tính năng mảng nền xanh pastel `#95BBEA` bo góc `rounded-3xl` (Tra cứu tồn kho real-time, Tư vấn đổi trả/freeship, Giám sát cảm xúc, Trích dẫn nguồn tài liệu).
+    - **Product Showcase**: Khối hình ảnh sản phẩm phong cách Still-life studio, bóng đổ mờ tự nhiên.
+    - **Footer**: Thông tin chuỗi cửa hàng, thiết kế tối giản thư thái.
 
-1. [ ] Cập nhật cấu hình JWT trong `code/backend/app/core/config.py`.
-2. [ ] Tạo module bảo mật & mật khẩu trong `code/backend/app/core/security.py`.
-3. [ ] Cập nhật `code/backend/app/api/deps.py` với `get_current_customer`.
-4. [ ] Tạo `code/backend/app/schemas/customer.py` và `code/backend/app/schemas/conversation.py`.
-5. [ ] Cập nhật `code/backend/app/schemas/__init__.py`.
-6. [ ] Tạo dịch vụ `code/backend/app/services/customer_auth_service.py`.
-7. [ ] Tạo dịch vụ `code/backend/app/services/conversation_service.py`.
-8. [ ] Xây dựng router `code/backend/app/api/v1/endpoints/customer_auth.py`.
-9. [ ] Xây dựng router `code/backend/app/api/v1/endpoints/conversation.py`.
-10. [ ] Cập nhật `code/backend/app/api/v1/endpoints/chat.py` kiểm tra `mode == 'CLOSED'`.
-11. [ ] Đăng ký các router mới vào `code/backend/app/api/v1/api.py`.
-12. [ ] Viết bộ kiểm thử `code/backend/tests/test_customer_auth.py`.
-13. [ ] Viết bộ kiểm thử `code/backend/tests/test_conversation.py`.
-14. [ ] Cập nhật `code/backend/tests/run_tests.py` và xác nhận tất cả test suites đều PASS.
+### Giai Đoạn 4: Màn Hình Đăng Ký & Đăng Nhập Khách Hàng
+11. [ ] Tạo `code/frontend/src/pages/auth/CustomerRegister.jsx`: Form đăng ký nằm trong card kem/bơ bo góc `rounded-3xl` với validation real-time (Họ tên, Email, Mật khẩu >= 8 ký tự, SĐT). Báo lỗi trùng email.
+12. [ ] Tạo `code/frontend/src/pages/auth/CustomerLogin.jsx`: Form đăng nhập với email & mật khẩu. Xử lý báo lỗi sai thông tin và cảnh báo tài khoản bị khóa 15 phút (423 Locked).
 
----
-
-## 7. 🎯 Acceptance Criteria (Tiêu Chuẩn Nghiệm Thu Kỹ Thuật)
-
-* **SPEC-1.1 (Customer Register)**: Đăng ký thành công với thông tin hợp lệ; chặn email trùng (E-4), mật khẩu ngắn/không có chữ số (E-2). `proven by:` `test_customer_register`, `strategy:` `Fully-Automated`.
-* **SPEC-1.2 (Customer Login & Lockout)**: Đăng nhập thành công trả về JWT token; đăng nhập sai 5 lần liên tiếp trong 15 phút sẽ tạm khóa tài khoản (E-6, E-7). `proven by:` `test_customer_login_lockout`, `strategy:` `Fully-Automated`.
-* **SPEC-1.3 (Customer Profile)**: Endpoint `/auth/customer/me` trả về đúng thông tin định danh khách hàng khi có Bearer token. `proven by:` `test_customer_me`, `strategy:` `Fully-Automated`.
-* **SPEC-1.4 (Create Conversation)**: Bắt đầu phiên chat mới tạo bản ghi `Conversation` và tự động tạo tin nhắn chào đầu tiên của Bot. `proven by:` `test_create_conversation`, `strategy:` `Fully-Automated`.
-* **SPEC-1.5 (Conversation List)**: Lấy danh sách phiên chat trả về đầy đủ tóm tắt tin nhắn cuối, nhãn trạng thái và thời gian cập nhật. `proven by:` `test_get_conversations_list`, `strategy:` `Fully-Automated`.
-* **SPEC-1.6 (Lazy Loading Messages)**: Lấy lịch sử tin nhắn trả về tối đa 50 tin nhắn gần nhất kèm metadata trích dẫn `citations`. `proven by:` `test_get_messages_lazy_loading`, `strategy:` `Fully-Automated`.
-* **SPEC-1.7 (Close Conversation)**: Đóng phiên chat cập nhật `mode = 'CLOSED'`; chặn chat vào phiên đã đóng. `proven by:` `test_closed_conversation_chat`, `strategy:` `Fully-Automated`.
-* **SPEC-1.8 (RAG Stream Integration)**: Endpoint `POST /api/chat/stream` tiếp tục stream token-by-token mượt mà trên các phiên `mode = 'BOT'`. `proven by:` `test_rag_stream`, `strategy:` `Fully-Automated`.
+### Giai Đoạn 5: Components Chat & Màn Hình ChatPage Tổng Thể
+13. [ ] Tạo `code/frontend/src/components/chat/CitationsDrawer.jsx`: Drawer / Popup bo góc `rounded-3xl` hiển thị danh sách trích dẫn nguồn tài liệu RAG.
+14. [ ] Tạo `code/frontend/src/components/chat/SuggestionButtons.jsx`: Các nút viên nhộng pill chips gợi ý câu hỏi mẫu.
+15. [ ] Tạo `code/frontend/src/components/chat/MessageItem.jsx` & `MessageList.jsx`: Bong bóng chat mềm mại, hiệu ứng gõ chữ thời gian thực, nút "Xem trích dẫn", cuộn tự động / lazy loading 50 tin nhắn cũ.
+16. [ ] Tạo `code/frontend/src/components/chat/ChatWindow.jsx`: Khung chat ghép nối tin nhắn, dải thông báo trạng thái (`WAITING_HUMAN`, `CLOSED`), ô nhập văn bản và nút gửi.
+17. [ ] Tạo `code/frontend/src/pages/customer/ChatPage.jsx`: Màn hình Chat hoàn chỉnh kết hợp Sidebar danh sách phiên chat cũ và Khung ChatWindow.
+18. [ ] Cập nhật `code/frontend/src/App.jsx`: Điều phối Navigation giữa Landing Page, Auth Pages, và Chat Page.
 
 ---
 
-## 8. 🔍 Verification Evidence
+## 6. 🎯 Acceptance Criteria (Tiêu Chuẩn Nghiệm Thu)
 
-| Gate / Scenario | Strategy | Proves SPEC Criterion |
-| :--- | :--- | :--- |
-| `tests/test_customer_auth.py::test_register_and_validations` | Fully-Automated | SPEC-1.1 |
-| `tests/test_customer_auth.py::test_login_and_brute_force_lockout` | Fully-Automated | SPEC-1.2 |
-| `tests/test_customer_auth.py::test_get_customer_profile_me` | Fully-Automated | SPEC-1.3 |
-| `tests/test_conversation.py::test_create_conversation_auto_greeting` | Fully-Automated | SPEC-1.4 |
-| `tests/test_conversation.py::test_list_conversations_with_snippets` | Fully-Automated | SPEC-1.5 |
-| `tests/test_conversation.py::test_lazy_load_messages_and_citations` | Fully-Automated | SPEC-1.6 |
-| `tests/test_conversation.py::test_close_conversation_and_block_chat` | Fully-Automated | SPEC-1.7 |
-| `tests/test_rag_pipeline.py::test_e2e_rag_pipeline` | Fully-Automated | SPEC-1.8 |
+| Mã AC | Tiêu Chuẩn Nghiệm Thu | Phương Pháp Chứng Minh | SPEC Ref |
+| :--- | :--- | :--- | :--- |
+| **AC-FE-1.0** | Trang chủ Marketing Landing Page hiển thị chuẩn ngôn ngữ Editorial Calm (Nền kem `#FFF8E7`, phông Serif, CTA Đỏ `#930500`, Block xanh `#95BBEA`). | Manual / E2E Test `LandingPage.test.jsx` | SPEC US-1.0 |
+| **AC-FE-1.1** | Form Đăng ký validate dữ liệu máy khách và đăng ký thành công; Form Đăng nhập báo lỗi khi sai mật khẩu hoặc bị khóa 15p (423 Locked). | Manual / E2E Test `Auth.test.jsx` | SPEC US-1.1 (AC-1, AC-2) |
+| **AC-FE-1.2** | Màn hình ChatPage hiển thị Sidebar với danh sách các phiên cũ, nhãn trạng thái viên nhộng pill badges và đoạn tóm tắt tin nhắn cuối. | Manual / E2E Test `Sidebar.test.jsx` | SPEC US-1.2 (AC-3) |
+| **AC-FE-1.3** | Bấm "Bắt đầu cuộc trò chuyện mới" tạo phiên chat `BOT` và nhận lời chào mừng tự động kèm nút gợi ý viên nhộng. | Manual / E2E Test `NewChat.test.jsx` | SPEC US-1.2 (AC-4) |
+| **AC-FE-1.4** | Cuộn lên đầu danh sách tin nhắn tải thêm 50 tin nhắn cũ hơn (Lazy Loading). | Manual / E2E Test `LazyLoad.test.jsx` | SPEC US-1.2 (AC-5) |
+| **AC-FE-1.5** | Gửi tin nhắn kích hoạt luồng SSE Stream `/api/chat/stream`, câu trả lời gõ từng từ thời gian thực; bấm nút "Xem trích dẫn" mở Pop-up trích đoạn tài liệu gốc. | Manual / E2E Test `SSEStream.test.jsx` | SPEC US-1.3 (AC-6, AC-7) |
+| **AC-FE-1.6** | Phiên `CLOSED` khóa ô nhập liệu và báo dải thông báo xám; Phiên `WAITING_HUMAN` hiển thị dải thông báo cam. | Manual / E2E Test `SessionMode.test.jsx` | SPEC US-1.2 (AC-8) |
 
 ---
 
-## 9. 🛡️ Test Infra Improvement Notes
+## 7. 💥 Blast Radius & Security Safeguards
+
+* **Blast Radius**: Toàn bộ thay đổi nằm gói gọn trong `code/frontend/src/` và `code/frontend/public/`.
+* **Bảo mật Frontend**:
+  - Không lưu mật khẩu thô trong State hay localStorage.
+  - JWT Access Token được lưu an toàn trong localStorage và gán tự động vào Header qua Axios Interceptor.
+  - Xóa Token và chuyển trạng thái về chưa đăng nhập khi nhận HTTP 401 từ Server.
+
+---
+
+## 8. 🛡️ Test Infra Improvement Notes
 (none identified yet)
 
 ---
 
-## 10. 🔄 Resume and Execution Handoff
+## 9. 🔄 Resume and Execution Handoff
+
 * **Tệp Kế Hoạch**: `process/features/customer-assistant/active/customer-services_16-09-26/customer-services_PLAN_16-09-26.md`
-* **Trạng thái**: Đã nghiệm thu Validate Contract (Gate: PASS), sẵn sàng thực thi (EXECUTE).
+* **Trạng thái**: Đã nghiệm thu Validate Contract (Gate: PASS), chuẩn hóa 100% Design System Editorial Calm, sẵn sàng triển khai mã nguồn Frontend.
 
 ---
 
@@ -228,47 +190,45 @@ date: 2026-09-16
 generated-by: outer-pvl
 
 Parallel strategy: sequential
-Rationale: 7/7 signals favor sequential execution due to clear layered dependency chain (Security -> Schemas -> Services -> Endpoints -> Tests).
+Rationale: 7/7 signals favor sequential execution due to clear layered dependency chain (CSS Tokens/Utils/Services -> Context/Hooks -> Marketing Page -> Auth Pages -> Chat Components -> Chat Page).
 
 Test gates:
 
 | criterion id | behavior | strategy | proving test | gap-resolution |
 |---|---|---|---|---|
-| SPEC-1.1 | Customer Registration with Email/Password validation | Fully-Automated | `tests/test_customer_auth.py::test_register_and_validations` | B |
-| SPEC-1.2 | Customer Login & 15-min Brute Force Lockout | Fully-Automated | `tests/test_customer_auth.py::test_login_and_brute_force_lockout` | B |
-| SPEC-1.3 | Customer Profile /me with Bearer JWT | Fully-Automated | `tests/test_customer_auth.py::test_get_customer_profile_me` | B |
-| SPEC-1.4 | Create Conversation with Auto Greeting Message | Fully-Automated | `tests/test_conversation.py::test_create_conversation_auto_greeting` | B |
-| SPEC-1.5 | Conversation List with Latest Message Snippet | Fully-Automated | `tests/test_conversation.py::test_list_conversations_with_snippets` | B |
-| SPEC-1.6 | Lazy Loading Messages (50 items) & Citations | Fully-Automated | `tests/test_conversation.py::test_lazy_load_messages_and_citations` | B |
-| SPEC-1.7 | Close Conversation & Block New Messages | Fully-Automated | `tests/test_conversation.py::test_close_conversation_and_block_chat` | B |
-| SPEC-1.8 | RAG Chat Stream Integration with Conversation Status | Fully-Automated | `tests/test_rag_pipeline.py::test_e2e_rag_pipeline` | A |
+| AC-FE-1.0 | Editorial Marketing Landing Page render hero, features, CTA buttons | Fully-Automated | `src/pages/customer/LandingPage.test.jsx` | B |
+| AC-FE-1.1 | Customer Auth Forms validation & lockout alerts | Fully-Automated | `src/pages/auth/Auth.test.jsx` | B |
+| AC-FE-1.2 | Sidebar Conversation List with snippet & mode badges | Fully-Automated | `src/components/chat/Sidebar.test.jsx` | B |
+| AC-FE-1.3 | Create New Chat with Auto Greeting & Suggestion Chips | Fully-Automated | `src/components/chat/NewChat.test.jsx` | B |
+| AC-FE-1.4 | Message History 50-limit Lazy Load on scroll | Fully-Automated | `src/components/chat/LazyLoad.test.jsx` | B |
+| AC-FE-1.5 | SSE Token Stream Real-time Typing & Citations Drawer | Fully-Automated | `src/components/chat/SSEStream.test.jsx` | B |
+| AC-FE-1.6 | CLOSED & WAITING_HUMAN Mode Warning Banners | Fully-Automated | `src/components/chat/SessionMode.test.jsx` | B |
 
 Legacy line form:
-- auth: [Fully-automated: python tests/test_customer_auth.py]
-- conversation: [Fully-automated: python tests/test_conversation.py]
-- rag_stream: [Fully-automated: python tests/test_rag_pipeline.py]
+- landing_page: [Fully-automated: npm run test src/pages/customer/LandingPage.test.jsx]
+- auth_ui: [Fully-automated: npm run test src/pages/auth/Auth.test.jsx]
+- chat_ui: [Fully-automated: npm run test src/components/chat/SSEStream.test.jsx]
 
 Dimension findings:
-- Infra fit: PASS — Cấu trúc Layered Architecture chuẩn mực của FastAPI (`core/`, `schemas/`, `services/`, `api/v1/endpoints/`), hoàn toàn tương thích với ORM SQLAlchemy và CSDL Supabase PostgreSQL.
-- Test coverage: PASS — Bao phủ 100% các tiêu chí SPEC cho Use Case 1.1, 1.2, 1.3 với các bài test tự động cho cả Auth, Quản lý phiên và RAG stream.
-- Breaking changes: PASS — Bổ sung API endpoints mới (Additive), không làm thay đổi các bảng CSDL hay các API hiện có.
-- Security surface: PASS — Mã hóa mật khẩu bằng thuật toán an toàn, JWT HS256 có hạn sử dụng, cơ chế chống dò mật khẩu (5 lần sai -> khóa 15p), cách ly dữ liệu giữa các khách hàng.
+- Infra fit: PASS — Cấu trúc React 18, Vite, Tailwind CSS, Editorial Design Tokens (`#FFF8E7`, `#930500`, `#95BBEA`), Axios Services & Context API hoàn toàn khớp với kiến trúc hệ thống.
+- Test coverage: PASS — Bao phủ 100% các tiêu chí SPEC cho Trang chủ Marketing, Auth, Chatbot và RAG SSE stream.
+- Breaking changes: PASS — Bổ sung các components & pages giao diện người dùng mới (Additive).
+- Security surface: PASS — Axios Interceptor tự động đính kèm Bearer JWT Token, tự xóa token khi 401, không lưu mật khẩu thô.
 
 Open gaps: none
 
 What this coverage does NOT prove:
-- Giao diện UI React frontend thực tế (sẽ được kiểm thử khi phát triển frontend).
-- Khả năng chịu tải đồng thời hàng nghìn kết nối (sẽ kiểm thử trong performance benchmark).
+- Mức độ hiển thị chuẩn xác trên các thiết bị di động có màn hình quá nhỏ (<320px).
 
 Gate: PASS
-Accepted by: user (requested validation)
+Accepted by: user (requested plan)
 
 ## Autonomous Goal Block
 
-TARGET: Triển khai hoàn chỉnh toàn bộ Backend Services & APIs cho Khối 1 (Trợ lý Tra cứu Khách hàng) theo checklist trong customer-services_PLAN_16-09-26.md.
+TARGET: Triển khai hoàn chỉnh giao diện Frontend cho Khối 1 và Trang chủ Marketing theo checklist trong customer-services_PLAN_16-09-26.md.
 PER-PHASE LOOP: Research -> Innovate -> Plan -> Validate -> Execute -> Review
-HARD STOPS: Không sửa đổi cấu trúc CSDL của các khối khác; dừng lại nếu kiểm thử thất bại.
-SAFETY: Toàn bộ mật khẩu phải được băm an toàn; access token phải được xác thực chặt chẽ.
+HARD STOPS: Không làm gián đoạn mã nguồn Backend; dừng lại nếu kiểm thử giao diện thất bại.
+SAFETY: Luôn kiểm tra tính hợp lệ của token; không lưu thông tin nhạy cảm vào State tĩnh.
 TEST GATES: automated
 VALIDATE CONTRACT: customer-services_PLAN_16-09-26.md
 START: Step 1 of Implementation Checklist

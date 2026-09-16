@@ -13,15 +13,20 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 def get_api_key() -> str:
-    """Lấy API Key từ config theo thứ tự ưu tiên."""
-    return (
+    """Lấy Google Gemini / LLM API Key từ config theo thứ tự ưu tiên."""
+    gemini_key = (
         settings.GEMINI_API_KEY
         or settings.GOOGLE_API_KEY
-        or settings.OPENAI_API_KEY
         or os.getenv("GEMINI_API_KEY", "")
         or os.getenv("GOOGLE_API_KEY", "")
-        or os.getenv("OPENAI_API_KEY", "")
     )
+    if gemini_key:
+        return gemini_key.strip()
+    
+    openai_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
+    if openai_key and len(openai_key.strip()) > 5:
+        return openai_key.strip()
+    return ""
 
 def extract_json_from_text(text: str) -> Dict[str, Any]:
     """Trích xuất JSON từ phản hồi LLM an toàn."""
@@ -40,13 +45,13 @@ def extract_json_from_text(text: str) -> Dict[str, Any]:
 class GeminiLLMService:
     def __init__(self):
         self.api_key = get_api_key()
-        self.model_name = settings.LLM_MODEL or "gemini-2.5-flash-lite"
+        self.model_name = settings.LLM_MODEL or "gemini-3.5-flash-lite"
         self._genai_client = None
         self._init_client()
 
     def _init_client(self):
         if not self.api_key:
-            logger.warning("Chưa cấu hình GEMINI_API_KEY hoặc OPENAI_API_KEY. LLM sẽ chạy chế độ Mock/Fallback.")
+            logger.warning("Chưa cấu hình GEMINI_API_KEY hợp lệ. LLM sẽ chạy chế độ Heuristic Fallback.")
             return
 
         try:
@@ -115,7 +120,11 @@ class GeminiLLMService:
                         yield chunk.text
         except Exception as e:
             logger.error(f"Lỗi gọi Gemini stream_text: {e}. Streaming fallback error.")
-            yield f"Dạ em xin lỗi, hệ thống AI tạm thời gặp gián đoạn ({str(e)}). Vui lòng thử lại sau giây lát ạ!"
+            for chunk in self._fallback_stream(prompt):
+                yield chunk
+
+    # Alias tương thích
+    generate_stream = stream_text
 
     def _fallback_decompose(self, prompt: str) -> Dict[str, Any]:
         """Quy tắc heuristic bóc tách fallback khi không có API Key."""
