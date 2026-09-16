@@ -5,6 +5,7 @@ Pipeline Orchestrator cho RAG Assistant (Kiến trúc KH-06 Nâng cấp).
 
 import json
 import logging
+from datetime import datetime, timezone
 from typing import AsyncGenerator, Dict, Any, Optional, List
 from sqlalchemy.orm import Session
 
@@ -34,10 +35,28 @@ class RAGPipelineService:
         try:
             conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
             if conv:
-                if conv.mode == "AGENT":
-                    logger.info(f"Hội thoại {conversation_id} đang ở chế độ AGENT. Bỏ qua RAG Pipeline.")
-                    yield f"event: error\ndata: {json.dumps({'error': 'Conversation is assigned to human agent'})}\n\n"
+                if conv.mode == "CLOSED":
+                    logger.info(f"Hội thoại {conversation_id} đã đóng (CLOSED). Bỏ qua RAG Pipeline.")
+                    yield f"event: error\ndata: {json.dumps({'error': 'Phiên hỗ trợ này đã đóng. Bạn có thể bấm Bắt đầu cuộc trò chuyện mới để được hỗ trợ tiếp.'}, ensure_ascii=False)}\n\n"
                     return
+                elif conv.mode == "WAITING_HUMAN":
+                    logger.info(f"Hội thoại {conversation_id} đang chờ nhân viên (WAITING_HUMAN).")
+                    yield f"event: notice\ndata: {json.dumps({'message': 'Cuộc trò chuyện đang được chuyển tiếp tới nhân viên tư vấn. Vui lòng chờ trong giây lát...'}, ensure_ascii=False)}\n\n"
+                    return
+                elif conv.mode in ["HUMAN", "AGENT"]:
+                    logger.info(f"Hội thoại {conversation_id} đang ở chế độ HUMAN. Bỏ qua RAG Pipeline.")
+                    yield f"event: notice\ndata: {json.dumps({'message': 'Nhân viên tư vấn đang tiếp nhận cuộc trò chuyện.'}, ensure_ascii=False)}\n\n"
+                    return
+
+                # Lưu tin nhắn của khách hàng vào CSDL
+                user_msg = Message(
+                    conversation_id=conv.id,
+                    sender_type="CUSTOMER",
+                    content=user_message
+                )
+                db.add(user_msg)
+                conv.updated_at = datetime.now(timezone.utc)
+                db.commit()
 
                 # Lấy 6 tin nhắn gần nhất
                 recent_msgs = db.query(Message).filter(
@@ -49,6 +68,7 @@ class RAGPipelineService:
                     chat_history.append({"role": role, "content": m.content})
         finally:
             db.close()
+
 
         # BƯỚC 1: Query Decomposition & Per-subquery Intent Routing
         decomposer_output = await decomposer_service.decompose(

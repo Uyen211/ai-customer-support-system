@@ -140,7 +140,32 @@ code/backend/
   data: {"full_text": "...", "citations": [...]}
   ```
 
-### 2. RAG Module Health Check (`GET /api/chat/health`)
+### 2. Quản lý Tài khoản Khách hàng (Use Case 1.1)
+* **Đăng ký tài khoản mới (`POST /api/auth/customer/register`)**:
+  - Request: `{"full_name": "...", "email": "...", "password": "...", "phone": "..."}`
+  - Response (201): `{"access_token": "...", "token_type": "bearer", "customer": {...}}`
+* **Đăng nhập (`POST /api/auth/customer/login`)**:
+  - Request: `{"email": "...", "password": "..."}`
+  - Response (200): `{"access_token": "...", "token_type": "bearer", "customer": {...}}` (Tự động khóa 15 phút nếu sai 5 lần liên tiếp).
+* **Lấy thông tin cá nhân (`GET /api/auth/customer/me`)**:
+  - Header: `Authorization: Bearer <access_token>`
+  - Response (200): `{"id": "...", "email": "...", "full_name": "...", "phone": "...", "created_at": "..."}`
+
+### 3. Quản lý Phiên trò chuyện (Use Case 1.2)
+* **Danh sách phiên chat (`GET /api/conversations`)**:
+  - Header: `Authorization: Bearer <access_token>`
+  - Response (200): `[{"id": "...", "mode": "BOT", "last_message_content": "...", "last_message_time": "...", "updated_at": "..."}]`
+* **Mở phiên chat mới (`POST /api/conversations`)**:
+  - Header: `Authorization: Bearer <access_token>`
+  - Response (201): Khởi tạo phiên `mode = 'BOT'` và tự động chèn câu chào mặc định mở đầu của Bot.
+* **Lịch sử tin nhắn phân đoạn (`GET /api/conversations/{id}/messages?limit=50`)**:
+  - Header: `Authorization: Bearer <access_token>`
+  - Response (200): Danh sách 50 tin nhắn gần nhất kèm metadata `citations`.
+* **Đóng phiên trò chuyện (`POST /api/conversations/{id}/close`)**:
+  - Header: `Authorization: Bearer <access_token>`
+  - Response (200): Chuyển `mode = 'CLOSED'`.
+
+### 4. RAG Module Health Check (`GET /api/chat/health`)
 * **Response:**
   ```json
   {
@@ -156,6 +181,7 @@ code/backend/
     ]
   }
   ```
+
 
 ---
 
