@@ -14,21 +14,21 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import httpx
 from app.main import app
-from app.modules.rag_assistant.schemas import (
+from app.schemas.rag import (
     SubQueryItem,
     SubQueryResult,
     DecomposerOutputSchema,
     CitationItem,
     AggregatedContext
 )
-from app.modules.rag_assistant.decomposer import decomposer_service
-from app.modules.rag_assistant.retrievers import (
+from app.services.rag.decomposer import decomposer_service
+from app.services.rag.retrievers import (
     SQLProductRetriever,
     VectorKnowledgeRetriever,
     OutOfDomainHandler,
     parallel_retrieval_service
 )
-from app.modules.rag_assistant.pipeline import rag_pipeline_service
+from app.services.rag.pipeline import rag_pipeline_service
 
 class TestRAGPipeline(unittest.TestCase):
 
@@ -80,7 +80,7 @@ class TestRAGPipeline(unittest.TestCase):
             self.assertEqual(result.sub_queries[2].intent, "OUT_OF_DOMAIN")
 
     def test_02_sql_product_catalog_retrieval(self):
-        """SPEC-RAG-02: Kiểm tra SQL Product Worker truy vấn đúng giá và tồn kho sản phẩm."""
+        """SPEC-RAG-02: Kiểm tra SQL Product Worker truy vấn đúng giá, tồn kho và thuộc tính JSONB của sản phẩm."""
         mock_db = MagicMock()
         mock_product = MagicMock()
         mock_product.sku = "CAT-CATURE-6L"
@@ -89,7 +89,8 @@ class TestRAGPipeline(unittest.TestCase):
         mock_product.sale_price = None
         mock_product.stock_quantity = 25
         mock_product.status = "IN_STOCK"
-        mock_product.attributes = {"volume": "6L", "scent": "Original"}
+        mock_product.description = "Cát vệ sinh đậu nành tự nhiên"
+        mock_product.attributes = {"brand": "Cature", "volume": "6L", "origin": "Trung Quốc"}
 
         mock_query = MagicMock()
         mock_db.query.return_value = mock_query
@@ -104,7 +105,8 @@ class TestRAGPipeline(unittest.TestCase):
             target_source="SQL_PRODUCT",
             product_search_keyword="Cature",
             pet_type="CAT",
-            category="Vệ sinh"
+            category="Vệ sinh",
+            brand="Cature"
         )
 
         result = SQLProductRetriever.retrieve(sq, mock_db)
@@ -113,6 +115,7 @@ class TestRAGPipeline(unittest.TestCase):
         self.assertIn("Cát vệ sinh Cature Tofu 6L", result.retrieved_content)
         self.assertIn("145,000đ", result.retrieved_content)
         self.assertIn("Tồn kho: 25", result.retrieved_content)
+        self.assertIn("brand: Cature", result.retrieved_content)
 
     def test_03_pgvector_hnsw_retrieval(self):
         """SPEC-RAG-03: Kiểm tra Vector Worker truy vấn pgvector HNSW trên Supabase (Không dùng score threshold)."""
@@ -122,7 +125,8 @@ class TestRAGPipeline(unittest.TestCase):
                 "chunk-1",
                 "Chinh_sach_van_chuyen.pdf",
                 "Miễn phí vận chuyển nội thành cho đơn hàng từ 500.000đ trở lên.",
-                {"page": 2, "policy_code": "PET-CS-003"}
+                {"page": 2, "policy_code": "PET-CS-003"},
+                0.85
             )
         ]
 
@@ -133,9 +137,9 @@ class TestRAGPipeline(unittest.TestCase):
             target_source="VECTOR_KNOWLEDGE"
         )
 
-        with patch("app.modules.rag_assistant.retrievers.get_embedder") as mock_embedder_func:
+        with patch("app.services.rag.retrievers.get_embedder") as mock_embedder_func:
             mock_embedder = MagicMock()
-            mock_embedder.embed_text.return_value = [0.1] * 768
+            mock_embedder.encode.return_value = [0.1] * 768
             mock_embedder_func.return_value = mock_embedder
 
             result = VectorKnowledgeRetriever.retrieve(sq, mock_db, top_k=1)
@@ -157,9 +161,8 @@ class TestRAGPipeline(unittest.TestCase):
         result = OutOfDomainHandler.handle(sq)
         self.assertEqual(result.sub_query_id, 3)
         self.assertEqual(result.intent, "OUT_OF_DOMAIN")
-        self.assertIn("OUT OF DOMAIN", result.retrieved_content)
         self.assertIn("PetHome chuyên cung cấp thức ăn, phụ kiện", result.retrieved_content)
-        self.assertIn("Nhân viên CSKH", result.retrieved_content)
+        self.assertIn("nhân viên tư vấn", result.retrieved_content)
 
     def test_05_parallel_retrieval_service(self):
         """Kiểm tra ParallelRetrievalService điều phối song song."""
@@ -189,25 +192,24 @@ class TestRAGPipeline(unittest.TestCase):
                 citations=[]
             )
 
-            aggregated = asyncio.run(parallel_retrieval_service.execute_parallel(sub_queries, "Query tổng hợp"))
+            aggregated = asyncio.run(parallel_retrieval_service.retrieve_all(sub_queries))
             self.assertIsInstance(aggregated, AggregatedContext)
             self.assertEqual(len(aggregated.sub_query_results), 2)
             self.assertIn("Cát Cature: 145.000đ", aggregated.merged_context_text)
-            self.assertIn("OUT OF DOMAIN", aggregated.merged_context_text)
+            self.assertIn("OUT_OF_DOMAIN", aggregated.merged_context_text)
 
     def test_06_sse_chat_stream_endpoint(self):
         """SPEC-RAG-05: Kiểm tra Endpoint /api/chat/stream trả về text/event-stream và token chunk."""
         conv_id = "10000000-0000-0000-0000-000000000001"
         
         async def mock_stream_pipeline(conversation_id, user_message):
-            yield {"event": "token", "data": {"token": "Chào bạn! "}}
-            yield {"event": "token", "data": {"token": "PetHome xin hỗ trợ bạn."}}
-            yield {"event": "done", "data": {"full_text": "Chào bạn! PetHome xin hỗ trợ bạn.", "citations": []}}
-
+            yield 'event: token\ndata: {"token": "Chào bạn! "}\n\n'
+            yield 'event: token\ndata: {"token": "PetHome xin hỗ trợ bạn."}\n\n'
+            yield 'event: done\ndata: {"full_text": "Chào bạn! PetHome xin hỗ trợ bạn.", "citations": []}\n\n'
 
         async def run_client():
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
-                with patch.object(rag_pipeline_service, "stream_chat_pipeline", side_effect=mock_stream_pipeline):
+                with patch.object(rag_pipeline_service, "execute_stream", side_effect=mock_stream_pipeline):
                     response = await ac.post(
                         "/api/chat/stream",
                         json={"conversation_id": conv_id, "message": "Xin chào shop"}

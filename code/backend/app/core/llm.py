@@ -218,3 +218,9 @@ class GeminiLLMService:
         yield "- Nếu bạn cần tư vấn thêm, nhân viên CSKH sẵn sàng hỗ trợ bạn ngay ạ!"
 
 llm_service = GeminiLLMService()
+
+def get_llm_service() -> GeminiLLMService:
+    global llm_service
+    if llm_service is None:
+        llm_service = GeminiLLMService()
+    return llm_service

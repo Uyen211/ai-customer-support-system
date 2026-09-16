@@ -4,62 +4,116 @@
 
 ---
 
-## 📁 Cấu trúc Thư mục Codebase & Mô tả Tệp
+## 📁 Cấu trúc Thư mục Codebase Chuẩn mực
 
-Hệ thống được tổ chức theo kiến trúc **Modular Monolith** sạch sẽ và dễ bảo trì:
+Toàn bộ backend đã được tổ chức lại theo mô hình **Layered Architecture** chuẩn mực của FastAPI:
 
 ```text
 code/backend/
 ├── app/
-│   ├── main.py                        # Tệp chạy chính FastAPI App (Khởi tạo server, CORS & đăng ký Routers)
-│   ├── core/                          # Tầng Nền tảng & Cấu hình Hệ thống
-│   │   ├── config.py                  # Đọc biến môi trường .env (DB DSN, API Key Gemini, Top-K, Model Name)
-│   │   ├── database.py                # Kết nối CSDL SQLAlchemy ORM với Supabase PostgreSQL
-│   │   └── llm.py                     # LLM Service Client kết nối Google Gemini API (Stream text & JSON Mode)
+│   ├── api/                           # Tầng Routing (Giao tiếp API với Frontend)
+│   │   ├── deps.py                    # Dependency injections (get_db, verify_jwt...)
+│   │   └── v1/
+│   │       ├── api.py                 # Router trung tâm gom tất cả sub-routers v1
+│   │       └── endpoints/
+│   │           └── chat.py            # UC 1.2, UC 1.3: Quản lý hội thoại & SSE Stream (/api/chat/stream)
 │   │
-│   ├── common/                        # Tầng Mô hình CSDL Dùng chung giữa các Khối
-│   │   ├── models.py                  # Khai báo ORM Tables: users, customers, conversations, messages, tickets, products, knowledge_chunks (pgvector 768)
-│   │   └── websocket.py               # Connection Manager quản lý phòng chat WebSocket 2 chiều
+│   ├── core/                          # Tầng Cấu hình & Client cốt lõi
+│   │   ├── config.py                  # Pydantic BaseSettings đọc biến môi trường .env
+│   │   ├── llm.py                     # Client Google Gemini API (JSON Mode & SSE Token Stream)
+│   │   └── redis.py                   # Client kết nối Redis (Queue, Pub/Sub, Cache)
 │   │
-│   └── modules/                       # Các Phân hệ Chức năng Kỹ thuật
-│       └── rag_assistant/             # PHÂN HỆ RAG CHATBOT KH-06 NÂNG CẤP (KHỐI 1)
-│           ├── __init__.py            # Khởi tạo Python Package
-│           ├── prompts.py             # Tập 2 Prompts LLM (MERGED_DECOMPOSER_PROMPT chứa DOMAIN BOUNDARY SCOPE & MULTI_CONTEXT_SYNTHESIZER_PROMPT)
-│           ├── schemas.py             # Các Pydantic DTOs (SubQueryItem, DecomposerOutputSchema, CitationItem, ChatStreamRequest)
-│           ├── embedder.py            # Mô hình VietnameseEmbedder 768 chiều & kiểm tra an toàn token đầu vào (max_seq_length=256)
-│           ├── decomposer.py          # QueryDecomposerService: Giải quyết đại từ, bẻ câu hỏi & phân nhãn Intent per sub-query
-│           ├── retrievers.py          # Bộ 3 Workers Tra cứu Song song (SQLProductRetriever, VectorKnowledgeRetriever pgvector HNSW, OutOfDomainHandler)
-│           ├── synthesizer.py         # MultiContextSynthesizerService: Gom ngữ cảnh đa nguồn & stream câu trả lời token-by-token
-│           ├── pipeline.py            # RAGPipelineService: Orchestrator điều phối toàn trình 5 bước & lưu tin nhắn BOT + citations vào CSDL
-│           └── router.py              # FastAPI Router cung cấp API Endpoints (/api/chat/stream, /api/chat/health)
+│   ├── db/                            # Tầng Cơ sở dữ liệu (Supabase PostgreSQL + pgvector)
+│   │   ├── base_class.py              # DeclarativeBase của SQLAlchemy
+│   │   ├── session.py                 # Engine, SessionLocal factory và get_db dependency
+│   │   └── base.py                    # Import Base và toàn bộ 10 ORM Models
+│   │
+│   ├── models/                        # Định nghĩa 10 Bảng ORM riêng biệt (SQLAlchemy)
+│   │   ├── __init__.py                # Export tất cả models
+│   │   ├── user.py                    # Bảng users (Nhân viên CSKH & Admin)
+│   │   ├── customer.py                # Bảng customers (Khách hàng)
+│   │   ├── conversation.py            # Bảng conversations (Phiên chat)
+│   │   ├── message.py                 # Bảng messages (Lịch sử tin nhắn & citations)
+│   │   ├── ticket.py                  # Bảng tickets (Phiếu yêu cầu CSKH)
+│   │   ├── sla_policy.py              # Bảng sla_policies (Chính sách cam kết SLA)
+│   │   ├── canned_response.py         # Bảng canned_responses (Câu trả lời mẫu)
+│   │   ├── ai_rule.py                 # Bảng ai_rules (Luật phân loại cảm xúc & ticket)
+│   │   ├── product.py                 # Bảng products (Sản phẩm, giá, tồn kho, JSONB attributes)
+│   │   └── knowledge_chunk.py         # Bảng knowledge_chunks (Tri thức vector pgvector 768 chiều)
+│   │
+│   ├── schemas/                       # Pydantic Schemas (Request/Response DTOs)
+│   │   ├── __init__.py                # Export schemas
+│   │   └── rag.py                     # DTOs: SubQueryItem, DecomposerOutput, Citations, ChatStreamRequest
+│   │
+│   ├── services/                      # Tầng Nghiệp vụ cốt lõi (Business Logic Layer)
+│   │   └── rag/                       # Bộ máy RAG Assistant (Kiến trúc KH-06 Nâng cấp)
+│   │       ├── __init__.py            # Export RAG services
+│   │       ├── prompts.py             # Tập Prompts LLM (Domain Scope, Sub-query Intent, JSONB attrs)
+│   │       ├── embedder.py            # VietnameseEmbedder 768 chiều & token trim safety check
+│   │       ├── decomposer.py          # QueryDecomposerService (bẻ câu hỏi & Intent router)
+│   │       ├── retrievers.py          # SQLProductRetriever (JSONB), VectorKnowledgeRetriever (HNSW), OutOfDomainHandler
+│   │       ├── synthesizer.py         # MultiContextSynthesizerService (Gom & Stream token)
+│   │       └── pipeline.py            # RAGPipelineService (Nhạc trưởng điều phối 5 bước)
+│   │
+│   ├── websocket/                     # Tầng kết nối thời gian thực 2 chiều
+│   │   ├── __init__.py
+│   │   └── connection_manager.py      # Quản lý connection pools, rooms theo conversation/agent
+│   │
+│   ├── workers/                       # Tiến trình chạy ngầm bất đồng bộ (Background Tasks)
+│   │   ├── __init__.py
+│   │   ├── ticket_dispatcher_worker.py# Lắng nghe Redis Queue (queue:tickets:pending)
+│   │   └── sla_monitor_worker.py      # Cron job quét vi phạm hạn SLA mỗi 30s, bắn Redis Pub/Sub
+│   │
+│   └── main.py                        # Điểm khởi chạy ứng dụng FastAPI (CORS, Middlewares, Routes)
 │
-├── tests/                             # Bộ Kiểm thử Tự động
-│   ├── test_rag_pipeline.py           # Unit tests & Integration tests bao phủ 5 SPEC Criteria
-│   └── run_tests.py                   # Script chạy test suite tự động bằng unittest runner
-├── Dockerfile                         # Container build script
-└── requirements.txt                   # Danh sách thư viện Python phụ thuộc
+├── tests/                             # Thư mục kiểm thử & Phòng thí nghiệm (RAG Lab)
+│   ├── run_tests.py                   # Test runner tự động (unittest)
+│   ├── test_rag_pipeline.py           # Bộ kiểm thử RAG Pipeline KH-06
+│   ├── rag_lab/                       # Nơi chứa mã chạy thử nghiệm benchmark KH-01 -> KH-08
+│   └── unit/                          # Thư mục chứa Unit tests bổ sung
+│
+├── Dockerfile                         # Container đóng gói cs_backend
+└── requirements.txt                   # Danh sách thư viện cần thiết
 ```
 
 ---
 
-## 📖 Bảng Chi tiết Vai trò Từng Tệp (File Roles)
+## 📖 Bảng Chi tiết Vai trò Từng Thư mục & Tệp Hiện hữu
 
-| Tệp (File) | Vai trò & Chức năng Kỹ thuật |
+### 1. Thư mục `app/`
+
+| Đường dẫn tệp / Thư mục | Vai trò & Chức năng Kỹ thuật |
 | --- | --- |
-| `app/main.py` | **Cổng vào ứng dụng FastAPI**: Nạp cấu hình CORS, khởi tạo kết nối CSDL và nhúng Router `/api/chat` vào ứng dụng. |
-| `app/core/config.py` | **Cấu hình toàn cục**: Đọc API Key từ tệp `.env`, định nghĩa tham số LLM Model (`gemini-2.5-flash-lite`), Embedding model (`dangvantuan/vietnamese-embedding`) và số lượng chunks `RAG_TOP_K`. |
-| `app/core/database.py` | **Quản lý kết nối CSDL**: Khởi tạo SQLAlchemy Engine, Session pooling (`get_db()`) kết nối trực tiếp đến CSDL Supabase PostgreSQL. |
-| `app/core/llm.py` | **Client giao tiếp LLM**: Sử dụng thư viện `google.genai` gọi Gemini sinh phản hồi dạng JSON cấu trúc (cho Decomposer) hoặc Stream văn bản token-by-token (cho Synthesizer), có sẵn chế độ Fallback an toàn khi mất mạng. |
-| `app/common/models.py` | **Định nghĩa các Bảng CSDL (ORM)**: Chứa định nghĩa cấu trúc bảng `products` (kho hàng), `knowledge_chunks` (vector 768 chiều), `conversations`, `messages`, `tickets`, `users`, `customers`... |
-| `app/common/websocket.py` | **Quản lý WebSocket**: Quản lý connection pool và kênh chat thời gian thực giữa nhân viên và khách hàng. |
-| `app/modules/rag_assistant/prompts.py` | **Tập Prompt Kỹ thuật**: Chứa Prompt 1 bẻ câu hỏi tích hợp `# DOMAIN BOUNDARY SCOPE` và Prompt 2 tổng hợp đa ngữ cảnh. |
-| `app/modules/rag_assistant/schemas.py` | **Chuẩn hóa Đầu vào/Đầu ra (DTOs)**: Định nghĩa các kiểu dữ liệu Pydantic đảm bảo dữ liệu truyền giữa các lớp không bị sai kiểu. |
-| `app/modules/rag_assistant/embedder.py` | **Tạo Vector Embedding**: Nạp mô hình 768 chiều, kiểm tra cắt tỉa an toàn văn bản quá dài trước khi tokenize. |
-| `app/modules/rag_assistant/decomposer.py` | **Bộ bẻ câu hỏi & Phân Intent**: Gọi LLM Prompt 1 để phân tích `user_query`, trả về danh sách `sub_queries` và Intent tương ứng. |
-| `app/modules/rag_assistant/retrievers.py` | **Bộ 3 Workers Tra cứu Song song**: <br>- `SQLProductRetriever`: Lấy giá & tồn kho real-time.<br>- `VectorKnowledgeRetriever`: Search HNSW Cosine trên Supabase pgvector.<br>- `OutOfDomainHandler`: Tạo phản hồi ngoài phạm vi + mời CSKH. |
-| `app/modules/rag_assistant/synthesizer.py` | **Bộ Tổng hợp & Stream**: Gom ngữ cảnh từ các workers, gọi LLM Prompt 2 để stream từng token câu trả lời về cho người dùng. |
-| `app/modules/rag_assistant/pipeline.py` | **Nhạc trưởng Điều phối (Orchestrator)**: Kiểm tra trạng thái hội thoại (`mode`), chạy 5 bước RAG KH-06 và tự động lưu lịch sử tin nhắn BOT cùng trích dẫn `citations` vào CSDL. |
-| `app/modules/rag_assistant/router.py` | **API Router**: Cung cấp API endpoint `/api/chat/stream` cho Frontend gọi qua HTTP SSE Response. |
+| `app/main.py` | **Cổng vào FastAPI App**: Nạp cấu hình CORS, khởi tạo kết nối & bảng CSDL, mount API Router `/api` và các endpoint `/`, `/health`. |
+| `app/api/deps.py` | **Dependencies**: Cung cấp hàm phụ thuộc DB Session (`get_db`) và xác thực người dùng cho các API endpoints. |
+| `app/api/v1/api.py` | **Router trung tâm v1**: Gom các router nhánh (chat, auth, agent, tickets...) vào một router duy nhất. |
+| `app/api/v1/endpoints/chat.py` | **Chat API**: Cung cấp endpoint SSE Streaming `POST /api/chat/stream` và kiểm tra sức khỏe `GET /api/chat/health`. |
+| `app/core/config.py` | **Cấu hình toàn cục**: Đọc và kiểm tra các biến môi trường từ `.env` (DSN Supabase, Gemini Key, Embedding Model...). |
+| `app/core/llm.py` | **LLM Service Client**: Client giao tiếp Google Gemini API qua SDK `google.genai`, hỗ trợ JSON Mode, Token Stream và Fallback an toàn. |
+| `app/core/redis.py` | **Redis Client**: Kết nối Redis phục vụ hàng đợi tác vụ, Pub/Sub thông báo và Caching. |
+| `app/db/base_class.py` | **SQLAlchemy DeclarativeBase**: Khởi tạo lớp `Base` gốc cho tất cả ORM models. |
+| `app/db/session.py` | **Database Session**: Khởi tạo SQLAlchemy Engine, SessionLocal factory và `get_db()`. |
+| `app/db/base.py` | **Base Aggregator**: Import `Base` và toàn bộ 10 models giúp Alembic và FastAPI nhận diện metadata CSDL. |
+| `app/models/` | **10 Bảng CSDL (ORM)**: Mỗi bảng được tách riêng thành 1 file độc lập (`user.py`, `customer.py`, `conversation.py`, `message.py`, `ticket.py`, `sla_policy.py`, `canned_response.py`, `ai_rule.py`, `product.py` hỗ trợ JSONB attributes, `knowledge_chunk.py` hỗ trợ pgvector 768 chiều). |
+| `app/schemas/rag.py` | **Pydantic DTOs**: Khai báo các schemas: `SubQueryItem` (với các trường trích xuất `brand`, `size`, `weight_volume`, `price_max/min`, `in_stock_only`), `DecomposerOutputSchema`, `CitationItem`, `AggregatedContext`, `ChatStreamRequest`. |
+| `app/services/rag/prompts.py` | **Tập Prompts RAG KH-06**: Prompt 1 (Decomposer + Phạm vi ranh giới + bóc tách JSONB) & Prompt 2 (Synthesizer đa ngữ cảnh). |
+| `app/services/rag/embedder.py` | **Vector Embedding**: Sinh vector 768 chiều cho văn bản với cơ chế cắt tỉa an toàn chống tràn token. |
+| `app/services/rag/decomposer.py` | **Query Decomposer**: Giải quyết đại từ, bẻ câu hỏi phức hợp thành các sub-queries nguyên tử và phân loại Intent. |
+| `app/services/rag/retrievers.py` | **Bộ 3 Workers Tra cứu Song song**: <br>- `SQLProductRetriever`: Tra cứu giá, tồn kho, lọc theo trường JSONB `attributes`.<br>- `VectorKnowledgeRetriever`: Truy vấn vector HNSW trên Supabase pgvector.<br>- `OutOfDomainHandler`: Phản hồi ngoài phạm vi & đề xuất kết nối CSKH. |
+| `app/services/rag/synthesizer.py` | **Synthesizer Service**: Gom ngữ cảnh từ các workers, gọi LLM tổng hợp và sinh stream câu trả lời token-by-token. |
+| `app/services/rag/pipeline.py` | **Pipeline Orchestrator**: Điều phối toàn bộ luồng 5 bước RAG KH-06 và tự động lưu tin nhắn Bot + citations vào CSDL. |
+| `app/websocket/connection_manager.py` | **WebSocket Manager**: Quản lý connection pools, rooms theo từng cuộc trò chuyện thời gian thực. |
+| `app/workers/ticket_dispatcher_worker.py` | **Background Dispatcher**: Worker lắng nghe Redis Queue để tự động phân phối Ticket cho nhân viên. |
+| `app/workers/sla_monitor_worker.py` | **Background SLA Monitor**: Cron job định kỳ mỗi 30s quét vi phạm thời hạn SLA và phát sự kiện qua Redis Pub/Sub. |
+
+### 2. Thư mục `tests/`
+
+| Đường dẫn tệp / Thư mục | Vai trò & Chức năng Kỹ thuật |
+| --- | --- |
+| `tests/run_tests.py` | Runner thực thi toàn bộ test suite bằng `unittest`, báo cáo kết quả chi tiết cho toàn bộ module. |
+| `tests/test_rag_pipeline.py` | Bộ kiểm thử tự động toàn diện bao phủ 5 SPEC Criteria: Decomposer, SQL Product Lookup, pgvector HNSW, Out-of-Domain, và SSE Endpoint. |
+| `tests/rag_lab/` | Thư mục phòng thí nghiệm dành cho việc chạy benchmark so sánh chất lượng giữa các kiến trúc RAG (KH-01 -> KH-08). |
+| `tests/unit/` | Thư mục sẵn sàng để bổ sung các bài unit tests cô lập cho từng tầng API/Service mới. |
 
 ---
 
@@ -109,11 +163,10 @@ code/backend/
 
 ### 1. Khởi chạy Server Backend tại máy cục bộ (Dev Mode)
 ```bash
-# Khởi tạo venv nếu chưa có
-python -m venv venv
+# Kích hoạt venv
 venv\Scripts\activate
 
-# Cài đặt thư viện
+# Cài đặt thư viện (nếu có bổ sung)
 pip install -r requirements.txt
 
 # Khởi chạy Uvicorn Server
