@@ -273,14 +273,16 @@ Dưới đây là mô tả chi tiết quy trình xử lý nội bộ, dữ liệ
 * **Quy trình xử lý nội bộ:**
   1. Ghi nhận tin nhắn người dùng vào bảng `messages` (`sender_type = 'CUSTOMER'`).
   2. Gateway truy vấn bảng `conversations` kiểm tra `mode`. Nếu `mode == 'WAITING_HUMAN'` hoặc `mode == 'HUMAN'`, bỏ qua luồng gọi AI RAG, dừng trả lời tự động để chờ nhân viên trực tiếp hỗ trợ.
-  3. Nếu `mode == 'BOT'`, Gateway gọi mô hình Embedding mã hóa câu hỏi thành Vector.
-  4. Thực hiện truy vấn Vector Search trực tiếp bằng HNSW Index trên bảng **`knowledge_chunks` (Supabase)** lấy Top 3 đoạn tài liệu chính sách có khoảng cách Cosine nhỏ nhất.
-  5. Nếu không tìm thấy đoạn trích phù hợp:
-     * Hệ thống ghi nhận tin nhắn BOT mặc định lịch sự: *"Rất tiếc, thông tin này chưa có trong tài liệu chính sách của chúng tôi. Bạn có muốn kết nối với nhân viên hỗ trợ không?"*.
-     * Đưa ra gợi ý chuyển cuộc trò chuyện sang trạng thái chờ nhân viên (`mode = 'WAITING_HUMAN'`, `is_flagged = TRUE`).
-  6. Khi có ngữ cảnh phù hợp, ghép đoạn trích + câu hỏi vào Prompt gửi sang LLM Engine.
-  7. Mở luồng **SSE (`text/event-stream`)** hoặc WebSocket đẩy từng token câu trả lời về cho Client UI.
-  8. Khi LLM sinh xong toàn bộ văn bản, tạo bản ghi mới trong bảng `messages`: `sender_type = 'BOT'`, `content` = văn bản hoàn chỉnh, `citations` = JSONB chứa thông tin trích dẫn từ `metadata` của `knowledge_chunks`.
+  3. Nếu `mode == 'BOT'`, câu hỏi được chuyển tiếp vào **Module RAG Pipeline Xử lý Nâng cao (Kiến trúc KH-06: Hybrid RAG + Sub-query Decomposition & Per-subquery Intent Router)**:
+     * Giải quyết đồng tham chiếu (Coreference Resolution) & Bẻ câu hỏi phức tạp thành các `sub_queries` nguyên tử.
+     * Phân loại Intent & gán Target Source độc lập cho từng `sub_query` (`SQL_PRODUCT`, `VECTOR_KNOWLEDGE`, `OUT_OF_DOMAIN`, `GREETING_CHITCHAT`, `HUMAN_AGENT_REQUEST`) dựa trên phạm vi cửa hàng.
+     * Thực thi truy vấn song song hai nguồn dữ liệu: CSDL Quan hệ `products` (giá, tồn kho real-time) và Supabase `pgvector` trên bảng `knowledge_chunks` (chính sách, FAQ, hướng dẫn sử dụng).
+     * Loại bỏ hoàn toàn cơ chế Score Thresholding, xử lý Fallback Out-of-domain linh hoạt cho từng ý ngoài phạm vi và gợi ý kết nối nhân viên tư vấn.
+     > 📌 **Chi tiết Kỹ thuật Module RAG Pipeline KH-06**:
+     > Toàn bộ kiến trúc chi tiết từ A-Z, sơ đồ luồng dữ liệu song song, đặc tả 2 Prompts LLM (`MERGED_DECOMPOSER_PROMPT` tích hợp `# DOMAIN BOUNDARY SCOPE` và `MULTI_CONTEXT_SYNTHESIZER_PROMPT`), cấu trúc JSON Schema và kịch bản testcase thực nghiệm được đặc tả chi tiết tại:
+     > 👉 [**Đặc tả Kiến trúc Kỹ thuật & Luồng Xử lý RAG KH-06 Nâng cấp**](file:///d:/Study/TLU/kiemthu/project/docs/overview/kh06_revised_architecture.md).
+  4. Sau khi Context Aggregator hợp nhất ngữ cảnh từ SQL, Vector DB và thông báo Fallback, LLM Multi-Context Synthesizer sinh câu trả lời hoàn chỉnh dưới dạng luồng **SSE (`text/event-stream`)** đẩy từng token về Client UI.
+  5. Khi hoàn tất, tạo bản ghi mới trong bảng `messages`: `sender_type = 'BOT'`, `content` = văn bản hoàn chỉnh, `citations` = JSONB chứa thông tin trích dẫn từ `metadata` của `knowledge_chunks`.
 * **Kết quả đầu ra:** Luồng gõ chữ trực tiếp trên khung chat, thông tin trích dẫn minh bạch và bản ghi tin nhắn mới trong CSDL Supabase.
 * **Xử lý ngoại lệ:** Lỗi kết nối LLM/Supabase $\rightarrow$ trả về câu thông báo lỗi hệ thống tạm thời.
 

@@ -18,12 +18,24 @@ class VietnameseEmbedder:
         self.model.max_seq_length = 256
         logger.info(f"Nạp mô hình {model_name} thành công (max_seq_length=256)!")
 
+    def truncate_text_safe(self, text: str, max_chars: int = 1000) -> str:
+        """Kiểm tra và cắt tỉa văn bản nếu vượt quá ngưỡng an toàn trước khi tokenize/embedding."""
+        if not text:
+            return ""
+        text = text.strip()
+        if len(text) > max_chars:
+            logger.warning(f"Văn bản đầu vào quá dài ({len(text)} ký tự). Đã chủ động cắt về {max_chars} ký tự để đảm bảo trong ngưỡng max_seq_length=256.")
+            text = text[:max_chars]
+        return text
+
     def embed_text(self, text: str) -> List[float]:
         """Tạo vector embedding (768 dimensions) cho 1 chuỗi văn bản."""
-        if not text or not text.strip():
+        safe_text = self.truncate_text_safe(text)
+        if not safe_text:
             return []
-        embedding = self.model.encode(text, convert_to_numpy=True)
+        embedding = self.model.encode(safe_text, convert_to_numpy=True)
         return embedding.tolist()
+
 
     def embed_chunks(self, chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import Base, engine
+from app.modules.rag_assistant.router import router as rag_router
 
 # Create tables in Database if not exist
 Base.metadata.create_all(bind=engine)
@@ -20,6 +21,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register Sub-module Routers
+app.include_router(rag_router)
+
 @app.get("/")
 def read_root():
     return {
@@ -31,3 +35,4 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
