@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.core.database import Base, engine
+from app.db.base import Base
+from app.db.session import engine
+from app.api.v1.api import api_router
 
 # Create tables in Database if not exist
 Base.metadata.create_all(bind=engine)
@@ -19,6 +21,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Đăng ký API Routers cho tất cả các tiền tố (/api/v1, /api và gốc /)
+app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, prefix="/api")
+app.include_router(api_router)
 
 @app.get("/")
 def read_root():

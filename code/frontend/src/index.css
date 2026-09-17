@@ -1,24 +1,38 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
-  --font-serif: "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+@layer base {
+  :root {
+    --color-canvas: #FFF8E7;
+    --color-primary-accent: #930500;
+    --color-secondary-block: #95BBEA;
+    --color-neutral-dark: #2B2523;
+    --color-muted-border: #EFE7D3;
+    --color-hairline: rgba(147, 5, 0, 0.08);
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-neutral-dark);
+    font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .font-serif-editorial {
+    font-family: 'Playfair Display', 'Instrument Serif', Georgia, serif;
+    letter-spacing: -0.01em;
+  }
 }
 
-*, ::before, ::after {
-  font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
-  text-rendering: optimizeLegibility !important;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.font-serif-editorial {
+  font-family: 'Playfair Display', 'Instrument Serif', Georgia, serif;
 }
 
-body {
-  background-color: #FFF8E7;
-  color: #2B2523;
-  line-height: 1.75;
+.font-sans-humanist {
+  font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
 }
 
-/* Custom Soft Ambient Shadow */
+/* Custom Editorial Soft Ambient Shadows */
 .shadow-editorial {
   box-shadow: 0 20px 40px -15px rgba(43, 37, 35, 0.06), 0 0 15px 0 rgba(147, 5, 0, 0.03);
 }
@@ -27,14 +41,22 @@ body {
   transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 .shadow-editorial-hover:hover {
-  transform: translateY(-3px) scale(1.01);
+  transform: translateY(-3px) scale(1.012);
   box-shadow: 0 25px 50px -12px rgba(43, 37, 35, 0.09), 0 0 20px 0 rgba(147, 5, 0, 0.05);
+}
+
+.shadow-diffused-sm {
+  box-shadow: 0 10px 25px -10px rgba(43, 37, 35, 0.05);
+}
+
+.shadow-diffused-lg {
+  box-shadow: 0 30px 60px -20px rgba(43, 37, 35, 0.1), 0 0 30px 0 rgba(147, 5, 0, 0.04);
 }
 
 /* Custom scrollbar for Editorial feel */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: #FFF8E7;
@@ -45,4 +67,23 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #95BBEA;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 2s ease-in-out infinite;
 }

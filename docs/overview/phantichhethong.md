@@ -128,14 +128,14 @@ Lưu trữ các câu trả lời chuẩn hóa hỗ trợ nhân viên gửi nhanh
 ### 8. Bảng `ai_rules` (Quy tắc Kích hoạt & Ngưỡng Cảm xúc AI)
 Cấu hình ngưỡng cảm xúc và quy tắc mở ticket tự động cho AI Auto-Triage Engine.
 
-| Tên trường (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả nghiệp vụ & Quy chuẩn kỹ thuật |
-| --- | --- | --- | --- |
-| `id` | UUID | PK, Default: `gen_random_uuid()` | Mã định danh quy tắc AI |
-| `rule_name` | VARCHAR(100) | NOT NULL | Tên quy tắc gợi nhớ (1-100 ký tự) |
-| `sentiment_threshold` | NUMERIC(4, 2) | NOT NULL | Ngưỡng điểm số cảm xúc kích hoạt số âm (-1.00 đến 0.00, mặc định -0.60) |
-| `target_priority` | VARCHAR(10) | NOT NULL, CHECK (`target_priority` IN ('P1', 'P2', 'P3')) | Mức độ ưu tiên gán tự động khi chạm ngưỡng |
-| `is_active` | BOOLEAN | NOT NULL, Default: `TRUE` | Trạng thái bật/tắt kích hoạt áp dụng |
-| `created_at` | TIMESTAMPTZ | NOT NULL, Default: `NOW()` | Thời điểm tạo quy tắc |
+|**Tên trường (Column)**|**Kiểu dữ liệu (PostgreSQL)**|**Ràng buộc (Constraints)**|**Mô tả nghiệp vụ**|
+|---|---|---|---|
+|`id`|UUID|PK, Default: `gen_random_uuid()`|Mã định danh đoạn trích tài liệu|
+|`document_name`|VARCHAR(255)|NOT NULL|Tên tài liệu/chính sách (VD: `Chinh_sach_doi_tra.pdf`)|
+|`content`|TEXT|NOT NULL|Nội dung đoạn văn bản đã chia nhỏ (chunk)|
+|`embedding`|VECTOR(768)|NULL|Vector nhúng ngữ nghĩa (768 chiều, mô hình `dangvantuan/vietnamese-embedding`)|
+|`metadata`|JSONB|NULL|Siêu dữ liệu: Số trang, chương, điều khoản phục vụ trích dẫn Citations|
+|`created_at`|TIMESTAMPTZ|NOT NULL, Default: `NOW()`|Thời điểm lưu dữ liệu|
 
 ---
 
@@ -258,50 +258,20 @@ Lưu trữ thông tin mặt hàng, đối tượng vật nuôi, giá bán và t�
 ### 1.2. Chức năng (UC 1.2): Quản lý Phiên trò chuyện
 * **API Endpoints:** `GET /api/customer/conversations`, `POST /api/customer/conversations`, `GET /api/customer/conversations/{id}/messages`.
 * **Quy trình xử lý nội bộ:**
-  1. **Tải danh sách phiên chat:**
-     - Decode JWT lấy `customer_id`. Truy vấn `SELECT * FROM conversations WHERE customer_id = :customer_id ORDER BY updated_at DESC`.
-     - Đối với mỗi phiên, kéo dòng tin nhắn cuối cùng trong `messages` (trích 15 từ đầu) và nhãn `mode` (`BOT`, `HUMAN`, `WAITING_HUMAN`).
-  2. **Tải tin nhắn của phiên cũ (Tải phân đoạn - Pagination):**
-     - Tiếp nhận `conversation_id`, query `SELECT * FROM messages WHERE conversation_id = :id ORDER BY created_at DESC LIMIT 50 OFFSET :offset`.
-     - Kiểm tra `conversations.mode`:
-       - Nếu `mode == 'CLOSED'`, trả về cờ `is_readonly = TRUE`.
-       - Nếu `mode == 'WAITING_HUMAN'`, trả về `notice: "Cuộc trò chuyện đang chờ nhân viên hỗ trợ"`.
-  3. **Tạo phiên trò chuyện mới:**
-     - Chèn dòng mới vào `conversations`: `customer_id`, `mode = 'BOT'`, `is_flagged = FALSE`.
-     - Chèn tin nhắn chào mừng mặc định vào `messages`: `sender_type = 'BOT'`, `content = 'Xin chào! Mình là Trợ lý tư vấn đồ dùng thú cưng. Bạn cần hỗ trợ thông tin nào hôm nay?'`.
-     - Trả về `conversation_id` mới khởi tạo.
-  4. **Tự động đóng phiên (Cron Job):**
-     - Cron Service quét định kỳ mỗi giờ: `UPDATE conversations SET mode = 'CLOSED' WHERE updated_at < NOW() - INTERVAL '24 hours' AND mode = 'HUMAN'`.
-
----
-
-### 1.3. Chức năng (UC 1.3): Tư vấn Sản phẩm & Giải đáp Chính sách Tự động (RAG Streaming & Citations)
-* **API Endpoints:** `POST /api/chat/stream` (SSE Stream).
-* **Dữ liệu đầu vào:** `{ "conversation_id": "UUID", "query": "String (2-1000 chars)" }`.
-* **Quy trình xử lý nội bộ:**
-  1. Kiểm tra validation `query`. Chèn bản ghi tin nhắn khách hàng vào `messages` (`sender_type = 'CUSTOMER'`, `content = query`).
-  2. Truy vấn `conversations.mode` theo `conversation_id`:
-     - Nếu `mode IN ('WAITING_HUMAN', 'HUMAN')`: Bỏ qua RAG Engine, không sinh lời đáp AI. Trả về SSE event: `data: {"status": "WAITING_HUMAN", "message": "Nhân viên đang trực tiếp hỗ trợ, vui lòng đợi..."}\n\n`. Kết thúc.
-  3. Nếu `mode == 'BOT'`:
-     - Gọi Embedding API chuyển `query` thành vector 1024 chiều `query_vec`.
-     - Thực hiện Vector Search trên Supabase:
-       ```sql
-       SELECT id, document_name, content, metadata, (1 - (embedding <=> :query_vec)) AS similarity
-       FROM knowledge_chunks
-       WHERE (1 - (embedding <=> :query_vec)) >= 0.65
-       ORDER BY similarity DESC LIMIT 3;
-       ```
-     - Đồng thời, nếu `query` chứa các từ khóa sản phẩm (thức ăn, hạt, cát vệ sinh, vòng cổ, chuồng, giá, còn hàng): Query bảng `products` tra cứu thông tin tồn kho `stock_quantity`, `price`, `sale_price` theo SKU/Tên.
-  4. **Xử lý Fallback khi không có dữ liệu phù hợp:**
-     - Nếu không có chunk nào thỏa mãn `similarity >= 0.65`:
-       - Chèn tin nhắn BOT vào `messages`: `content = 'Rất tiếc, thông tin này chưa có trong tài liệu hướng dẫn của cửa hàng. Bạn có muốn kết nối trực tiếp với nhân viên tư vấn không?'`.
-       - Trả về gói SSE kèm 2 nút gợi ý: `["Kết nối nhân viên", "Hỏi câu khác"]`.
-       - Nếu khách chọn "Kết nối nhân viên": Thực hiện `UPDATE conversations SET mode = 'WAITING_HUMAN', is_flagged = TRUE WHERE id = :id`.
-  5. **Streaming & Citations khi có dữ liệu:**
-     - Đóng gói Prompt RAG: `Context = [Chunks + Product Catalog Data]`, `User Query = query`.
-     - Mở luồng HTTP Response Header `Content-Type: text/event-stream`.
-     - Đẩy từng token sinh ra bởi LLM về Client: `data: {"token": "..."}\n\n`.
-     - Khi sinh xong, chèn bản ghi BOT vào `messages`: `sender_type = 'BOT'`, `content = full_text`, `citations = JSONB([document_name, page_number, clause, snippet])`.
+  1. Ghi nhận tin nhắn người dùng vào bảng `messages` (`sender_type = 'CUSTOMER'`).
+  2. Gateway truy vấn bảng `conversations` kiểm tra `mode`. Nếu `mode == 'WAITING_HUMAN'` hoặc `mode == 'HUMAN'`, bỏ qua luồng gọi AI RAG, dừng trả lời tự động để chờ nhân viên trực tiếp hỗ trợ.
+  3. Nếu `mode == 'BOT'`, câu hỏi được chuyển tiếp vào **Module RAG Pipeline Xử lý Nâng cao (Kiến trúc KH-06: Hybrid RAG + Sub-query Decomposition & Per-subquery Intent Router)**:
+     * Giải quyết đồng tham chiếu (Coreference Resolution) & Bẻ câu hỏi phức tạp thành các `sub_queries` nguyên tử.
+     * Phân loại Intent & gán Target Source độc lập cho từng `sub_query` (`SQL_PRODUCT`, `VECTOR_KNOWLEDGE`, `OUT_OF_DOMAIN`, `GREETING_CHITCHAT`, `HUMAN_AGENT_REQUEST`) dựa trên phạm vi cửa hàng.
+     * Thực thi truy vấn song song hai nguồn dữ liệu: CSDL Quan hệ `products` (giá, tồn kho real-time) và Supabase `pgvector` trên bảng `knowledge_chunks` (chính sách, FAQ, hướng dẫn sử dụng).
+     * Loại bỏ hoàn toàn cơ chế Score Thresholding, xử lý Fallback Out-of-domain linh hoạt cho từng ý ngoài phạm vi và gợi ý kết nối nhân viên tư vấn.
+     > 📌 **Chi tiết Kỹ thuật Module RAG Pipeline KH-06**:
+     > Toàn bộ kiến trúc chi tiết từ A-Z, sơ đồ luồng dữ liệu song song, đặc tả 2 Prompts LLM (`MERGED_DECOMPOSER_PROMPT` tích hợp `# DOMAIN BOUNDARY SCOPE` và `MULTI_CONTEXT_SYNTHESIZER_PROMPT`), cấu trúc JSON Schema và kịch bản testcase thực nghiệm được đặc tả chi tiết tại:
+     > 👉 [**Đặc tả Kiến trúc Kỹ thuật & Luồng Xử lý RAG KH-06 Nâng cấp**](file:///d:/Study/TLU/kiemthu/project/docs/overview/kh06_revised_architecture.md).
+  4. Sau khi Context Aggregator hợp nhất ngữ cảnh từ SQL, Vector DB và thông báo Fallback, LLM Multi-Context Synthesizer sinh câu trả lời hoàn chỉnh dưới dạng luồng **SSE (`text/event-stream`)** đẩy từng token về Client UI.
+  5. Khi hoàn tất, tạo bản ghi mới trong bảng `messages`: `sender_type = 'BOT'`, `content` = văn bản hoàn chỉnh, `citations` = JSONB chứa thông tin trích dẫn từ `metadata` của `knowledge_chunks`.
+* **Kết quả đầu ra:** Luồng gõ chữ trực tiếp trên khung chat, thông tin trích dẫn minh bạch và bản ghi tin nhắn mới trong CSDL Supabase.
+* **Xử lý ngoại lệ:** Lỗi kết nối LLM/Supabase $\rightarrow$ trả về câu thông báo lỗi hệ thống tạm thời.
 
 ---
 
