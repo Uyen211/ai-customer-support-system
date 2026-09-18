@@ -2,6 +2,8 @@ from fastapi import APIRouter
 from app.api.v1.endpoints.chat import router as chat_router
 from app.api.v1.endpoints.customer_auth import router as customer_auth_router
 from app.api.v1.endpoints.conversation import router as conversation_router
+from app.api.v1.endpoints.staff_auth import router as staff_auth_router
+from app.api.v1.endpoints.staff import admin_router as staff_admin_router, agent_router as agent_router
 
 api_router = APIRouter()
 
@@ -13,3 +15,8 @@ api_router.include_router(conversation_router)
 
 # 3. Đăng ký Router RAG Chatbot Streaming (Use Case 1.3)
 api_router.include_router(chat_router)
+
+# 4. Đăng ký Router Tài khoản nhân viên & trạng thái làm việc (Use Case 3.1, 3.2)
+api_router.include_router(staff_auth_router)
+api_router.include_router(staff_admin_router)
+api_router.include_router(agent_router)

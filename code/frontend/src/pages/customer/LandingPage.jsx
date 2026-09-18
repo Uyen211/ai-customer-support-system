@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, ShieldCheck, Truck, Sparkles, MessageCircle, ArrowRight, Heart, PackageCheck, Award, CheckCircle2 } from 'lucide-react';
+import { Bot, ShieldCheck, Truck, Sparkles, MessageCircle, ArrowRight, Heart, PackageCheck, Award, CheckCircle2, BriefcaseBusiness } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 
 export function LandingPage({ onNavigate }) {
@@ -13,6 +13,10 @@ export function LandingPage({ onNavigate }) {
 
   const handleRegister = () => {
     onNavigate('register');
+  };
+
+  const handleStaffLogin = () => {
+    onNavigate('staff-login');
   };
 
   return (
@@ -40,6 +44,9 @@ export function LandingPage({ onNavigate }) {
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={handleLogin}>
               Đăng Nhập
+            </Button>
+            <Button variant="soft" size="sm" icon={BriefcaseBusiness} onClick={handleStaffLogin}>
+              Nhân Viên
             </Button>
             <Button variant="outline" size="sm" onClick={handleRegister}>
               Đăng Ký

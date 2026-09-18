@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.models.customer import Customer
+from app.models.user import User
 from app.schemas.customer import CustomerRegisterRequest, CustomerLoginRequest, TokenResponse, CustomerResponse
 from app.core.security import (
     get_password_hash,
@@ -69,6 +70,13 @@ class CustomerAuthService:
         # E-5: Kiểm tra email có tồn tại không
         customer = db.query(Customer).filter(Customer.email == normalized_email).first()
         if not customer:
+            # Email có thể là tài khoản nhân viên (Use Case 3.1) -> chỉ dẫn đúng cổng đăng nhập
+            staff_account = db.query(User).filter(User.email == normalized_email).first()
+            if staff_account:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Email này là tài khoản nhân viên. Vui lòng đăng nhập qua Cổng Nhân Viên."
+                )
             record_failed_login(normalized_email)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.core.security import decode_access_token
 from app.models.customer import Customer
+from app.models.user import User
 
 # Sử dụng HTTPBearer để hỗ trợ Header: Authorization: Bearer <token>
 security_scheme = HTTPBearer(auto_error=False)
@@ -74,4 +75,55 @@ def get_optional_current_customer(
     except Exception:
         return None
 
-__all__ = ["get_db", "get_current_customer", "get_optional_current_customer"]
+def get_current_user(
+    auth: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Phiên đăng nhập nhân viên không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    if not auth or not auth.credentials:
+        raise credentials_exception
+
+    payload = decode_access_token(auth.credentials)
+    if not payload or payload.get("role") == "CUSTOMER":
+        raise credentials_exception
+
+    user_id_str = payload.get("sub") or payload.get("user_id")
+    if not user_id_str:
+        raise credentials_exception
+
+    try:
+        user_id = UUID(user_id_str)
+    except (ValueError, TypeError):
+        raise credentials_exception
+
+    user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Tài khoản nhân viên không tồn tại hoặc đã bị khóa.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return user
+
+
+def require_roles(*allowed_roles: str):
+    allowed = {role.upper() for role in allowed_roles}
+
+    def dependency(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Bạn không có quyền thực hiện thao tác này."
+            )
+        return current_user
+
+    return dependency
+
+
+__all__ = ["get_db", "get_current_customer", "get_optional_current_customer", "get_current_user", "require_roles"]
