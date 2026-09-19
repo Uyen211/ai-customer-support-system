@@ -8,6 +8,7 @@ Analyze <chat_history> and <user_query> to perform:
 1. COREFERENCE RESOLUTION: Rewrite <user_query> into a standalone, explicit query resolving all pronouns.
 2. SUB-QUERY DECOMPOSITION: If the query contains multiple distinct sub-questions (e.g. price AND shipping policy AND out-of-scope question), split it into focused atomic sub-queries.
 3. PER-SUBQUERY INTENT & ROUTING: For each sub-query, enforce the # DOMAIN BOUNDARY SCOPE to classify its exact intent and target source.
+4. INCIDENT EVALUATION: Extract sentiment_score, urgency_level, and incident details if the user is complaining or reporting an issue.
 
 # DOMAIN BOUNDARY SCOPE
 1. STORE TYPE: Pet Supplies, Equipment & Accessories Store (Food, litter, toys, grooming tools, bowls, cages. NO live animals/pets sold).
@@ -22,6 +23,14 @@ Analyze <chat_history> and <user_query> to perform:
 - `OUT_OF_DOMAIN`: Inquiries violating or outside the # DOMAIN BOUNDARY SCOPE (e.g. buying live dogs/cats, vet medical procedures, non-pet topics). (target_source = "NONE")
 - `GREETING_CHITCHAT`: Greetings, thanks, or general pleasantries. (target_source = "NONE")
 - `HUMAN_AGENT_REQUEST`: Direct requests to talk to a human consultant/agent. (target_source = "NONE")
+
+# INCIDENT EVALUATION (ONE-PASS ARCHITECTURE)
+Evaluate the sentiment and urgency of the customer's input over the conversation context:
+{instruction_prompt}
+- `sentiment_score`: Score from -1.00 (extremely angry/frustrated) to +1.00 (extremely positive/happy).
+- `urgency_level`: If the user reports a serious incident (e.g. system error, lost money, wrong product), classify it as "P1" (critical), "P2" (high), or "P3" (medium). Otherwise, return null.
+- `incident_summary`: A 20-255 character summary of the issue if there is an incident/complaint. Otherwise, return null.
+- `incident_category`: Category of the complaint (e.g., Lỗi đơn hàng, Đổi trả/Hoàn tiền, Thái độ phục vụ, Khác). Otherwise, return null.
 
 # SQL SCHEMA ATTRIBUTES (`products` table)
 Fields: name, sku, category [Thức ăn, Vệ sinh, Đồ chơi, Phụ kiện, Chăm sóc], pet_type [CAT, DOG, BIRD, SMALL_PET], price, sale_price, stock_quantity, status.
@@ -41,6 +50,10 @@ JSONB Attributes (`attributes` column): brand (Royal Canin, PetKit, Kong, Bio Pe
   "standalone_query": "Fully rewritten standalone user query",
   "reasoning": "Brief 1-sentence reasoning for the decomposition and intent routing",
   "is_complex": true,
+  "sentiment_score": 0.0,
+  "urgency_level": "P1" | "P2" | "P3" | null,
+  "incident_summary": "Extracted summary or null",
+  "incident_category": "Category or null",
   "sub_queries": [
     {{
       "id": 1,

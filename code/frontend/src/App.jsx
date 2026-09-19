@@ -5,6 +5,7 @@ import { LandingPage } from './pages/customer/LandingPage';
 import { CustomerLogin } from './pages/auth/CustomerLogin';
 import { CustomerRegister } from './pages/auth/CustomerRegister';
 import { ChatPage } from './pages/customer/ChatPage';
+import AlertConfigPage from './pages/admin/AlertConfigPage';
 
 function AppContent() {
   const { isLoggedIn, loading } = useAuth();
@@ -23,6 +24,11 @@ function AppContent() {
         </p>
       </div>
     );
+  }
+
+  // Simple URL based routing for Admin without RBAC
+  if (window.location.pathname === '/admin/alerts') {
+    return <AlertConfigPage />;
   }
 
   // Route routing logic
