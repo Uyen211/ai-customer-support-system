@@ -45,7 +45,7 @@ def extract_json_from_text(text: str) -> Dict[str, Any]:
 class GeminiLLMService:
     def __init__(self):
         self.api_key = get_api_key()
-        self.model_name = settings.LLM_MODEL or "gemini-3.5-flash-lite"
+        self.model_name = settings.LLM_MODEL or "gemini-2.5-flash"
         self._genai_client = None
         self._init_client()
 
@@ -74,22 +74,33 @@ class GeminiLLMService:
             return self._fallback_decompose(prompt)
 
         try:
-            # Kiểm tra nếu là google.genai Client
-            if hasattr(self._genai_client, "models"):
+            # Sử dụng async (aio) nếu có thể để không block event loop
+            if hasattr(self._genai_client, "aio"):
                 from google.genai import types
-                response = self._genai_client.models.generate_content(
+                response = await self._genai_client.aio.models.generate_content(
                     model=self.model_name,
                     contents=prompt,
                     config=types.GenerateContentConfig(response_mime_type="application/json")
                 )
                 return extract_json_from_text(response.text)
+            elif hasattr(self._genai_client, "models"):
+                import asyncio
+                from google.genai import types
+                def _sync_call():
+                    return self._genai_client.models.generate_content(
+                        model=self.model_name,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(response_mime_type="application/json")
+                    )
+                response = await asyncio.to_thread(_sync_call)
+                return extract_json_from_text(response.text)
             else:
-                # Legacy GenerativeModel
+                import asyncio
                 model = self._genai_client.GenerativeModel(
                     model_name=self.model_name,
                     generation_config={"response_mime_type": "application/json"}
                 )
-                response = model.generate_content(prompt)
+                response = await asyncio.to_thread(model.generate_content, prompt)
                 return extract_json_from_text(response.text)
         except Exception as e:
             logger.error(f"Lỗi gọi Gemini generate_json: {e}. Sử dụng Fallback parser.")
@@ -104,7 +115,16 @@ class GeminiLLMService:
             return
 
         try:
-            if hasattr(self._genai_client, "models"):
+            if hasattr(self._genai_client, "aio"):
+                response = await self._genai_client.aio.models.generate_content_stream(
+                    model=self.model_name,
+                    contents=prompt
+                )
+                async for chunk in response:
+                    if chunk.text:
+                        yield chunk.text
+            elif hasattr(self._genai_client, "models"):
+                # Fallback to sync generator (may block event loop slightly, but works)
                 response = self._genai_client.models.generate_content_stream(
                     model=self.model_name,
                     contents=prompt

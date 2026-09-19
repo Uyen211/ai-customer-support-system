@@ -30,6 +30,10 @@ class DecomposerOutputSchema(BaseModel):
     reasoning: str = Field(..., description="Lý do phân loại và bẻ câu hỏi")
     is_complex: bool = Field(default=False, description="True nếu câu hỏi chứa nhiều hơn 1 sub-query")
     sub_queries: List[SubQueryItem] = Field(default_factory=list, description="Danh sách các sub-queries")
+    sentiment_score: float = Field(default=0.00, description="Điểm cảm xúc từ -1.00 đến +1.00")
+    urgency_level: Optional[Literal["P1", "P2", "P3"]] = Field(None, description="Mức độ nghiêm trọng P1/P2/P3 nếu phát hiện sự cố")
+    incident_summary: Optional[str] = Field(None, description="Tóm tắt sự cố (20-255 ký tự)")
+    incident_category: Optional[str] = Field(None, description="Danh mục khiếu nại")
 
 class CitationItem(BaseModel):
     document_name: str

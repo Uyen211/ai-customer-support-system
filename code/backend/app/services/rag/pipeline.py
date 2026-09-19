@@ -5,13 +5,16 @@ Pipeline Orchestrator cho RAG Assistant (Kiến trúc KH-06 Nâng cấp).
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import AsyncGenerator, Dict, Any, Optional, List
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.models.conversation import Conversation
 from app.models.message import Message
+from app.models.ticket import Ticket
+from app.models.ai_rule import AIRule
+from app.core.redis import redis_client
 from app.schemas.rag import AggregatedContext
 from app.services.rag.decomposer import decomposer_service
 from app.services.rag.retrievers import parallel_retrieval_service
@@ -29,6 +32,12 @@ class RAGPipelineService:
     ) -> AsyncGenerator[str, None]:
         logger.info(f"=== [BẮT ĐẦU RAG KH-06 PIPELINE] Conversation: {conversation_id} ===")
         
+        # Validation E-1 (Độ dài tin nhắn)
+        if not user_message or len(user_message.strip()) < 2 or len(user_message) > 1000:
+            logger.info("Tin nhắn không hợp lệ, trả về lỗi E-1.")
+            yield f"event: error\ndata: {json.dumps({'error': 'Tin nhắn không hợp lệ. Vui lòng nhập từ 2 đến 1000 ký tự.'}, ensure_ascii=False)}\n\n"
+            return
+
         # 0. Kiểm tra trạng thái hội thoại và lấy lịch sử chat
         db: Session = SessionLocal()
         chat_history = []
@@ -85,6 +94,86 @@ class RAGPipelineService:
             chat_history=chat_history
         )
         standalone_query = decomposer_output.standalone_query
+
+        # BƯỚC 1.5: Incident Evaluation & Guardrail (UC 2.1 & 2.2)
+        sentiment_score = decomposer_output.sentiment_score
+        llm_urgency = decomposer_output.urgency_level
+        final_priority = None
+
+        # Lấy Dynamic Config từ Cache/DB
+        alert_config = self._get_alert_config()
+        p1_thresh = alert_config["p1_threshold"]
+        p2_thresh = alert_config["p2_threshold"]
+
+        # Guardrail an toàn
+        sentiment_label = "NEUTRAL"
+        if sentiment_score <= p1_thresh:
+            final_priority = "P1"
+            sentiment_label = "CRITICAL"
+        elif sentiment_score <= p2_thresh:
+            final_priority = "P2"
+            sentiment_label = "NEGATIVE"
+        else:
+            final_priority = llm_urgency  # Có thể là P1/P2/P3 hoặc None
+            if sentiment_score < -0.29:
+                sentiment_label = "NEGATIVE"
+            elif sentiment_score > 0.29:
+                sentiment_label = "POSITIVE"
+
+        # Cập nhật Sticky Red Flag & Lưu điểm vào CSDL
+        db: Session = SessionLocal()
+        try:
+            conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+            if conv:
+                if final_priority in ["P1", "P2"] or sentiment_score <= p2_thresh:
+                    conv.is_flagged = True
+                conv.last_sentiment = sentiment_label
+                
+                user_msg_db = db.query(Message).filter(
+                    Message.conversation_id == conversation_id,
+                    Message.sender_type == "CUSTOMER"
+                ).order_by(Message.created_at.desc()).first()
+                if user_msg_db:
+                    user_msg_db.sentiment_score = sentiment_score
+                
+                if final_priority in ["P1", "P2", "P3"]:
+                    self._create_or_update_ticket(db, conv, final_priority, decomposer_output)
+                db.commit()
+        except Exception as e:
+            logger.error(f"Lỗi cập nhật cờ đỏ và ticket: {e}")
+            db.rollback()
+        finally:
+            db.close()
+
+        # BƯỚC 1.6: Graceful Handover cho P1
+        if final_priority == "P1":
+            logger.info("Kích hoạt Graceful Handover cho P1 qua SSE Stream")
+            apology_msg = "Mình rất xin lỗi về trải nghiệm này. Hệ thống đã đánh dấu yêu cầu khẩn cấp và nhân viên CSKH đang vào hỗ trợ bạn ngay lập tức."
+            
+            db: Session = SessionLocal()
+            try:
+                conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+                if conv:
+                    conv.mode = "WAITING_HUMAN"
+                    db.commit()
+            except Exception as e:
+                db.rollback()
+            finally:
+                db.close()
+            
+            # Tự stream thẳng qua SSE mà không gọi RAG/Synthesizer
+            yield f"event: token\ndata: {json.dumps({'token': apology_msg}, ensure_ascii=False)}\n\n"
+            self._save_bot_message_to_db(conversation_id, apology_msg, [])
+            
+            done_payload = json.dumps({
+                "full_text": apology_msg,
+                "citations": [],
+                "standalone_query": standalone_query,
+                "is_complex": False
+            }, ensure_ascii=False)
+            yield f"event: done\ndata: {done_payload}\n\n"
+            logger.info(f"=== [HOÀN THÀNH RAG KH-06 PIPELINE (GRACEFUL HANDOVER)] ===")
+            return
 
         # BƯỚC 2: Parallel Retrieval Workers (SQL, Vector HNSW, OutOfDomain)
         aggregated_context: AggregatedContext = await parallel_retrieval_service.retrieve_all(
@@ -145,6 +234,70 @@ class RAGPipelineService:
         except Exception as e:
             db.rollback()
             logger.error(f"Lỗi khi lưu tin nhắn BOT vào CSDL: {e}")
+        finally:
+            db.close()
+
+    def _create_or_update_ticket(self, db: Session, conv: Conversation, priority: str, output):
+        """Khởi tạo hoặc cập nhật phiếu hỗ trợ (UC 2.2)."""
+        existing_ticket = db.query(Ticket).filter(
+            Ticket.conversation_id == conv.id,
+            Ticket.status.in_(["PENDING", "IN_PROGRESS"])
+        ).first()
+
+        summary = output.incident_summary or "Cần kiểm tra thủ công - Lỗi trích xuất"
+        category = output.incident_category or "Vấn đề khác"
+        sla_minutes = {"P1": 15, "P2": 60, "P3": 240}.get(priority, 240)
+
+        if existing_ticket:
+            p_rank = {"P1": 1, "P2": 2, "P3": 3}
+            if p_rank.get(priority, 3) < p_rank.get(existing_ticket.priority, 3):
+                existing_ticket.priority = priority
+                existing_ticket.sla_deadline = datetime.now(timezone.utc) + timedelta(minutes=sla_minutes)
+            
+            existing_ticket.summary += f"\n[Update]: {summary}"
+        else:
+            new_ticket = Ticket(
+                conversation_id=conv.id,
+                category=category,
+                priority=priority,
+                summary=summary,
+                sla_deadline=datetime.now(timezone.utc) + timedelta(minutes=sla_minutes),
+                ai_metadata={"sentiment_score": float(output.sentiment_score)}
+            )
+            db.add(new_ticket)
+
+    def _get_alert_config(self) -> Dict[str, Any]:
+        """Lấy cấu hình cảnh báo từ Redis (ưu tiên) hoặc DB."""
+        try:
+            cached = redis_client.hgetall("cache:alert_rules")
+            if cached and "p1_threshold" in cached:
+                return {
+                    "p1_threshold": float(cached["p1_threshold"]),
+                    "p2_threshold": float(cached["p2_threshold"]),
+                    "instruction_prompt": cached.get("instruction_prompt", "")
+                }
+        except Exception as e:
+            logger.error(f"Redis cache lỗi: {e}")
+            
+        db: Session = SessionLocal()
+        try:
+            rule = db.query(AIRule).first()
+            p1_thresh = float(rule.p1_threshold) if rule else -0.60
+            p2_thresh = float(rule.p2_threshold) if rule else -0.30
+            instruction = rule.instruction_prompt if rule else ""
+            
+            try:
+                redis_client.hset("cache:alert_rules", mapping={
+                    "p1_threshold": str(p1_thresh),
+                    "p2_threshold": str(p2_thresh),
+                    "instruction_prompt": instruction
+                })
+                # Cache 1 tiếng nếu cần
+                redis_client.expire("cache:alert_rules", 3600)
+            except:
+                pass
+                
+            return {"p1_threshold": p1_thresh, "p2_threshold": p2_thresh, "instruction_prompt": instruction}
         finally:
             db.close()
 
