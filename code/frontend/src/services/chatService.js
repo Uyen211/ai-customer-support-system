@@ -29,4 +29,10 @@ export const chatService = {
     const response = await api.post(`/conversations/${conversationId}/close`);
     return response.data;
   },
+
+  async deleteConversation(conversationId) {
+    const response = await api.delete(`/conversations/${conversationId}`);
+    return response.data;
+  },
 };
+

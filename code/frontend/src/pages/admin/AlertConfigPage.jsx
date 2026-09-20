@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getConfig, updateConfig } from '../../services/configService';
+import logoAsset from '../../assets/logo.png';
 
 const AlertConfigPage = () => {
     const [config, setConfig] = useState({
@@ -86,11 +87,17 @@ const AlertConfigPage = () => {
     return (
         <div className="min-h-screen bg-[#FFF8E7] text-[#2B2523] p-8 md:p-16 font-sans">
             <div className="max-w-4xl mx-auto">
-                <header className="mb-12">
-                    <h1 className="text-4xl font-serif text-[#2B2523] tracking-tight mb-2">Cấu hình Quy tắc Cảnh báo</h1>
-                    <p className="text-sm font-medium tracking-wide uppercase text-[#2B2523] opacity-60">
-                        Quản lý hệ thống phân loại sự cố AI
-                    </p>
+                <header className="mb-12 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-4xl font-serif text-[#2B2523] tracking-tight mb-2">Cấu hình Quy tắc Cảnh báo</h1>
+                        <p className="text-sm font-medium tracking-wide uppercase text-[#2B2523] opacity-60">
+                            Quản lý hệ thống phân loại sự cố AI
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <img src={logoAsset} alt="PetHome Logo" className="w-12 h-12 object-cover rounded-full shadow-diffused border border-[#930500]/20" />
+                        <span className="font-serif-editorial text-2xl font-bold text-[#2B2523]">PetHome</span>
+                    </div>
                 </header>
 
                 <form onSubmit={handleSubmit} className="bg-white/40 backdrop-blur-md rounded-[32px] p-8 md:p-12 shadow-[0_24px_50px_rgba(147,5,0,0.04)] border border-[#EFE7D3]">

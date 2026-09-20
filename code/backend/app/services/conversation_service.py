@@ -202,3 +202,50 @@ class ConversationService:
             message="Phiên trò chuyện đã được kết thúc thành công.",
             mode="CLOSED"
         )
+
+    @staticmethod
+    def delete_conversation(db: Session, conversation_id: UUID, customer_id: UUID) -> dict:
+        """
+        Xóa cuộc hội thoại và tự động vô hiệu hóa các Ticket liên quan (status = 'CLOSED') (Use Case 1.4).
+        """
+        conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+        if not conv:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Không tìm thấy phiên trò chuyện yêu cầu."
+            )
+            
+        if conv.customer_id != customer_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Bạn không có quyền xóa phiên trò chuyện này."
+            )
+            
+        # 1. Vô hiệu hóa các Ticket liên quan (status -> CLOSED) và xóa các Ticket đó
+        from app.models.ticket import Ticket
+        tickets = db.query(Ticket).filter(Ticket.conversation_id == conversation_id).all()
+        for t in tickets:
+            t.status = "CLOSED"
+            t.resolved_at = datetime.now(timezone.utc)
+            if t.ai_metadata and isinstance(t.ai_metadata, dict):
+                t.ai_metadata["closure_reason"] = "Phiên hội thoại đã bị khách hàng xóa"
+            else:
+                t.ai_metadata = {"closure_reason": "Phiên hội thoại đã bị khách hàng xóa"}
+        
+        db.flush()
+        # Xóa các tickets thuộc phiên chat để không vi phạm NotNullViolation khi xóa conversation
+        db.query(Ticket).filter(Ticket.conversation_id == conversation_id).delete(synchronize_session=False)
+
+        # 2. Xóa các tin nhắn thuộc phiên hội thoại
+        db.query(Message).filter(Message.conversation_id == conversation_id).delete(synchronize_session=False)
+
+        # 3. Xóa bản ghi Conversation
+        db.delete(conv)
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": "Đã xóa phiên trò chuyện và vô hiệu hóa phiếu hỗ trợ liên quan.",
+            "deleted_id": str(conversation_id)
+        }
+

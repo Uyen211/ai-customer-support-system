@@ -2,6 +2,8 @@ import React from 'react';
 import { Bot, ShieldCheck, Truck, Sparkles, MessageCircle, ArrowRight, Heart, PackageCheck, Award, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 
+import logoAsset from '../../assets/logo.png';
+
 export function LandingPage({ onNavigate }) {
   const handleStartChat = () => {
     onNavigate('chat');
@@ -21,9 +23,7 @@ export function LandingPage({ onNavigate }) {
       <header className="sticky top-0 z-40 bg-[#FFF8E7]/90 backdrop-blur-md border-b border-[#EFE7D3] transition-all">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('landing')}>
-            <div className="w-10 h-10 rounded-full bg-[#930500] text-[#FFF8E7] flex items-center justify-center font-serif-editorial text-xl shadow-diffused-sm">
-              🐾
-            </div>
+            <img src={logoAsset} alt="PetHome Logo" className="w-12 h-12 object-cover rounded-full shadow-diffused-sm border border-[#930500]/20" />
             <div>
               <span className="font-serif-editorial text-2xl font-bold tracking-tight text-[#2B2523]">PetHome</span>
               <span className="text-[10px] block uppercase tracking-widest text-[#930500] font-semibold -mt-1">Organic & AI Care</span>

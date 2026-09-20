@@ -39,6 +39,10 @@ class CitationItem(BaseModel):
     document_name: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
     content_snippet: str
+    section_title: Optional[str] = None
+    page_number: Optional[int] = None
+    parent_content: Optional[str] = None
+
 
 class SubQueryResult(BaseModel):
     sub_query_id: int

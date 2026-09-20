@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, MessageSquare, LogOut, Home, ArrowLeft, Bot, RefreshCw } from 'lucide-react';
+import { Plus, Search, LogOut, Home, Bot, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useSSEChat } from '../../hooks/useSSEChat';
 import { chatService } from '../../services/chatService';
 import { ChatWindow } from '../../components/chat/ChatWindow';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
+import { Modal } from '../../components/common/Modal';
 import { formatTimeAgo } from '../../utils/formatters';
+import logoImg from '../../assets/logo.png';
 
 export function ChatPage({ onNavigate }) {
   const { user, logout } = useAuth();
@@ -21,6 +23,10 @@ export function ChatPage({ onNavigate }) {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Modal Xóa
+  const [targetDeleteId, setTargetDeleteId] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Load conversations on mount
   const fetchConversations = useCallback(async () => {
@@ -44,7 +50,11 @@ export function ChatPage({ onNavigate }) {
 
   // Fetch detail and messages when activeConvId changes
   useEffect(() => {
-    if (!activeConvId) return;
+    if (!activeConvId) {
+      setActiveConversation(null);
+      setMessages([]);
+      return;
+    }
 
     async function loadConvData() {
       setIsLoadingMessages(true);
@@ -148,6 +158,37 @@ export function ChatPage({ onNavigate }) {
     }
   };
 
+  // Delete Conversation Handlers
+  const promptDeleteConversation = (convId, e) => {
+    e?.stopPropagation();
+    setTargetDeleteId(convId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteConversation = async () => {
+    if (!targetDeleteId) return;
+    try {
+      await chatService.deleteConversation(targetDeleteId);
+      const updatedList = conversations.filter((c) => c.id !== targetDeleteId);
+      setConversations(updatedList);
+
+      if (activeConvId === targetDeleteId) {
+        if (updatedList.length > 0) {
+          setActiveConvId(updatedList[0].id);
+        } else {
+          setActiveConvId(null);
+          setActiveConversation(null);
+          setMessages([]);
+        }
+      }
+    } catch (err) {
+      console.error('Lỗi xóa phiên trò chuyện:', err);
+    } finally {
+      setIsDeleteModalOpen(false);
+      setTargetDeleteId(null);
+    }
+  };
+
   // Filtered Conversations
   const filteredConversations = conversations.filter((c) => {
     if (!searchQuery) return true;
@@ -166,12 +207,13 @@ export function ChatPage({ onNavigate }) {
         <div className="flex items-center gap-4">
           <button
             onClick={() => onNavigate('landing')}
-            className="p-2 rounded-full hover:bg-[#EFE7D3] text-[#2B2523] transition-colors"
+            className="p-2 rounded-full hover:bg-[#EFE7D3] text-[#2B2523] transition-colors cursor-pointer"
             title="Về Trang Chủ"
           >
             <Home className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <img src={logoImg} alt="PetHome Logo" className="w-10 h-10 object-cover rounded-full shadow-diffused-sm border border-[#930500]/20" />
             <span className="font-serif-editorial text-2xl font-bold text-[#2B2523]">PetHome</span>
             <span className="text-xs uppercase tracking-wider text-[#930500] font-semibold">CSKH AI Workspace</span>
           </div>
@@ -242,7 +284,7 @@ export function ChatPage({ onNavigate }) {
                   <div
                     key={c.id}
                     onClick={() => setActiveConvId(c.id)}
-                    className={`p-3.5 rounded-2xl cursor-pointer transition-all duration-300 border ${
+                    className={`group p-3.5 rounded-2xl cursor-pointer transition-all duration-300 border relative ${
                       isActive
                         ? 'bg-[#95BBEA]/30 border-[#95BBEA] shadow-diffused-sm'
                         : 'bg-[#FFF8E7] hover:bg-[#EFE7D3]/60 border-[#EFE7D3]'
@@ -250,12 +292,21 @@ export function ChatPage({ onNavigate }) {
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <Badge variant={c.mode || 'BOT'}>{c.mode || 'BOT'}</Badge>
-                      <span className="text-[10px] text-[#2B2523]/50">
-                        {formatTimeAgo(c.last_message_at || c.updated_at)}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-[#2B2523]/50">
+                          {formatTimeAgo(c.last_message_at || c.updated_at)}
+                        </span>
+                        <button
+                          onClick={(e) => promptDeleteConversation(c.id, e)}
+                          className="p-1 rounded-full text-[#2B2523]/40 hover:text-[#930500] hover:bg-[#930500]/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                          title="Xóa cuộc trò chuyện này"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
-                    <p className="text-xs font-semibold text-[#2B2523] truncate">
+                    <p className="text-xs font-semibold text-[#2B2523] truncate pr-6">
                       {c.last_message_snippet || 'Trò chuyện mới cùng AI Bot'}
                     </p>
                     <p className="text-[10px] text-[#2B2523]/50 mt-1">
@@ -283,6 +334,7 @@ export function ChatPage({ onNavigate }) {
               onSendMessage={handleSendUserMessage}
               onStopStream={stopStream}
               onCloseConversation={handleCloseConversation}
+              onDeleteConversation={() => promptDeleteConversation(activeConvId)}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center bg-[#FFF8E7] rounded-3xl border border-[#EFE7D3] p-8 text-center">
@@ -299,6 +351,34 @@ export function ChatPage({ onNavigate }) {
         </main>
 
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="🗑️ Xác Nhận Xóa Cuộc Trò Chuyện"
+        className="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-[#2B2523] leading-relaxed">
+            Bạn có chắc chắn muốn xóa cuộc trò chuyện này? Toàn bộ tin nhắn và phiếu hỗ trợ nhân viên liên quan (nếu có) sẽ bị xóa hoặc vô hiệu hóa.
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button variant="ghost" size="sm" onClick={() => setIsDeleteModalOpen(false)}>
+              Hủy bỏ
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={confirmDeleteConversation}
+              className="bg-[#930500] text-white hover:bg-[#7a0400]"
+            >
+              Xác nhận xóa
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   );
 }
