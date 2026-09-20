@@ -4,11 +4,13 @@ import { useAuth } from './hooks/useAuth';
 import { LandingPage } from './pages/customer/LandingPage';
 import { CustomerLogin } from './pages/auth/CustomerLogin';
 import { CustomerRegister } from './pages/auth/CustomerRegister';
+import { StaffLogin } from './pages/auth/StaffLogin';
 import { ChatPage } from './pages/customer/ChatPage';
+import { StaffConsole } from './pages/admin/StaffConsole';
 import AlertConfigPage from './pages/admin/AlertConfigPage';
 
 function AppContent() {
-  const { isLoggedIn, loading } = useAuth();
+  const { isLoggedIn, loading, accountType } = useAuth();
   const [currentPage, setCurrentPage] = useState('landing');
 
   const handleNavigate = (page) => {
@@ -40,10 +42,24 @@ function AppContent() {
     return <CustomerRegister onNavigate={handleNavigate} />;
   }
 
+  if (currentPage === 'staff-login') {
+    return <StaffLogin onNavigate={handleNavigate} />;
+  }
+
+  if (currentPage === 'staff-console') {
+    if (!isLoggedIn || accountType !== 'STAFF') {
+      return <StaffLogin onNavigate={handleNavigate} />;
+    }
+    return <StaffConsole onNavigate={handleNavigate} />;
+  }
+
   if (currentPage === 'chat') {
     // If not logged in, show login page first
     if (!isLoggedIn) {
       return <CustomerLogin onNavigate={handleNavigate} />;
+    }
+    if (accountType === 'STAFF') {
+      return <StaffConsole onNavigate={handleNavigate} />;
     }
     return <ChatPage onNavigate={handleNavigate} />;
   }

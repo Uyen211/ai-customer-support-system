@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, ArrowLeft, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, AlertTriangle, ShieldAlert, BriefcaseBusiness } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { authService } from '../../services/authService';
@@ -66,7 +66,7 @@ export function CustomerLogin({ onNavigate }) {
         setIsLocked(true);
         setApiError('Tài khoản đã bị tạm khóa 15 phút do nhập sai mật khẩu quá 5 lần liên tiếp.');
       } else if (status === 401) {
-        setApiError('Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.');
+        setApiError(detail || 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.');
       } else {
         setApiError(detail);
       }
@@ -168,6 +168,16 @@ export function CustomerLogin({ onNavigate }) {
                 Đăng ký ngay
               </button>
             </p>
+          </div>
+
+          <div className="mt-4">
+            <button
+              onClick={() => onNavigate('staff-login')}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-[#EFE7D3] bg-white/40 px-4 py-3 text-xs font-semibold text-[#2B2523]/80 hover:border-[#930500]/40 hover:text-[#930500] transition-colors"
+            >
+              <BriefcaseBusiness className="w-4 h-4" />
+              Là nhân viên PetHome? Đăng nhập Cổng Nhân Viên
+            </button>
           </div>
 
         </div>
