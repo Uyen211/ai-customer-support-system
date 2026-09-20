@@ -5,6 +5,8 @@ import { Input } from '../../components/common/Input';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../hooks/useAuth';
 
+import logoAsset from '../../assets/logo.png';
+
 export function CustomerLogin({ onNavigate }) {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
@@ -89,9 +91,7 @@ export function CustomerLogin({ onNavigate }) {
         <div className="bg-[#FFF8E7] rounded-3xl p-8 sm:p-10 border border-[#EFE7D3] shadow-editorial">
           
           <div className="text-center mb-8">
-            <div className="w-12 h-12 rounded-full bg-[#930500] text-[#FFF8E7] flex items-center justify-center font-serif-editorial text-2xl mx-auto mb-3">
-              🐾
-            </div>
+            <img src={logoAsset} alt="PetHome Logo" className="w-16 h-16 rounded-full object-cover mx-auto mb-3 shadow-diffused border border-[#930500]/20" />
             <h2 className="font-serif-editorial text-3xl font-bold text-[#2B2523]">Đăng Nhập Khách Hàng</h2>
             <p className="text-xs text-[#2B2523]/70 mt-1 font-light">
               Chào mừng bạn trở lại với hệ thống hỗ trợ PetHome.

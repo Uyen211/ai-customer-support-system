@@ -16,6 +16,7 @@ export function ChatWindow({
   onSendMessage,
   onStopStream,
   onCloseConversation,
+  onDeleteConversation,
 }) {
   const [inputText, setInputText] = useState('');
 
@@ -64,18 +65,33 @@ export function ChatWindow({
           </div>
         </div>
 
-        {/* Action Button: End Conversation */}
-        {!isClosed && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCloseConversation}
-            className="text-xs text-[#930500] hover:bg-[#930500]/10"
-          >
-            Đóng Phiên Hỗ Trợ
-          </Button>
-        )}
+        {/* Action Buttons: Delete & End Conversation */}
+        <div className="flex items-center gap-2">
+          {onDeleteConversation && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDeleteConversation}
+              className="text-xs text-[#930500] hover:bg-[#930500]/10"
+              title="Xóa cuộc trò chuyện này"
+            >
+              Xóa Chat
+            </Button>
+          )}
+
+          {!isClosed && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCloseConversation}
+              className="text-xs text-[#2B2523]/70 hover:bg-[#EFE7D3]"
+            >
+              Đóng Phiên Hỗ Trợ
+            </Button>
+          )}
+        </div>
       </div>
+
 
       {/* 2. Mode Warning Banners */}
       {isWaitingHuman && (

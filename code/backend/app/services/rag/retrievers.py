@@ -203,14 +203,20 @@ class VectorKnowledgeRetriever:
 
             for row in results:
                 chunk_id, doc_name, content, meta, sim = row
+                meta_dict = meta if isinstance(meta, dict) else {}
                 content_blocks.append(f"[Tài liệu: {doc_name}]\n{content}")
+                
                 citations.append(
                     CitationItem(
-                        document_name=doc_name or "Tài liệu PetHome",
-                        metadata=meta if isinstance(meta, dict) else {},
-                        content_snippet=content[:200] + "..." if len(content) > 200 else content
+                        document_name=doc_name or meta_dict.get("title") or "Tài liệu PetHome",
+                        metadata=meta_dict,
+                        content_snippet=content[:200] + "..." if len(content) > 200 else content,
+                        section_title=meta_dict.get("section") or meta_dict.get("section_title") or meta_dict.get("title"),
+                        page_number=meta_dict.get("page_number"),
+                        parent_content=meta_dict.get("parent_content") or content
                     )
                 )
+
 
             merged_text = "\n\n".join(content_blocks)
 

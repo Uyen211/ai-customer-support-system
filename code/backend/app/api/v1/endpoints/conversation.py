@@ -117,3 +117,23 @@ def close_conversation(
         conversation_id=conversation_id,
         customer_id=current_customer.id
     )
+
+@router.delete(
+    "/{conversation_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Xóa cuộc trò chuyện & vô hiệu hóa Ticket liên quan (Use Case 1.4)"
+)
+def delete_conversation(
+    conversation_id: UUID,
+    current_customer: Customer = Depends(get_current_customer),
+    db: Session = Depends(get_db)
+):
+    """
+    Xóa vĩnh viễn cuộc trò chuyện và lịch sử tin nhắn, đồng thời vô hiệu hóa tất cả Ticket liên quan.
+    """
+    return ConversationService.delete_conversation(
+        db=db,
+        conversation_id=conversation_id,
+        customer_id=current_customer.id
+    )
+

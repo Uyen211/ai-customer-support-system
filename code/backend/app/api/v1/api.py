@@ -4,6 +4,7 @@ from app.api.v1.endpoints.customer_auth import router as customer_auth_router
 from app.api.v1.endpoints.conversation import router as conversation_router
 from app.api.v1.endpoints.staff_auth import router as staff_auth_router
 from app.api.v1.endpoints.staff import admin_router as staff_admin_router, agent_router as agent_router
+from app.api.v1.endpoints.config import router as config_router
 
 api_router = APIRouter()
 
@@ -20,3 +21,5 @@ api_router.include_router(chat_router)
 api_router.include_router(staff_auth_router)
 api_router.include_router(staff_admin_router)
 api_router.include_router(agent_router)
+# 4. Đăng ký Router Cấu hình Hệ thống (Use Case 2.3)
+api_router.include_router(config_router, prefix="/configs", tags=["configs"])
