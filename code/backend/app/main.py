@@ -1,3 +1,6 @@
+import asyncio
+from app.api.v1.endpoints.ws_alerts import listen_to_redis_alerts
+from app.workers.ticket_dispatcher_worker import start_ticket_dispatcher_worker
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -38,3 +41,8 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(listen_to_redis_alerts())
+    asyncio.create_task(start_ticket_dispatcher_worker())
