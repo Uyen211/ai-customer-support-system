@@ -15,6 +15,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.test_customer_auth import TestCustomerAuth
 from tests.test_conversation import TestConversationManagement
 from tests.test_staff_management import TestStaffAuth, TestStaffManagement
+from tests.test_agent_conversations import TestAgentConversations
+from tests.test_canned_responses import TestCannedResponses
 
 # Lưu ý: test_rag_pipeline.py phụ thuộc pytest (chưa có trong requirements.txt).
 # Import có điều kiện nhằm không chặn toàn bộ Test Suite nếu thiếu pytest.
@@ -42,7 +44,13 @@ def suite():
     # 4. Khối 3 - Use Case 3.1 & 3.2: Tài khoản nhân viên & trạng thái làm việc
     test_suite.addTest(unittest.makeSuite(TestStaffAuth))
     test_suite.addTest(unittest.makeSuite(TestStaffManagement))
-    
+
+    # 5. Khối 3 - Use Case 3.3: Hàng đợi & tiếp quản cuộc trò chuyện
+    test_suite.addTest(unittest.makeSuite(TestAgentConversations))
+
+    # 6. Khối 3 - Use Case 3.4: Mẫu phản hồi nhanh
+    test_suite.addTest(unittest.makeSuite(TestCannedResponses))
+
     return test_suite
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from app.core.security import decode_access_token
 from app.core.redis import redis_client
+from app.workers.presence_worker import register_staff, touch_staff, drop_staff
 
 router = APIRouter(prefix="/ws", tags=["WebSockets"])
 logger = logging.getLogger(__name__)
@@ -21,15 +22,30 @@ async def websocket_alerts(websocket: WebSocket, token: str = Query(...)):
 
     await websocket.accept()
     active_alert_connections.append(websocket)
+    staff_id = payload.get("sub") or payload.get("user_id")
+    if staff_id:
+        register_staff(staff_id)
     logger.info(f"Staff connected to /ws/alerts. Total: {len(active_alert_connections)}")
 
     try:
-        # Giữ connection mở bằng vòng lặp nhận tin nhắn (nếu client gửi)
+        # Giữ connection mở bằng vòng lặp nhận tin nhắn (nếu client gửi) + heartbeat
         while True:
-            await websocket.receive_text()
+            if staff_id:
+                touch_staff(staff_id)
+            try:
+                await asyncio.wait_for(websocket.receive_text(), timeout=1.0)
+            except asyncio.TimeoutError:
+                continue
     except WebSocketDisconnect:
         active_alert_connections.remove(websocket)
+        if staff_id:
+            drop_staff(staff_id)
         logger.info("Staff disconnected from /ws/alerts")
+    except Exception as e:
+        active_alert_connections.remove(websocket)
+        if staff_id:
+            drop_staff(staff_id)
+        logger.error(f"Lỗi WS /ws/alerts: {e}")
 
 # Background task để lắng nghe Redis pub/sub và forward tới các WebSocket đang mở
 async def listen_to_redis_alerts():

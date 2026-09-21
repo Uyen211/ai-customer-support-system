@@ -7,6 +7,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { staffService } from '../../services/staffService';
 import { ticketService } from '../../services/ticketService';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import { getWsBaseUrl } from '../../utils/constants';
+import { AgentLiveChat } from '../../components/agent/AgentLiveChat';
 
 const STATUS_OPTIONS = [
   { value: 'ONLINE', label: 'Trực tuyến', tone: 'bg-emerald-500', message: 'Bạn đã sẵn sàng tiếp nhận hỗ trợ!' },
@@ -15,6 +17,7 @@ const STATUS_OPTIONS = [
 ];
 
 const ROLE_OPTIONS = ['AGENT', 'MANAGER', 'ADMIN'];
+const SKILL_OPTIONS = ['Đổi trả', 'Giao hàng', 'Tư vấn sản phẩm', 'Khiếu nại'];
 
 function statusLabel(status) {
   return STATUS_OPTIONS.find((item) => item.value === status)?.label || status;
@@ -36,7 +39,7 @@ export function StaffConsole({ onNavigate }) {
   const [isAssigning, setIsAssigning] = useState(false);
 
   const [formData, setFormData] = useState({
-    full_name: '', email: '', phone: '', role: 'AGENT', skills: '', password: '',
+    full_name: '', email: '', phone: '', role: 'AGENT', skills: [], password: '', confirm_password: '',
   });
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState(null);
@@ -46,9 +49,8 @@ export function StaffConsole({ onNavigate }) {
 
   const canManageStaff = currentUser && ['ADMIN', 'MANAGER'].includes(currentUser.role);
 
-  // Connect to global alerts WebSocket
-  // Note: Backend port is assumed 8000
-  const { popMessage, isConnected } = useWebSocket('ws://127.0.0.1:8000/api/v1/ws/alerts');
+  // Connect to global alerts WebSocket (URL theo env VITE_API_BASE_URL để khớp port backend docker)
+  const { popMessage, isConnected } = useWebSocket(`${getWsBaseUrl()}/ws/alerts`);
 
   useEffect(() => {
     setCurrentUser(user);
@@ -138,6 +140,12 @@ export function StaffConsole({ onNavigate }) {
     if (!formData.full_name.trim()) nextErrors.full_name = 'Vui lòng nhập họ và tên';
     if (!formData.email.trim()) nextErrors.email = 'Vui lòng nhập email';
     if (!formData.password) nextErrors.password = 'Vui lòng nhập mật khẩu';
+    else if (formData.password.length < 8 || !/[A-Za-z]/.test(formData.password) || !/\d/.test(formData.password)) {
+      nextErrors.password = 'Mật khẩu phải tối thiểu 8 ký tự, gồm cả chữ và số';
+    }
+    if (formData.confirm_password !== formData.password) nextErrors.confirm_password = 'Mật khẩu xác nhận không trùng khớp';
+    if (formData.phone && !/^0\d{9}$/.test(formData.phone.trim())) nextErrors.phone = 'Số điện thoại phải gồm 10 chữ số bắt đầu bằng 0';
+    if (formData.role === 'AGENT' && formData.skills.length === 0) nextErrors.skills = 'Tài khoản Agent bắt buộc chọn ít nhất 1 kỹ năng xử lý';
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -145,6 +153,15 @@ export function StaffConsole({ onNavigate }) {
   const handleFormChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: null }));
+  };
+
+  const handleSkillToggle = (skill) => {
+    setFormData((prev) => {
+      const has = prev.skills.includes(skill);
+      return { ...prev, skills: has ? prev.skills.filter((s) => s !== skill) : [...prev.skills, skill] };
+    });
+    setErrors((prev) => ({ ...prev, skills: null }));
   };
 
   const handleCreateStaff = async (event) => {
@@ -152,12 +169,19 @@ export function StaffConsole({ onNavigate }) {
     if (!validateStaffForm()) return;
     setIsCreating(true);
     try {
-      await staffService.createStaff({ ...formData, skills: formData.skills.split(',').filter(Boolean) });
-      setFormData({ full_name: '', email: '', phone: '', role: 'AGENT', skills: '', password: '' });
+      await staffService.createStaff({
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone || null,
+        role: formData.role,
+        skills: formData.skills,
+        password: formData.password,
+      });
+      setFormData({ full_name: '', email: '', phone: '', role: 'AGENT', skills: [], password: '', confirm_password: '' });
       showNotice('success', 'Tạo tài khoản nhân viên thành công!');
       loadStaffList();
     } catch (error) {
-      showNotice('error', 'Tạo tài khoản thất bại.');
+      showNotice('error', error.response?.data?.detail || 'Tạo tài khoản thất bại.');
     } finally {
       setIsCreating(false);
     }
@@ -265,7 +289,7 @@ export function StaffConsole({ onNavigate }) {
             </div>
           )}
 
-          {canManageStaff ? (
+          {canManageStaff && (
             <>
               {/* Existing Admin Management Tools */}
               <div className="rounded-3xl border border-[#EFE7D3] bg-white shadow-editorial p-6">
@@ -286,7 +310,36 @@ export function StaffConsole({ onNavigate }) {
                       {ROLE_OPTIONS.map((role) => <option key={role} value={role}>{role}</option>)}
                     </select>
                   </div>
+                  <Input label="Số điện thoại (tùy chọn)" name="phone" value={formData.phone} onChange={handleFormChange} placeholder="0912345678" error={errors.phone} />
                   <Input label="Mật khẩu" name="password" type="password" value={formData.password} onChange={handleFormChange} error={errors.password} />
+                  <Input label="Xác nhận mật khẩu" name="confirm_password" type="password" value={formData.confirm_password} onChange={handleFormChange} error={errors.confirm_password} />
+                  {formData.role === 'AGENT' && (
+                    <div className="md:col-span-2">
+                      <label className="text-xs uppercase tracking-wider font-semibold text-[#2B2523]/80 block mb-1.5">
+                        Kỹ năng chuyên môn <span className="text-[#930500]">*</span>
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {SKILL_OPTIONS.map((skill) => {
+                          const active = formData.skills.includes(skill);
+                          return (
+                            <button
+                              key={skill}
+                              type="button"
+                              onClick={() => handleSkillToggle(skill)}
+                              className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+                                active
+                                  ? 'bg-[#930500] text-white border-[#930500] shadow-md shadow-[#930500]/20'
+                                  : 'bg-white text-[#2B2523] border-[#EFE7D3] hover:border-[#930500]/40'
+                              }`}
+                            >
+                              {skill}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {errors.skills && <p className="text-xs text-[#930500] mt-1.5">{errors.skills}</p>}
+                    </div>
+                  )}
                   <div className="md:col-span-2">
                     <Button type="submit" variant="primary" isLoading={isCreating}>Tạo tài khoản</Button>
                   </div>
@@ -313,8 +366,12 @@ export function StaffConsole({ onNavigate }) {
                 </div>
               </div>
             </>
-          ) : (
-            <div className="space-y-6">
+          )}
+
+          <div className="space-y-6">
+            {/* UC 3.3: Hàng đợi hội thoại trực tuyến + tiếp quản + chat realtime */}
+            <AgentLiveChat currentUser={currentUser} />
+
               {/* Agent Active Tickets Workspace */}
               <div className="rounded-3xl border border-[#EFE7D3] bg-white shadow-editorial p-6">
                 <div className="flex items-center gap-3 mb-5">
@@ -349,8 +406,7 @@ export function StaffConsole({ onNavigate }) {
                   </div>
                 )}
               </div>
-            </div>
-          )}
+          </div>
         </section>
       </main>
 

@@ -141,6 +141,19 @@ class RAGPipelineService:
                     if is_new:
                         redis_client.lpush("queue:tickets:pending", str(ticket.id))
                 db.commit()
+
+                # Thông báo hàng đợi thời gian thực khi xuất hiện cờ đỏ (UC 3.3)
+                if conv.is_flagged:
+                    try:
+                        redis_client.publish(
+                            "channel:ws_alerts",
+                            json.dumps({
+                                "event": "QUEUE_UPDATED",
+                                "payload": {"conversation_id": conversation_id, "mode": conv.mode, "is_flagged": True}
+                            }, ensure_ascii=False)
+                        )
+                    except Exception:
+                        pass
         except Exception as e:
             logger.error(f"Lỗi cập nhật cờ đỏ và ticket: {e}")
             db.rollback()
@@ -162,7 +175,19 @@ class RAGPipelineService:
                 db.rollback()
             finally:
                 db.close()
-            
+
+            # Thông báo hàng đợi thời gian thực cho console nhân viên (UC 3.3)
+            try:
+                redis_client.publish(
+                    "channel:ws_alerts",
+                    json.dumps({
+                        "event": "QUEUE_UPDATED",
+                        "payload": {"conversation_id": conversation_id, "mode": "WAITING_HUMAN"}
+                    }, ensure_ascii=False)
+                )
+            except Exception:
+                pass
+
             # Tự stream thẳng qua SSE mà không gọi RAG/Synthesizer
             yield f"event: token\ndata: {json.dumps({'token': apology_msg}, ensure_ascii=False)}\n\n"
             self._save_bot_message_to_db(conversation_id, apology_msg, [])

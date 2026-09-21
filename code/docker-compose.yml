@@ -1,4 +1,23 @@
 services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: cs_postgres
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   redis:
     image: redis:7-alpine
     container_name: cs_redis
@@ -20,16 +39,18 @@ services:
     container_name: cs_backend
     restart: always
     ports:
-      - "8000:8000"
+      - "8001:8000"
     volumes:
       - ./backend:/app
       - hf_cache:/root/.cache/huggingface
     env_file:
-      - .env
+      - ../../.env
     environment:
       - REDIS_URL=redis://redis:6379/0
       - HF_HOME=/root/.cache/huggingface
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
 
@@ -45,10 +66,11 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_API_BASE_URL=http://localhost:8001
     depends_on:
       - backend
 
 volumes:
+  postgres_data:
   redis_data:
   hf_cache:

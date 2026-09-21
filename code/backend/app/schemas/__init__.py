@@ -13,13 +13,21 @@ from app.schemas.customer import (
     CustomerResponse,
     TokenResponse
 )
+from app.schemas.canned_response import (
+    CannedResponseCreate,
+    CannedResponseUpdate,
+    CannedResponseResponse,
+)
 from app.schemas.conversation import (
     MessageItemSchema,
     ConversationListItemSchema,
     ConversationDetailSchema,
     ConversationCreateResponse,
     ConversationMessagesListResponse,
-    ConversationCloseResponse
+    ConversationCloseResponse,
+    ConversationQueueItemSchema,
+    AgentSendMessageRequest,
+    AgentSendMessageResponse
 )
 
 __all__ = [
@@ -39,5 +47,11 @@ __all__ = [
     "ConversationDetailSchema",
     "ConversationCreateResponse",
     "ConversationMessagesListResponse",
-    "ConversationCloseResponse"
+    "ConversationCloseResponse",
+    "ConversationQueueItemSchema",
+    "AgentSendMessageRequest",
+    "AgentSendMessageResponse",
+    "CannedResponseCreate",
+    "CannedResponseUpdate",
+    "CannedResponseResponse"
 ]
