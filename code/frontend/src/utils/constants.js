@@ -1,5 +1,11 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
+// Base URL cho WebSocket (đổi http/https -> ws/wss), theo đúng env như REST API
+export function getWsBaseUrl() {
+  const base = API_BASE_URL.replace(/\/+$/, '');
+  return base.replace(/^http/, 'ws');
+}
+
 export const MODE = {
   BOT: 'BOT',
   HUMAN: 'HUMAN',

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Any, Dict
 from datetime import datetime
 from uuid import UUID
@@ -60,3 +60,28 @@ class ConversationCloseResponse(BaseModel):
     status: str = "success"
     message: str = "Phiên trò chuyện đã được kết thúc thành công."
     mode: str = "CLOSED"
+
+class ConversationQueueItemSchema(BaseModel):
+    id: UUID
+    customer_id: UUID
+    customer_name: Optional[str] = None
+    assigned_agent_id: Optional[UUID] = None
+    assigned_agent_name: Optional[str] = None
+    mode: str
+    is_flagged: bool
+    last_sentiment: Optional[str] = None
+    last_message_content: Optional[str] = None
+    last_message_time: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AgentSendMessageRequest(BaseModel):
+    content: str = Field(..., min_length=1, max_length=4000)
+    sender_type: str = "AGENT"
+
+class AgentSendMessageResponse(BaseModel):
+    ok: bool = True
+    message: MessageItemSchema

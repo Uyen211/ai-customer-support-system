@@ -1,6 +1,7 @@
 import asyncio
 from app.api.v1.endpoints.ws_alerts import listen_to_redis_alerts
 from app.workers.ticket_dispatcher_worker import start_ticket_dispatcher_worker
+from app.workers.presence_worker import start_presence_monitor
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -46,3 +47,4 @@ def health_check():
 async def startup_event():
     asyncio.create_task(listen_to_redis_alerts())
     asyncio.create_task(start_ticket_dispatcher_worker())
+    asyncio.create_task(start_presence_monitor())

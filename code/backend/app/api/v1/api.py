@@ -7,12 +7,21 @@ from app.api.v1.endpoints.staff import admin_router as staff_admin_router, agent
 from app.api.v1.endpoints.config import router as config_router
 from app.api.v1.endpoints.tickets import router as tickets_router
 from app.api.v1.endpoints.ws_alerts import router as ws_alerts_router
+from app.api.v1.endpoints.ws_chat import router as ws_chat_router
+from app.api.v1.endpoints.agent_conversations import router as agent_conversations_router
+from app.api.v1.endpoints.canned_responses import router as canned_responses_router
 
 api_router = APIRouter()
 
 # Đăng ký Router Tickets (Phân công công việc)
 api_router.include_router(tickets_router)
 api_router.include_router(ws_alerts_router)
+# UC 3.3: WS chat realtime (phòng chat khách hàng / nhân viên)
+api_router.include_router(ws_chat_router)
+# UC 3.3: Live Console nhân viên (hàng đợi + tiếp quản + WS chat realtime)
+api_router.include_router(agent_conversations_router)
+# UC 3.4: Mẫu phản hồi nhanh
+api_router.include_router(canned_responses_router)
 
 
 # 1. Đăng ký Router Xác thực Khách hàng (Use Case 1.1)

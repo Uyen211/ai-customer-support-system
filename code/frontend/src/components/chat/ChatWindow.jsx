@@ -10,6 +10,7 @@ export function ChatWindow({
   messages = [],
   isStreaming = false,
   streamedContent = '',
+  isHumanMode = false,
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
@@ -50,11 +51,11 @@ export function ChatWindow({
       <div className="px-6 py-4 border-b border-[#EFE7D3] bg-[#FFF8E7] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-[#95BBEA] text-[#1F242B] flex items-center justify-center font-bold text-sm">
-            <Bot className="w-5 h-5" />
+            {isHumanMode ? <UserCheck className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
           </div>
           <div>
             <h3 className="font-serif-editorial text-lg font-bold text-[#2B2523] flex items-center gap-2">
-              Trợ Lý AI PetHome 24/7
+              {isHumanMode ? 'Nhân Viên Tư Vấn PetHome' : 'Trợ Lý AI PetHome 24/7'}
             </h3>
             <div className="flex items-center gap-2 mt-0.5">
               <Badge variant={mode}>{mode}</Badge>
@@ -101,6 +102,13 @@ export function ChatWindow({
         </div>
       )}
 
+      {isHumanMode && !isWaitingHuman && (
+        <div className="px-6 py-2.5 bg-[#DCFCE7] border-b border-[#BBF7D0] text-xs text-[#166534] flex items-center gap-2 animate-fade-in font-medium">
+          <UserCheck className="w-4 h-4 text-[#16A34A] shrink-0" />
+          <span>Nhân viên tư vấn đang trực tiếp phục vụ bạn. Tin nhắn được gửi theo thời gian thực.</span>
+        </div>
+      )}
+
       {isClosed && (
         <div className="px-6 py-2.5 bg-[#EFE7D3] border-b border-[#EFE7D3] text-xs text-[#78716C] flex items-center gap-2 animate-fade-in font-medium">
           <Lock className="w-4 h-4 shrink-0" />
@@ -118,8 +126,8 @@ export function ChatWindow({
         onLoadMore={onLoadMore}
       />
 
-      {/* 4. Suggestion Buttons (when list is short or just started) */}
-      {messages.length <= 2 && !isClosed && (
+      {/* 4. Suggestion Buttons (when list is short or just started) — chỉ ở chế độ Bot */}
+      {messages.length <= 2 && !isClosed && !isHumanMode && (
         <div className="px-6 pb-2">
           <SuggestionButtons onSelectSuggestion={handleSelectSuggestion} />
         </div>
@@ -137,7 +145,9 @@ export function ChatWindow({
             placeholder={
               isClosed
                 ? 'Phiên chat đã đóng...'
-                : 'Nhập câu hỏi cho Trợ lý AI (Ví dụ: Giá hạt Nutrience, chính sách đổi trả...)'
+                : isHumanMode
+                  ? 'Nhập tin nhắn gửi trực tiếp tới nhân viên tư vấn...'
+                  : 'Nhập câu hỏi cho Trợ lý AI (Ví dụ: Giá hạt Nutrience, chính sách đổi trả...)'
             }
             className="w-full bg-[#FFF8E7] text-[#2B2523] placeholder-[#2B2523]/40 border border-[#EFE7D3] focus:border-[#930500] rounded-2xl py-3 pl-4 pr-14 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#930500]/20 disabled:bg-[#EFE7D3]/50 disabled:cursor-not-allowed transition-all"
           />
@@ -164,7 +174,9 @@ export function ChatWindow({
           </div>
         </form>
         <p className="text-[11px] text-[#2B2523]/50 mt-2 text-center">
-          Nhấn Enter để gửi, Shift + Enter để xuống dòng. Trợ lý AI phản hồi tức thì với trích dẫn RAG.
+          {isHumanMode
+            ? 'Nhân viên tư vấn sẽ phản hồi tin nhắn của bạn theo thời gian thực.'
+            : 'Nhấn Enter để gửi, Shift + Enter để xuống dòng. Trợ lý AI phản hồi tức thì với trích dẫn RAG.'}
         </p>
       </div>
 

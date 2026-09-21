@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Search, LogOut, Home, Bot, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useSSEChat } from '../../hooks/useSSEChat';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import { chatService } from '../../services/chatService';
 import { ChatWindow } from '../../components/chat/ChatWindow';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { formatTimeAgo } from '../../utils/formatters';
+import { getWsBaseUrl } from '../../utils/constants';
 import logoImg from '../../assets/logo.png';
 
 export function ChatPage({ onNavigate }) {
@@ -23,6 +25,14 @@ export function ChatPage({ onNavigate }) {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Chế độ nhân viên: khách hàng chat trực tiếp qua WebSocket (UC 3.3)
+  const isHumanMode = activeConversation && ['HUMAN', 'WAITING_HUMAN', 'AGENT'].includes(activeConversation.mode);
+  const roomSocket = useWebSocket(
+    activeConvId && isHumanMode ? `${getWsBaseUrl()}/ws/chat/${activeConvId}` : null,
+    { autoReconnect: true }
+  );
+  const pendingSendRef = useRef([]);
 
   // Modal Xóa
   const [targetDeleteId, setTargetDeleteId] = useState(null);
@@ -103,9 +113,18 @@ export function ChatPage({ onNavigate }) {
     }
   };
 
-  // Send Message via SSE Stream
+  // Send Message: HUMAN mode -> WebSocket realtime; BOT mode -> SSE Stream
   const handleSendUserMessage = async (text) => {
     if (!activeConvId) return;
+
+    if (isHumanMode) {
+      pendingSendRef.current.push(text);
+      if (roomSocket.isConnected) {
+        const toSend = pendingSendRef.current.splice(0, pendingSendRef.current.length);
+        toSend.forEach((t) => roomSocket.send({ type: 'send_message', content: t }));
+      }
+      return;
+    }
 
     const tempUserMsg = {
       id: `temp-${Date.now()}`,
@@ -157,6 +176,45 @@ export function ChatPage({ onNavigate }) {
       console.error('Lỗi đóng phiên:', err);
     }
   };
+
+  // Flush tin nhắn chờ gửi khi WS kết nối lại (HUMAN mode)
+  useEffect(() => {
+    if (roomSocket.isConnected && pendingSendRef.current.length > 0) {
+      const toSend = pendingSendRef.current.splice(0, pendingSendRef.current.length);
+      toSend.forEach((t) => roomSocket.send({ type: 'send_message', content: t }));
+    }
+  }, [roomSocket.isConnected, activeConvId]);
+
+  // Xử lý sự kiện thời gian thực từ phòng chat (HUMAN mode / UC 3.3)
+  useEffect(() => {
+    const msg = roomSocket.lastMessage;
+    if (!msg) return;
+
+    if (msg.event === 'CHAT_MESSAGE' && msg.payload) {
+      setMessages((prev) => {
+        if (prev.find((m) => m.id === msg.payload.id)) return prev;
+        return [...prev, msg.payload];
+      });
+      fetchConversations();
+    } else if (msg.event === 'CHAT_MODE_CHANGED' && msg.payload) {
+      setActiveConversation((prev) => (prev ? { ...prev, mode: msg.payload.mode } : prev));
+      if (msg.payload.notice_message) {
+        setMessages((prev) =>
+          prev.find((m) => m.id === msg.payload.notice_message.id) ? prev : [...prev, msg.payload.notice_message]
+        );
+      }
+      fetchConversations();
+    } else if (msg.event === 'CONVERSATION_DELETED' && msg.payload) {
+      const deletedId = msg.payload.conversation_id || msg.payload.deleted_id;
+      setConversations((prev) => prev.filter((c) => c.id !== deletedId));
+      if (activeConvId === deletedId) {
+        setActiveConvId(null);
+        setActiveConversation(null);
+        setMessages([]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomSocket.lastMessage]);
 
   // Delete Conversation Handlers
   const promptDeleteConversation = (convId, e) => {
@@ -328,6 +386,7 @@ export function ChatPage({ onNavigate }) {
               messages={messages}
               isStreaming={isStreaming}
               streamedContent={streamedContent}
+              isHumanMode={isHumanMode}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={handleLoadMore}
