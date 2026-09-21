@@ -10,7 +10,8 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    // Dùng sessionStorage (riêng biệt cho từng tab) thay vì localStorage
+    const token = sessionStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,10 +31,10 @@ api.interceptors.response.use(
       if (!isLoggingOut) {
         isLoggingOut = true;
 
-        // Xóa toàn bộ thông tin đăng nhập
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('accountType');
+        // Xóa toàn bộ thông tin đăng nhập (sessionStorage cho tab hiện tại)
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        sessionStorage.removeItem('accountType');
 
         // Force reload trang để React khởi tạo lại AuthContext
         // với token = null → tự động hiển thị trang login

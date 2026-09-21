@@ -21,7 +21,7 @@ export function useSSEChat() {
       abortControllerRef.current = new AbortController();
 
       try {
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
         const response = await fetch(`${API_BASE_URL}/chat/stream`, {
           method: 'POST',
           headers: {

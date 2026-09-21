@@ -24,10 +24,10 @@ export function StaffConsole({ onNavigate }) {
   const { user, login, logout } = useAuth();
   const [currentUser, setCurrentUser] = useState(user);
   const [staffList, setStaffList] = useState([]);
-  
+
   // Agent Tickets State
   const [activeTickets, setActiveTickets] = useState([]);
-  
+
   // Admin Alert & Assign State
   const [redAlerts, setRedAlerts] = useState([]);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -45,7 +45,7 @@ export function StaffConsole({ onNavigate }) {
   const [isLoadingList, setIsLoadingList] = useState(false);
 
   const canManageStaff = currentUser && ['ADMIN', 'MANAGER'].includes(currentUser.role);
-  
+
   // Connect to global alerts WebSocket
   // Note: Backend port is assumed 8000
   const { popMessage, isConnected } = useWebSocket('ws://127.0.0.1:8000/api/v1/ws/alerts');
@@ -99,7 +99,7 @@ export function StaffConsole({ onNavigate }) {
     try {
       const updated = await staffService.updateStatus(status);
       setCurrentUser(updated);
-      login(localStorage.getItem('token'), updated, 'STAFF');
+      login(sessionStorage.getItem('token'), updated, 'STAFF');
       const option = STATUS_OPTIONS.find((item) => item.value === status);
       showNotice('success', `Đã chuyển sang trạng thái ${option.label}`);
       if (canManageStaff) loadStaffList();
@@ -133,7 +133,7 @@ export function StaffConsole({ onNavigate }) {
     }
   };
 
-  const validateStaffForm = () => { /* ... existing validation ... */ 
+  const validateStaffForm = () => { /* ... existing validation ... */
     const nextErrors = {};
     if (!formData.full_name.trim()) nextErrors.full_name = 'Vui lòng nhập họ và tên';
     if (!formData.email.trim()) nextErrors.email = 'Vui lòng nhập email';
@@ -236,7 +236,7 @@ export function StaffConsole({ onNavigate }) {
         </section>
 
         <section className="lg:col-span-8 space-y-6">
-          
+
           {/* Admin Red Alert Zone */}
           {canManageStaff && redAlerts.length > 0 && (
             <div className="rounded-3xl bg-[#930500] text-[#FFF8E7] p-6 shadow-2xl shadow-[#930500]/20 animate-fade-in border border-[#930500]">
@@ -245,15 +245,15 @@ export function StaffConsole({ onNavigate }) {
                 <h2 className="font-serif-editorial text-2xl font-bold">Cảnh Báo Đỏ (SLA Risk)</h2>
               </div>
               <p className="text-sm opacity-80 mb-5">Hệ thống phát hiện vé không có tư vấn viên tiếp nhận. Cần xử lý thủ công ngay!</p>
-              
+
               <div className="space-y-3">
                 {redAlerts.map(alert => (
                   <div key={alert.ticket_id} className="bg-black/20 rounded-2xl p-4 flex items-center justify-between">
                     <div>
                       <p className="font-semibold text-lg">{alert.category || 'Vé hỗ trợ chung'}</p>
-                      <p className="text-xs opacity-70 mt-1">Ticket ID: {alert.ticket_id.slice(0,8)}... | Không tìm thấy Agent có kỹ năng phù hợp.</p>
+                      <p className="text-xs opacity-70 mt-1">Ticket ID: {alert.ticket_id.slice(0, 8)}... | Không tìm thấy Agent có kỹ năng phù hợp.</p>
                     </div>
-                    <button 
+                    <button
                       onClick={() => handleOpenAssignModal(alert)}
                       className="px-4 py-2 bg-[#FFF8E7] text-[#930500] rounded-full text-sm font-bold hover:bg-white transition-all shadow-sm"
                     >
@@ -281,10 +281,10 @@ export function StaffConsole({ onNavigate }) {
                   <Input label="Họ và tên" name="full_name" value={formData.full_name} onChange={handleFormChange} error={errors.full_name} />
                   <Input label="Email nội bộ" name="email" type="email" value={formData.email} onChange={handleFormChange} error={errors.email} />
                   <div className="w-full flex flex-col gap-1.5">
-                     <label className="text-xs uppercase tracking-wider font-semibold text-[#2B2523]/80">Vai trò</label>
-                     <select name="role" value={formData.role} onChange={handleFormChange} className="w-full bg-[#FFF8E7] text-[#2B2523] border border-[#EFE7D3] rounded-2xl px-4 py-3 text-sm outline-none">
-                       {ROLE_OPTIONS.map((role) => <option key={role} value={role}>{role}</option>)}
-                     </select>
+                    <label className="text-xs uppercase tracking-wider font-semibold text-[#2B2523]/80">Vai trò</label>
+                    <select name="role" value={formData.role} onChange={handleFormChange} className="w-full bg-[#FFF8E7] text-[#2B2523] border border-[#EFE7D3] rounded-2xl px-4 py-3 text-sm outline-none">
+                      {ROLE_OPTIONS.map((role) => <option key={role} value={role}>{role}</option>)}
+                    </select>
                   </div>
                   <Input label="Mật khẩu" name="password" type="password" value={formData.password} onChange={handleFormChange} error={errors.password} />
                   <div className="md:col-span-2">
@@ -295,22 +295,22 @@ export function StaffConsole({ onNavigate }) {
 
               {/* Staff List */}
               <div className="rounded-3xl border border-[#EFE7D3] bg-white shadow-editorial p-6">
-                 {/* ... (Existing List Logic minimized for brevity but keeping styling) ... */}
-                 <div className="flex items-center justify-between mb-5">
-                    <h2 className="font-serif-editorial text-2xl font-bold">Danh sách nhân viên</h2>
-                    <Button variant="soft" size="sm" onClick={loadStaffList}>Làm mới</Button>
-                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {staffList.map(staff => (
-                      <article key={staff.id} className="rounded-2xl border border-[#EFE7D3] p-4 bg-[#FFF8E7]/50">
-                        <div className="flex justify-between items-start">
-                           <h3 className="font-semibold text-[#2B2523]">{staff.full_name}</h3>
-                           <Badge variant="outline">{staff.role}</Badge>
-                        </div>
-                        <p className="text-xs text-[#2B2523]/60 mt-1">{staff.email}</p>
-                      </article>
-                    ))}
-                 </div>
+                {/* ... (Existing List Logic minimized for brevity but keeping styling) ... */}
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-serif-editorial text-2xl font-bold">Danh sách nhân viên</h2>
+                  <Button variant="soft" size="sm" onClick={loadStaffList}>Làm mới</Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {staffList.map(staff => (
+                    <article key={staff.id} className="rounded-2xl border border-[#EFE7D3] p-4 bg-[#FFF8E7]/50">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-semibold text-[#2B2523]">{staff.full_name}</h3>
+                        <Badge variant="outline">{staff.role}</Badge>
+                      </div>
+                      <p className="text-xs text-[#2B2523]/60 mt-1">{staff.email}</p>
+                    </article>
+                  ))}
+                </div>
               </div>
             </>
           ) : (
@@ -360,14 +360,14 @@ export function StaffConsole({ onNavigate }) {
           <div className="bg-[#FFF8E7] w-full max-w-md rounded-[32px] p-8 shadow-2xl relative overflow-hidden">
             {/* Soft decorative blur */}
             <div className="absolute top-0 left-0 w-32 h-32 bg-[#930500]/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-            
+
             <h3 className="font-serif-editorial text-2xl font-bold mb-2">Phân công thủ công</h3>
             <p className="text-sm text-[#2B2523]/70 mb-6">Chọn một Agent trực tuyến để xử lý vé {selectedAlert?.category}</p>
-            
+
             <div className="space-y-4 mb-8">
               <label className="text-xs uppercase tracking-wider font-semibold text-[#2B2523]/80 block">Chọn Nhân viên (Agent)</label>
-              <select 
-                value={selectedAgentId} 
+              <select
+                value={selectedAgentId}
                 onChange={(e) => setSelectedAgentId(e.target.value)}
                 className="w-full bg-white text-[#2B2523] border border-[#EFE7D3] rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#930500]/20 transition-all"
               >
@@ -381,13 +381,13 @@ export function StaffConsole({ onNavigate }) {
             </div>
 
             <div className="flex items-center justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setIsAssignModalOpen(false)}
                 className="px-6 py-3 rounded-full text-sm font-semibold text-[#2B2523]/70 hover:bg-black/5 transition-colors"
               >
                 Hủy
               </button>
-              <button 
+              <button
                 onClick={handleManualAssign}
                 disabled={!selectedAgentId || isAssigning}
                 className="px-6 py-3 rounded-full bg-[#930500] text-white text-sm font-semibold shadow-md shadow-[#930500]/20 disabled:opacity-50 transition-all hover:bg-[#7a0400]"
