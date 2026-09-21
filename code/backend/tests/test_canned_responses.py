@@ -8,6 +8,7 @@ import asyncio
 import sys
 import os
 import uuid
+import json
 from datetime import datetime, timezone
 from unittest.mock import patch
 
@@ -105,7 +106,7 @@ class TestCannedResponses(unittest.TestCase):
                 res = await ac.post(
                     "/api/canned-responses",
                     headers={"Authorization": f"Bearer {token}"},
-                    json={"shortcut": "hoan-tien", "title": "Hoàn tiền", "content": "Chúng tôi sẽ hoàn tiền...", "category": "Chính sách"},
+                    json={"shortcut": "/hoan-tien", "title": "Hoàn tiền", "content": "Chúng tôi sẽ hoàn tiền...", "category": "Chính sách"},
                 )
                 self.assertEqual(res.status_code, 201)
                 data = res.json()
@@ -130,21 +131,22 @@ class TestCannedResponses(unittest.TestCase):
             _run_with_auth(assert_fn, agent)
 
     def test_05_duplicate_shortcut_conflict(self):
-        """UC 3.4 E-1: Shortcut trùng -> 409."""
+        """UC 3.4 E-1: Shortcut trùng -> 400 'Phím tắt đã tồn tại'."""
         agent = _make_user("AGENT")
         token = create_access_token({"sub": str(agent.id), "email": agent.email, "role": "STAFF"})
 
         def _dup(*args, **kwargs):
-            raise HTTPException(status_code=409, detail="Shortcut '/hoan-tien' đã tồn tại.")
+            raise HTTPException(status_code=400, detail="Phím tắt đã tồn tại.")
 
         with patch.object(CannedResponseService, "create", new=_dup):
             async def assert_fn(ac):
                 res = await ac.post(
                     "/api/canned-responses",
                     headers={"Authorization": f"Bearer {token}"},
-                    json={"shortcut": "hoan-tien", "title": "Hoàn tiền", "content": "X", "category": "Chính sách"},
+                    json={"shortcut": "/hoan-tien", "title": "Hoàn tiền", "content": "Chúng tôi sẽ hoàn tiền theo chính sách.", "category": "Chính sách"},
                 )
-                self.assertEqual(res.status_code, 409)
+                self.assertEqual(res.status_code, 400)
+                self.assertEqual(res.json()["detail"], "Phím tắt đã tồn tại.")
 
             _run_with_auth(assert_fn, agent)
 
@@ -180,16 +182,73 @@ class TestCannedResponses(unittest.TestCase):
             _run_with_auth(assert_fn, agent)
 
     def test_08_service_duplicate_shortcut(self):
-        """UC 3.4 E-1 (logic service): Shortcut trùng -> 409 Conflict."""
+        """UC 3.4 E-1 (logic service): Shortcut trùng -> 400 Bad Request."""
         db = unittest.mock.MagicMock()
         db.query.return_value.filter.return_value.first.return_value = unittest.mock.MagicMock()
         agent = _make_user("AGENT")
 
         with self.assertRaises(HTTPException) as ctx:
             CannedResponseService.create(db=db, req=unittest.mock.MagicMock(shortcut="hoan-tien", title="X", content="Y", category="Z"), user=agent)
-        self.assertEqual(ctx.exception.status_code, 409)
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertEqual(ctx.exception.detail, "Phím tắt đã tồn tại.")
 
-    def test_09_service_non_owner_cannot_edit(self):
+    def test_09_service_publishes_created_event(self):
+        """UC 3.4: Sau khi tạo mẫu -> bắn sự kiện CANNED_RESPONSE_CREATED qua Redis."""
+        db = unittest.mock.MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = None
+        agent = _make_user("AGENT")
+        canned = _make_canned(created_by=agent.id)
+
+        with patch.object(CannedResponseResponse, "model_validate", return_value=canned), \
+             patch("app.services.canned_response_service.redis_client") as rc:
+            CannedResponseService.create(
+                db=db,
+                req=unittest.mock.MagicMock(
+                    shortcut="/hoan-tien",
+                    title="Hoàn tiền",
+                    content="Chúng tôi sẽ hoàn tiền trong 3-5 ngày.",
+                    category="Chính sách",
+                ),
+                user=agent,
+            )
+            rc.publish.assert_called_once()
+            payload = json.loads(rc.publish.call_args[0][1])
+            self.assertEqual(payload["event"], "CANNED_RESPONSE_CREATED")
+            self.assertEqual(payload["payload"]["shortcut"], "hoan-tien")
+
+    def test_10_schema_shortcut_requires_slash(self):
+        """UC 3.4 A-1 Validation: shortcut thiếu '/' -> 422."""
+        try:
+            CannedResponseCreate(shortcut="hoan-tien", title="Hoàn tiền", content="Chúng tôi sẽ hoàn tiền.", category="Chính sách")
+            self.fail("shortcut không bắt đầu bằng '/' phải lỗi")
+        except Exception:
+            pass
+
+    def test_11_schema_shortcut_has_space(self):
+        """UC 3.4 A-1 Validation: shortcut chứa khoảng trắng -> 422."""
+        try:
+            CannedResponseCreate(shortcut="/hoan tien", title="Hoàn tiền", content="Chúng tôi sẽ hoàn tiền.", category="Chính sách")
+            self.fail("shortcut chứa khoảng trắng phải lỗi")
+        except Exception:
+            pass
+
+    def test_12_schema_content_too_short(self):
+        """UC 3.4 A-1 Validation: content < 5 ký tự -> 422."""
+        try:
+            CannedResponseCreate(shortcut="/hoan-tien", title="Hoàn tiền", content="X", category="Chính sách")
+            self.fail("content quá ngắn phải lỗi")
+        except Exception:
+            pass
+
+    def test_13_schema_title_too_short(self):
+        """UC 3.4 A-1 Validation: title < 3 ký tự -> 422."""
+        try:
+            CannedResponseCreate(shortcut="/hoan-tien", title="HT", content="Chúng tôi sẽ hoàn tiền.", category="Chính sách")
+            self.fail("title quá ngắn phải lỗi")
+        except Exception:
+            pass
+
+    def test_14_service_non_owner_cannot_edit(self):
         """UC 3.4 Quyền (logic service): AGENT không phải chủ mẫu -> 403."""
         db = unittest.mock.MagicMock()
         item = unittest.mock.MagicMock()
@@ -202,7 +261,7 @@ class TestCannedResponses(unittest.TestCase):
             CannedResponseService.update(db=db, response_id=item.id, req=unittest.mock.MagicMock(shortcut=None, title="X", content="Y", category="Z"), user=agent)
         self.assertEqual(ctx.exception.status_code, 403)
 
-    def test_10_service_manager_can_edit_any(self):
+    def test_15_service_manager_can_edit_any(self):
         """UC 3.4 Quyền: MANAGER được chỉnh sửa mẫu của người khác."""
         manager = _make_user("MANAGER")
         item = unittest.mock.MagicMock()

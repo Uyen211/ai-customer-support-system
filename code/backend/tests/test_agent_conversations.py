@@ -295,7 +295,7 @@ class TestAgentConversations(unittest.TestCase):
         self.assertIn("Trần Thị Khác", ctx.exception.detail)
 
     def test_10_service_agent_can_access_rules(self):
-        """UC 3.3 Quyền (logic service): AGENT chỉ truy cập phiên của mình / phiên chưa nhận trong hàng đợi."""
+        """UC 3.3 Quyền (logic service): đọc cho phép tới phiên do nhân viên khác tiếp quản (E-1 Chỉ xem); ghi chỉ cho chủ sở hữu / phiên chưa nhận."""
         agent = _make_user("AGENT")
         other = _make_user("AGENT")
 
@@ -305,8 +305,12 @@ class TestAgentConversations(unittest.TestCase):
 
         self.assertTrue(ConversationService._agent_can_access(conv_my, agent))
         self.assertTrue(ConversationService._agent_can_access(conv_free, agent))
-        self.assertFalse(ConversationService._agent_can_access(conv_other, agent))
+        self.assertTrue(ConversationService._agent_can_access(conv_other, agent))
         self.assertFalse(ConversationService._agent_can_access(None, agent))
+
+        self.assertTrue(ConversationService._agent_can_access(conv_my, agent, write=True))
+        self.assertTrue(ConversationService._agent_can_access(conv_free, agent, write=True))
+        self.assertFalse(ConversationService._agent_can_access(conv_other, agent, write=True))
 
 
 if __name__ == "__main__":

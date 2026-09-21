@@ -1,6 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timezone
+import json
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from fastapi import HTTPException, status
@@ -12,6 +13,12 @@ from app.schemas.canned_response import (
     CannedResponseUpdate,
     CannedResponseResponse,
 )
+from app.core.redis import redis_client
+
+
+def _normalize_shortcut(value: str) -> str:
+    """Chuẩn hóa phím tắt: bỏ khoảng trắng 2 đầu và dấu '/' cho lưu trữ dùng chung."""
+    return value.strip().lstrip("/")
 
 
 class CannedResponseService:
@@ -25,12 +32,12 @@ class CannedResponseService:
 
     @staticmethod
     def create(db: Session, req: CannedResponseCreate, user: User) -> CannedResponseResponse:
-        shortcut = req.shortcut.strip()
+        shortcut = _normalize_shortcut(req.shortcut)
         exists = db.query(CannedResponse).filter(CannedResponse.shortcut == shortcut).first()
         if exists:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Shortcut '/{shortcut}' đã tồn tại. Vui lòng chọn shortcut khác.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phím tắt đã tồn tại.",
             )
 
         response = CannedResponse(
@@ -43,7 +50,22 @@ class CannedResponseService:
         db.add(response)
         db.commit()
         db.refresh(response)
-        return CannedResponseResponse.model_validate(response)
+        result = CannedResponseResponse.model_validate(response)
+        try:
+            redis_client.publish(
+                "channel:ws_alerts",
+                json.dumps(
+                    {
+                        "type": "canned_response",
+                        "event": "CANNED_RESPONSE_CREATED",
+                        "payload": result.model_dump(mode="json"),
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+        except Exception:
+            pass
+        return result
 
     @staticmethod
     def list_responses(
@@ -81,15 +103,15 @@ class CannedResponseService:
             )
 
         if req.shortcut is not None:
-            new_shortcut = req.shortcut.strip()
+            new_shortcut = _normalize_shortcut(req.shortcut)
             conflict = db.query(CannedResponse).filter(
                 CannedResponse.shortcut == new_shortcut,
                 CannedResponse.id != response_id,
             ).first()
             if conflict:
                 raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Shortcut '/{new_shortcut}' đã tồn tại. Vui lòng chọn shortcut khác.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Phím tắt đã tồn tại.",
                 )
             item.shortcut = new_shortcut
         if req.title is not None:

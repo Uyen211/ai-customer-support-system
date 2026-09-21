@@ -326,7 +326,7 @@ class ConversationService:
         return results
 
     @staticmethod
-    def _agent_can_access(conv: Optional[Conversation], user: User) -> bool:
+    def _agent_can_access(conv: Optional[Conversation], user: User, write: bool = False) -> bool:
         """Kiểm tra quyền của nhân viên trên một phiên trò chuyện."""
         if not conv:
             return False
@@ -334,10 +334,11 @@ class ConversationService:
             return True
         if conv.assigned_agent_id == user.id:
             return True
-        # Cho phép xem trước (pre-takeover) đối với phiên chưa có người nhận trong hàng đợi
-        if conv.assigned_agent_id is None and (conv.is_flagged or conv.mode == "WAITING_HUMAN"):
-            return True
-        return False
+        if write:
+            # Phiên chưa ai nhận trong hàng đợi vẫn cho gửi tin (giữ hành vi cũ, chưa tiếp quản)
+            return conv.assigned_agent_id is None and (conv.is_flagged or conv.mode == "WAITING_HUMAN")
+        # UC 3.3 E-1: phiên đã được nhân viên khác tiếp quản -> vẫn cho ĐỌC (chế độ Chỉ xem)
+        return conv.is_flagged or conv.mode in ("WAITING_HUMAN", "HUMAN")
 
     @staticmethod
     def get_conversation_messages_for_agent(
@@ -472,7 +473,7 @@ class ConversationService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Không tìm thấy phiên trò chuyện yêu cầu."
             )
-        if not ConversationService._agent_can_access(conv, user):
+        if not ConversationService._agent_can_access(conv, user, write=True):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Bạn không có quyền gửi tin nhắn trong phiên trò chuyện này."

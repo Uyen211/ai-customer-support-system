@@ -21,16 +21,15 @@ router = APIRouter(prefix="/ws", tags=["WebSockets"])
 logger = logging.getLogger(__name__)
 
 
-def _agent_can_access_room(conv: Conversation, user: User, db: Session) -> bool:
+def _agent_can_access_room(conv: Conversation, user: User, db: Session, write: bool = False) -> bool:
     if user.role in ("MANAGER", "ADMIN"):
         return True
     if conv.assigned_agent_id == user.id:
         return True
-    # Cho phép nhân viên mở xem và chat trong phiên họ đã tiếp quản; phiên trong hàng đợi cho xem trước
-    if conv is not None:
-        if conv.assigned_agent_id is None and (conv.is_flagged or conv.mode == "WAITING_HUMAN"):
-            return True
-    return False
+    if write:
+        return conv.assigned_agent_id is None and (conv.is_flagged or conv.mode == "WAITING_HUMAN")
+    # UC 3.3 E-1: nhân viên khác đã tiếp quản -> vẫn được tham gia phòng ở chế độ Chỉ xem
+    return conv.is_flagged or conv.mode in ("WAITING_HUMAN", "HUMAN")
 
 
 async def _broadcast_room(channel: str, payload: dict) -> None:
@@ -150,6 +149,13 @@ async def websocket_chat(websocket: WebSocket, conversation_id: str, token: str 
                     sender_type = "CUSTOMER"
                     sender_id = None
                 else:
+                    if not _agent_can_access_room(conv2, user, db2, write=True):
+                        await websocket.send_text(json.dumps(
+                            {"type": "error", "event": "ERROR",
+                             "payload": {"error": "Phiên trò chuyện này đã được nhân viên khác tiếp quản. Bạn chỉ được xem."}},
+                            ensure_ascii=False
+                        ))
+                        continue
                     sender_type = "AGENT"
                     sender_id = UUID(sub_id)
 

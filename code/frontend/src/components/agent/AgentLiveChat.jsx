@@ -47,6 +47,10 @@ export function AgentLiveChat({ currentUser }) {
   const [notice, setNotice] = useState(null);
   const [loadError, setLoadError] = useState(null);
 
+  // Gợi ý mẫu phản hồi khi gõ "/"
+  const [suggestIndex, setSuggestIndex] = useState(0);
+  const inputRef = useRef(null);
+
   // Canned Responses
   const [cannedOpen, setCannedOpen] = useState(false);
   const [cannedList, setCannedList] = useState([]);
@@ -69,6 +73,9 @@ export function AgentLiveChat({ currentUser }) {
     const m = globalAlerts.lastMessage;
     if (m && ['QUEUE_UPDATED', 'CHAT_MODE_CHANGED', 'CONVERSATION_DELETED', 'TICKET_ASSIGNED'].includes(m.event)) {
       loadQueue();
+    }
+    if (m && m.event === 'CANNED_RESPONSE_CREATED') {
+      cannedResponseService.listResponses().then((list) => setCannedList(list || [])).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalAlerts.lastMessage]);
@@ -104,6 +111,11 @@ export function AgentLiveChat({ currentUser }) {
     const poll = setInterval(loadQueue, 15000);
     return () => clearInterval(poll);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Nạp sẵn danh sách mẫu phản hồi nhanh để gõ "/" gợi ý ngay khi mở console
+  useEffect(() => {
+    cannedResponseService.listResponses().then((list) => setCannedList(list || [])).catch(() => {});
   }, []);
 
   const loadMessages = async (convId) => {
@@ -144,8 +156,19 @@ export function AgentLiveChat({ currentUser }) {
     if (msg.event === 'CHAT_MESSAGE' && msg.payload) {
       appendMessage(msg.payload);
     } else if (msg.event === 'CHAT_MODE_CHANGED' && msg.payload) {
-      setMode(msg.payload.mode || 'HUMAN');
-      if (msg.payload.notice_message) appendMessage(msg.payload.notice_message);
+      const p = msg.payload;
+      setMode(p.mode || 'HUMAN');
+      if (p.notice_message) appendMessage(p.notice_message);
+      setActiveConv((prev) =>
+        prev
+          ? {
+              ...prev,
+              mode: p.mode || 'HUMAN',
+              assigned_agent_id: p.assigned_agent_id || prev.assigned_agent_id,
+              assigned_agent_name: p.assigned_agent_name || prev.assigned_agent_name,
+            }
+          : prev
+      );
       loadQueue();
     } else if (msg.event === 'CONVERSATION_DELETED' && msg.payload) {
       const deletedId = msg.payload.conversation_id || msg.payload.deleted_id;
@@ -184,7 +207,7 @@ export function AgentLiveChat({ currentUser }) {
 
   const handleSend = async (e) => {
     e?.preventDefault();
-    if (!activeConv || !inputText.trim() || isSending) return;
+    if (!activeConv || !inputText.trim() || isSending || isReadOnly) return;
     const content = inputText.trim();
     setInputText('');
 
@@ -223,6 +246,63 @@ export function AgentLiveChat({ currentUser }) {
 
   const handlePickCanned = (item) => {
     setInputText((prev) => (prev ? `${prev}\n${item.content}` : item.content));
+  };
+
+  // Phím tắt "/" để chèn mẫu phản hồi (UC 3.4: gõ / -> bảng gợi ý)
+  const getSuggestMatch = (text) => {
+    const m = text.match(/(^|\s)(\/[^\s]*)$/);
+    if (!m) return null;
+    const start = m[1].length === 0 ? 0 : m.index + m[1].length;
+    return { start, token: m[2].toLowerCase() };
+  };
+
+  const suggestMatch = getSuggestMatch(inputText);
+  const suggestQuery = suggestMatch ? suggestMatch.token.slice(1) : '';
+  const suggestItems = suggestMatch
+    ? cannedList
+        .filter((item) => {
+          const st = `/${item.shortcut.toLowerCase()}`;
+          return st.startsWith(suggestMatch.token) || item.title.toLowerCase().includes(suggestQuery);
+        })
+        .slice(0, 7)
+    : [];
+
+  const applySuggestion = (item) => {
+    if (!suggestMatch || !item) return;
+    const { start, token } = suggestMatch;
+    const before = inputText.slice(0, start);
+    const after = inputText.slice(start + token.length);
+    setInputText(`${before}${item.content}${after}`);
+    setSuggestIndex(0);
+    inputRef.current?.focus();
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (suggestItems.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSuggestIndex((i) => (i + 1) % suggestItems.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSuggestIndex((i) => (i - 1 + suggestItems.length) % suggestItems.length);
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        applySuggestion(suggestItems[suggestIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setSuggestIndex(0);
+        setInputText((prev) => `${prev} `);
+        return;
+      }
+    } else {
+      setSuggestIndex(0);
+    }
   };
 
   const isManager = ['MANAGER', 'ADMIN'].includes(currentUser?.role);
@@ -457,6 +537,32 @@ export function AgentLiveChat({ currentUser }) {
                   </div>
                 )}
 
+                {suggestItems.length > 0 && (
+                  <div className="mb-3 rounded-2xl border border-[#95BBEA] bg-white shadow-editorial overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-2 bg-[#95BBEA]/20 border-b border-[#95BBEA]/40">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#930500]">
+                        Mẫu phản hồi nhanh — bấm Enter để chèn
+                      </span>
+                      <span className="text-[10px] text-[#2B2523]/50">↑↓ duyệt · Esc đóng</span>
+                    </div>
+                    <div className="max-h-44 overflow-y-auto divide-y divide-[#EFE7D3]">
+                      {suggestItems.map((item, idx) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => applySuggestion(item)}
+                          onMouseEnter={() => setSuggestIndex(idx)}
+                          className={`w-full text-left px-4 py-2.5 transition-colors cursor-pointer ${idx === suggestIndex ? 'bg-[#95BBEA]/25' : 'hover:bg-[#95BBEA]/10'}`}
+                        >
+                          <span className="text-[11px] font-mono text-[#930500] font-bold">/{item.shortcut}</span>
+                          <span className="ml-2 text-sm font-semibold text-[#2B2523]">{item.title}</span>
+                          <span className="block text-xs text-[#2B2523]/60 line-clamp-1 mt-0.5">{item.content}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <form onSubmit={handleSend} className="flex items-center gap-2">
                   <button
                     type="button"
@@ -467,9 +573,11 @@ export function AgentLiveChat({ currentUser }) {
                     <Sparkles className="w-4 h-4" />
                   </button>
                   <textarea
+                    ref={inputRef}
                     rows={1}
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={(e) => { setInputText(e.target.value); setSuggestIndex(0); }}
+                    onKeyDown={handleInputKeyDown}
                     placeholder={
                       isReadOnly
                         ? 'Phiên đã được nhân viên khác tiếp quản — bạn chỉ được xem...'
