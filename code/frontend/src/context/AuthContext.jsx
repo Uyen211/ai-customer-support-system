@@ -5,12 +5,13 @@ import { staffService } from '../services/staffService';
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+  // Dùng sessionStorage thay vì localStorage → mỗi tab có session riêng
+  const [token, setToken] = useState(() => sessionStorage.getItem('token') || null);
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
+    const saved = sessionStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [accountType, setAccountType] = useState(() => localStorage.getItem('accountType') || 'CUSTOMER');
+  const [accountType, setAccountType] = useState(() => sessionStorage.getItem('accountType') || 'CUSTOMER');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,7 +20,7 @@ export function AuthProvider({ children }) {
         try {
           const meData = accountType === 'STAFF' ? await staffService.getMe() : await authService.getMe();
           setUser(meData);
-          localStorage.setItem('user', JSON.stringify(meData));
+          sessionStorage.setItem('user', JSON.stringify(meData));
         } catch (error) {
           console.error("Auth verification failed:", error);
           logout();
@@ -31,18 +32,18 @@ export function AuthProvider({ children }) {
   }, [token, accountType]);
 
   const login = (newToken, userData, type = 'CUSTOMER') => {
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('accountType', type);
+    sessionStorage.setItem('token', newToken);
+    sessionStorage.setItem('user', JSON.stringify(userData));
+    sessionStorage.setItem('accountType', type);
     setToken(newToken);
     setUser(userData);
     setAccountType(type);
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('accountType');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('accountType');
     setToken(null);
     setUser(null);
     setAccountType('CUSTOMER');

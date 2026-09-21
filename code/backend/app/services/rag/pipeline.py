@@ -137,7 +137,9 @@ class RAGPipelineService:
                     user_msg_db.sentiment_score = sentiment_score
                 
                 if final_priority in ["P1", "P2", "P3"]:
-                    self._create_or_update_ticket(db, conv, final_priority, decomposer_output)
+                    ticket, is_new = self._create_or_update_ticket(db, conv, final_priority, decomposer_output)
+                    if is_new:
+                        redis_client.lpush("queue:tickets:pending", str(ticket.id))
                 db.commit()
         except Exception as e:
             logger.error(f"Lỗi cập nhật cờ đỏ và ticket: {e}")
@@ -255,6 +257,7 @@ class RAGPipelineService:
                 existing_ticket.sla_deadline = datetime.now(timezone.utc) + timedelta(minutes=sla_minutes)
             
             existing_ticket.summary += f"\n[Update]: {summary}"
+            return existing_ticket, False
         else:
             new_ticket = Ticket(
                 conversation_id=conv.id,
@@ -265,6 +268,8 @@ class RAGPipelineService:
                 ai_metadata={"sentiment_score": float(output.sentiment_score)}
             )
             db.add(new_ticket)
+            db.flush()
+            return new_ticket, True
 
     def _get_alert_config(self) -> Dict[str, Any]:
         """Lấy cấu hình cảnh báo từ Redis (ưu tiên) hoặc DB."""
