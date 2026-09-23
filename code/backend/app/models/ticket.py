@@ -17,6 +17,7 @@ class Ticket(Base):
     ai_metadata = Column(JSONB, nullable=True)
     sla_deadline = Column(DateTime(timezone=True), nullable=False)
     sla_breached = Column(Boolean, nullable=False, default=False)
+    resolution_note = Column(Text, nullable=True)
     resolved_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())

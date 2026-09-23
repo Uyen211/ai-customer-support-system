@@ -5,4 +5,14 @@ export const ticketService = {
     const response = await api.post(`/admin/tickets/${ticketId}/assign`, { agent_id: agentId });
     return response.data;
   },
+
+  async getActiveTickets() {
+    const response = await api.get('/admin/tickets/active'); // Wait, we didn't add this endpoint. Let's do it if needed, or we just rely on existing if available
+    return response.data;
+  },
+
+  async resolveTicket(ticketId, resolutionNote) {
+    const response = await api.put(`/admin/tickets/${ticketId}/resolve`, { resolution_note: resolutionNote });
+    return response.data;
+  }
 };

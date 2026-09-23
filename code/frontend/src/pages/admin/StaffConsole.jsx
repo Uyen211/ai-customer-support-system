@@ -23,6 +23,109 @@ function statusLabel(status) {
   return STATUS_OPTIONS.find((item) => item.value === status)?.label || status;
 }
 
+function TicketCard({ ticket, onResolve }) {
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [totalTime, setTotalTime] = useState(1); // To calculate percentage
+  const [showResolveForm, setShowResolveForm] = useState(false);
+  const [resolutionNote, setResolutionNote] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    // Parse total time based on priority if possible, or just deduce from deadline vs created_at
+    const deadline = new Date(ticket.sla_deadline).getTime();
+    const created = new Date(ticket.created_at).getTime();
+    setTotalTime(deadline - created);
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const diff = Math.max(0, deadline - now);
+      setTimeLeft(diff);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [ticket]);
+
+  const isOverdue = timeLeft <= 0 || ticket.sla_breached;
+  const isWarning = !isOverdue && (timeLeft / totalTime) <= 0.2;
+
+  const formatTime = (ms) => {
+    if (ms <= 0) return "00:00:00";
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const s = String(totalSeconds % 60).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  };
+
+  const handleResolve = async (e) => {
+    e.preventDefault();
+    if (resolutionNote.trim().length < 10 || resolutionNote.length > 1000) {
+      setError('Nội dung phải từ 10 đến 1000 ký tự');
+      return;
+    }
+    setError('');
+    setSubmitting(true);
+    try {
+      await onResolve(ticket.id || ticket.ticket_id, resolutionNote);
+    } catch (err) {
+      setError('Lỗi khi hoàn tất. Vui lòng thử lại.');
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className={`rounded-2xl border p-5 flex flex-col gap-4 group transition-all duration-300 ${
+      isOverdue ? 'bg-[#930500]/10 border-[#930500] animate-pulse shadow-md shadow-[#930500]/20' : 
+      isWarning ? 'bg-amber-50 border-amber-300' : 'bg-[#95BBEA]/10 border-[#95BBEA]/30'
+    }`}>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <Badge variant="outline">{ticket.priority || 'P3'}</Badge>
+            <span className={`px-2.5 py-1 bg-white rounded-full text-[10px] font-bold tracking-wider uppercase drop-shadow-sm ${isOverdue ? 'text-[#930500]' : 'text-[#95BBEA]'}`}>
+              {isOverdue ? 'Quá Hạn' : 'Đang xử lý'}
+            </span>
+          </div>
+          <h3 className="font-semibold text-lg text-[#2B2523]">{ticket.category || 'Hỗ trợ khách hàng'}</h3>
+          <p className="text-xs opacity-70 mt-1 truncate max-w-sm">
+            Ticket ID: {ticket.id || ticket.ticket_id} | Phòng: {ticket.conversation_id?.slice(0, 8)}...
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <div className={`text-xl font-mono font-bold tracking-tight ${isOverdue ? 'text-[#930500]' : isWarning ? 'text-amber-600' : 'text-[#2B2523]'}`}>
+            {formatTime(timeLeft)}
+          </div>
+          {!showResolveForm && (
+            <Button variant={isOverdue ? 'soft' : 'primary'} size="sm" onClick={() => setShowResolveForm(true)}>
+              Hoàn tất xử lý
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {showResolveForm && (
+        <form onSubmit={handleResolve} className="mt-2 p-4 bg-white rounded-xl border border-[#EFE7D3]">
+          <label className="text-xs uppercase tracking-wider font-semibold text-[#2B2523]/80 block mb-2">
+            Kết quả xử lý <span className="text-[#930500]">*</span>
+          </label>
+          <textarea 
+            value={resolutionNote} 
+            onChange={e => setResolutionNote(e.target.value)}
+            placeholder="Ghi nhận giải pháp xử lý (10 - 1000 ký tự)..."
+            className={`w-full bg-[#FFF8E7] text-[#2B2523] border rounded-xl px-4 py-3 text-sm outline-none resize-y min-h-[80px] ${error ? 'border-[#930500]' : 'border-[#EFE7D3] focus:border-[#930500]/40'}`}
+          />
+          {error && <p className="text-xs text-[#930500] mt-1">{error}</p>}
+          <div className="flex justify-end gap-2 mt-3">
+            <Button type="button" variant="soft" size="sm" onClick={() => setShowResolveForm(false)} disabled={submitting}>Hủy</Button>
+            <Button type="submit" variant="primary" size="sm" isLoading={submitting}>Xác nhận hoàn thành</Button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
 export function StaffConsole({ onNavigate }) {
   const { user, login, logout } = useAuth();
   const [currentUser, setCurrentUser] = useState(user);
@@ -62,6 +165,14 @@ export function StaffConsole({ onNavigate }) {
     }
   }, [canManageStaff]);
 
+  // Fetch active tickets on load
+  useEffect(() => {
+    if (currentUser?.role === 'AGENT' || canManageStaff) {
+      ticketService.getActiveTickets().then(tickets => {
+        setActiveTickets(tickets);
+      }).catch(err => console.error("Failed to load active tickets", err));
+    }
+  }, [currentUser, canManageStaff]);
   // Handle WebSocket messages
   useEffect(() => {
     const msg = popMessage();
@@ -69,11 +180,31 @@ export function StaffConsole({ onNavigate }) {
       if (msg.event === 'UNASSIGNED_TICKET_ALERT' && canManageStaff) {
         setRedAlerts(prev => [msg.payload, ...prev]);
       } else if (msg.event === 'TICKET_ASSIGNED') {
-        // If this agent was assigned the ticket
         if (msg.payload.agent_id === currentUser?.id) {
-          setActiveTickets(prev => [msg.payload, ...prev]);
+          // Instead of just relying on payload, fetch to get full ticket with sla_deadline
+          ticketService.getActiveTickets().then(tickets => setActiveTickets(tickets));
           showNotice('success', `Bạn vừa được phân công một Ticket mới!`);
+        } else {
+          // Nếu vé được gán cho người khác (hoặc bị thu hồi), hãy xóa nó khỏi danh sách của mình nếu đang có
+          setActiveTickets(prev => prev.filter(t => (t.id || t.ticket_id) !== msg.payload.ticket_id));
         }
+      } else if (msg.event === 'SLA_BREACH_ALERT') {
+        if (msg.payload.assigned_to === currentUser?.id) {
+          showNotice('error', 'CẢNH BÁO: Bạn có một phiếu hỗ trợ đã QUÁ HẠN XỬ LÝ!');
+          // Play alert sound if possible
+          try {
+            const audio = new Audio('/sounds/alert.mp3'); // We might not have this file but it's a good effort
+            audio.play().catch(e => console.log('Audio blocked', e));
+          } catch (e) {}
+          // Mark the ticket as breached in state to immediately show red
+          setActiveTickets(prev => prev.map(t => t.id === msg.payload.ticket_id ? { ...t, sla_breached: true } : t));
+        }
+        if (canManageStaff) {
+          setRedAlerts(prev => [msg.payload, ...prev]);
+        }
+      } else if (msg.event === 'TICKET_RESOLVED') {
+          // Remove from active list
+          setActiveTickets(prev => prev.filter(t => t.id !== msg.payload.ticket_id));
       }
     }
   }, [popMessage, canManageStaff, currentUser]);
@@ -393,15 +524,15 @@ export function StaffConsole({ onNavigate }) {
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
                     {activeTickets.map(ticket => (
-                      <div key={ticket.ticket_id} className="rounded-2xl bg-[#95BBEA]/10 border border-[#95BBEA]/30 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-[#95BBEA]/20 transition-all duration-300">
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="px-2.5 py-1 bg-white rounded-full text-[10px] font-bold tracking-wider uppercase text-[#95BBEA] drop-shadow-sm">Mới Phân Công</span>
-                          </div>
-                          <h3 className="font-semibold text-lg text-[#2B2523]">Phòng chat: {ticket.conversation_id.slice(0, 8)}...</h3>
-                        </div>
-                        <Button variant="primary" size="sm" className="shrink-0 bg-[#2B2523] hover:bg-black text-[#FFF8E7]">Vào phòng chat</Button>
-                      </div>
+                      <TicketCard 
+                        key={ticket.id || ticket.ticket_id} 
+                        ticket={ticket} 
+                        onResolve={async (id, note) => {
+                          await ticketService.resolveTicket(id, note);
+                          setActiveTickets(prev => prev.filter(t => (t.id || t.ticket_id) !== id));
+                          showNotice('success', 'Đã hoàn tất xử lý phiếu hỗ trợ!');
+                        }} 
+                      />
                     ))}
                   </div>
                 )}

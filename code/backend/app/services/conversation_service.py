@@ -430,6 +430,25 @@ class ConversationService:
         conv.updated_at = datetime.now(timezone.utc)
         db.flush()
 
+
+        # Đồng bộ quyền sở hữu Ticket: 
+        # Nếu cuộc trò chuyện này đã phát sinh Ticket và Ticket đó bị gán cho người khác (do bot chia tự động),
+        # ta sẽ thu hồi và giao lại cho nhân viên đang bấm "Tiếp quản" hiện tại.
+        from app.models.ticket import Ticket
+        active_tickets = db.query(Ticket).filter(
+            Ticket.conversation_id == conv.id,
+            Ticket.status.in_(["PENDING", "IN_PROGRESS"])
+        ).with_for_update().all()
+        
+        reassigned_tickets = []
+        for t in active_tickets:
+            t.assigned_to = user.id
+            t.status = "IN_PROGRESS"
+            t.updated_at = datetime.now(timezone.utc)
+            reassigned_tickets.append(t)
+
+        db.flush()
+
         # Chèn thông báo hệ thống vào khung chat khách hàng (sender_type='BOT' do schema CHECK hạn chế)
         notice_content = f"Nhân viên tư vấn {user.full_name} đã tham gia cuộc trò chuyện."
         notice = Message(
@@ -458,6 +477,22 @@ class ConversationService:
             redis_client.publish("channel:ws_alerts", json.dumps(payload, ensure_ascii=False))
         except Exception:
             pass
+
+        # Thông báo cho UI về sự thay đổi của vé
+        for t in reassigned_tickets:
+            ticket_payload = {
+                "event": "TICKET_ASSIGNED",
+                "payload": {
+                    "ticket_id": str(t.id),
+                    "conversation_id": str(t.conversation_id),
+                    "agent_id": str(user.id),
+                    "assigned_by": "SYSTEM"
+                }
+            }
+            try:
+                redis_client.publish("channel:ws_alerts", json.dumps(ticket_payload, ensure_ascii=False))
+            except Exception:
+                pass
 
         return ConversationDetailSchema.model_validate(conv)
 
