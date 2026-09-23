@@ -11,8 +11,21 @@ export const ticketService = {
     return response.data;
   },
 
+  async getKanbanTickets() {
+    const response = await api.get('/admin/tickets/kanban');
+    return response.data;
+  },
+
   async resolveTicket(ticketId, resolutionNote) {
     const response = await api.put(`/admin/tickets/${ticketId}/resolve`, { resolution_note: resolutionNote });
+    return response.data;
+  },
+
+  async updateTicketStatus(ticketId, status, resolutionNote) {
+    const response = await api.put(`/admin/tickets/${ticketId}/status`, { 
+      status, 
+      resolution_note: resolutionNote 
+    });
     return response.data;
   }
 };

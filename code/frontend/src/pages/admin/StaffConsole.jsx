@@ -331,18 +331,43 @@ export function StaffConsole({ onNavigate }) {
     <div className="min-h-screen bg-[#FFF8E7] text-[#2B2523] selection:bg-[#930500] selection:text-[#FFF8E7] font-sans">
       <header className="sticky top-0 z-40 bg-[#FFF8E7]/90 backdrop-blur-md border-b border-[#EFE7D3]">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#2B2523] text-[#FFF8E7] flex items-center justify-center">
-              <BriefcaseBusiness className="w-5 h-5" />
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#2B2523] text-[#FFF8E7] flex items-center justify-center">
+                <BriefcaseBusiness className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="font-serif-editorial text-2xl font-bold tracking-tight">Live Support Console</h1>
+                <p className="text-[10px] uppercase tracking-widest text-[#930500] font-semibold">
+                  {isConnected ? 'Connected' : 'Reconnecting...'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-serif-editorial text-2xl font-bold tracking-tight">Live Support Console</h1>
-              <p className="text-[10px] uppercase tracking-widest text-[#930500] font-semibold">
-                {isConnected ? 'Connected' : 'Reconnecting...'}
-              </p>
+            
+            <nav className="flex items-center gap-6 border-l border-[#EFE7D3] pl-6">
+              <button 
+                className="text-sm font-bold text-[#930500] border-b-2 border-[#930500] pb-1"
+              >
+                Hàng đợi & Live Chat
+              </button>
+              <button 
+                onClick={() => onNavigate('kanban')}
+                className="text-sm font-semibold text-[#2B2523]/60 hover:text-[#930500] transition-colors"
+              >
+                Bảng công việc Kanban
+              </button>
+            </nav>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 pl-4 border-l border-[#EFE7D3]">
+              <div className="text-right">
+                <p className="text-sm font-bold leading-none">{currentUser.full_name}</p>
+                <p className="text-[10px] text-[#2B2523]/70 mt-0.5">{currentUser.email} • {currentUser.role}</p>
+              </div>
+              <Button variant="soft" size="sm" icon={LogOut} onClick={handleLogout} className="px-3 py-1.5 h-8 text-xs">Thoát</Button>
             </div>
           </div>
-          <Button variant="soft" size="sm" icon={LogOut} onClick={handleLogout}>Đăng xuất</Button>
         </div>
       </header>
 
@@ -503,40 +528,40 @@ export function StaffConsole({ onNavigate }) {
             {/* UC 3.3: Hàng đợi hội thoại trực tuyến + tiếp quản + chat realtime */}
             <AgentLiveChat currentUser={currentUser} />
 
-              {/* Agent Active Tickets Workspace */}
-              <div className="rounded-3xl border border-[#EFE7D3] bg-white shadow-editorial p-6">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-2xl bg-[#95BBEA] text-[#2B2523] flex items-center justify-center shadow-inner">
-                    <MessageSquare className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="font-serif-editorial text-2xl font-bold">Vé Hỗ Trợ Đang Xử Lý</h2>
-                    <p className="text-xs text-[#2B2523]/70 mt-1">Các phiên hỗ trợ khách hàng được hệ thống phân công cho bạn.</p>
-                  </div>
+            {/* Agent Active Tickets Workspace */}
+            <div className="rounded-3xl border border-[#EFE7D3] bg-white shadow-editorial p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-2xl bg-[#95BBEA] text-[#2B2523] flex items-center justify-center shadow-inner">
+                  <MessageSquare className="w-5 h-5" />
                 </div>
-
-                {activeTickets.length === 0 ? (
-                  <div className="py-12 text-center rounded-2xl bg-[#FFF8E7] border border-[#EFE7D3]/50 border-dashed">
-                    <ShieldCheck className="w-10 h-10 mx-auto text-[#2B2523]/30 mb-3" />
-                    <p className="text-sm font-medium text-[#2B2523]/60">Chưa có công việc nào đang diễn ra.</p>
-                    <p className="text-xs text-[#2B2523]/40 mt-1">Hệ thống sẽ tự động gửi vé khi có khách hàng cần hỗ trợ.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4">
-                    {activeTickets.map(ticket => (
-                      <TicketCard 
-                        key={ticket.id || ticket.ticket_id} 
-                        ticket={ticket} 
-                        onResolve={async (id, note) => {
-                          await ticketService.resolveTicket(id, note);
-                          setActiveTickets(prev => prev.filter(t => (t.id || t.ticket_id) !== id));
-                          showNotice('success', 'Đã hoàn tất xử lý phiếu hỗ trợ!');
-                        }} 
-                      />
-                    ))}
-                  </div>
-                )}
+                <div>
+                  <h2 className="font-serif-editorial text-2xl font-bold">Vé Hỗ Trợ Đang Xử Lý</h2>
+                  <p className="text-xs text-[#2B2523]/70 mt-1">Các phiên hỗ trợ khách hàng được hệ thống phân công cho bạn.</p>
+                </div>
               </div>
+
+              {activeTickets.length === 0 ? (
+                <div className="py-12 text-center rounded-2xl bg-[#FFF8E7] border border-[#EFE7D3]/50 border-dashed">
+                  <ShieldCheck className="w-10 h-10 mx-auto text-[#2B2523]/30 mb-3" />
+                  <p className="text-sm font-medium text-[#2B2523]/60">Chưa có công việc nào đang diễn ra.</p>
+                  <p className="text-xs text-[#2B2523]/40 mt-1">Hệ thống sẽ tự động gửi vé khi có khách hàng cần hỗ trợ.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {activeTickets.map(ticket => (
+                    <TicketCard 
+                      key={ticket.id || ticket.ticket_id} 
+                      ticket={ticket} 
+                      onResolve={async (id, note) => {
+                        await ticketService.resolveTicket(id, note);
+                        setActiveTickets(prev => prev.filter(t => (t.id || t.ticket_id) !== id));
+                        showNotice('success', 'Đã hoàn tất xử lý phiếu hỗ trợ!');
+                      }} 
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
       </main>

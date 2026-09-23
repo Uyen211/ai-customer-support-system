@@ -8,6 +8,7 @@ import { StaffLogin } from './pages/auth/StaffLogin';
 import { ChatPage } from './pages/customer/ChatPage';
 import { StaffConsole } from './pages/admin/StaffConsole';
 import AlertConfigPage from './pages/admin/AlertConfigPage';
+import { KanbanPage } from './pages/admin/KanbanPage';
 
 function AppContent() {
   const { isLoggedIn, loading, accountType } = useAuth();
@@ -53,6 +54,12 @@ function AppContent() {
     return <StaffConsole onNavigate={handleNavigate} />;
   }
 
+  if (currentPage === 'kanban') {
+    if (!isLoggedIn || accountType !== 'STAFF') {
+      return <StaffLogin onNavigate={handleNavigate} />;
+    }
+    return <KanbanPage onNavigate={handleNavigate} />;
+  }
   if (currentPage === 'chat') {
     // If not logged in, show login page first
     if (!isLoggedIn) {

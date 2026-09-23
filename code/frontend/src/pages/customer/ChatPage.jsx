@@ -90,7 +90,8 @@ export function ChatPage({ onNavigate }) {
     try {
       const newConv = await chatService.createConversation();
       await fetchConversations();
-      setActiveConvId(newConv.conversation_id);
+      // response từ backend là { conversation: { id: ... }, initial_message: { ... } }
+      setActiveConvId(newConv.conversation.id);
     } catch (err) {
       console.error('Lỗi tạo phiên mới:', err);
     }
