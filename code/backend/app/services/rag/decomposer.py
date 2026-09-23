@@ -50,7 +50,7 @@ class QueryDecomposerService:
             # Gọi LLM sinh phản hồi JSON (Timeout 3.0s)
             json_response = await asyncio.wait_for(
                 self.llm.generate_json(prompt),
-                timeout=3.0
+                timeout=8.0  # Tăng thời gian chờ từ 3.0s lên 8.0s do Gemini API có thể phản hồi chậm
             )
             
             # Parse vào Pydantic Schema
@@ -71,7 +71,7 @@ class QueryDecomposerService:
             return output
 
         except Exception as e:
-            logger.error(f"Lỗi trong quá trình Decomposer: {e}. Sử dụng fallback.")
+            logger.error(f"Lỗi trong quá trình Decomposer: {repr(e)}. Sử dụng fallback.")
             return DecomposerOutputSchema(
                 standalone_query=query,
                 reasoning="Fallback do lỗi phân tích LLM hoặc Timeout",
