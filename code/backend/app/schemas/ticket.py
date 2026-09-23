@@ -36,3 +36,14 @@ class TicketResolveRequest(BaseModel):
         if not v.strip():
             raise ValueError("Nội dung không được chỉ chứa khoảng trắng.")
         return v
+
+class TicketStatusUpdateRequest(BaseModel):
+    status: str = Field(..., description="Trạng thái đích (IN_PROGRESS, RESOLVED, CLOSED)")
+    resolution_note: Optional[str] = Field(None, min_length=10, max_length=1000, description="Nội dung kết quả xử lý, bắt buộc khi chuyển sang RESOLVED")
+
+    @field_validator("resolution_note")
+    @classmethod
+    def check_resolution_note(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not v.strip():
+            raise ValueError("Nội dung không được chỉ chứa khoảng trắng.")
+        return v
