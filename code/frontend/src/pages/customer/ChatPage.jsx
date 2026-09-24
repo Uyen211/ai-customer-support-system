@@ -89,9 +89,11 @@ export function ChatPage({ onNavigate }) {
   const handleCreateNewChat = async () => {
     try {
       const newConv = await chatService.createConversation();
-      await fetchConversations();
-      // response từ backend là { conversation: { id: ... }, initial_message: { ... } }
+      // Immediately set the active conversation to the newly created one
+      // This will highlight the sidebar and switch the right pane
       setActiveConvId(newConv.conversation.id);
+      // Then fetch the list to update the sidebar items
+      await fetchConversations();
     } catch (err) {
       console.error('Lỗi tạo phiên mới:', err);
     }
