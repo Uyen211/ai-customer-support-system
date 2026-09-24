@@ -187,23 +187,65 @@ export function AgentLiveChat({ currentUser }) {
     setActiveConv(item);
   };
 
-  const handleTakeover = async () => {
-    if (!activeConv) return;
+  const formatErrorDetail = (detail) => {
+    if (Array.isArray(detail)) {
+      return detail.map(d => d.msg || JSON.stringify(d)).join('; ');
+    }
+    return detail;
+  };
+
+  const handleTakeover = async (convObj = activeConv) => {
+    // Nếu convObj là React Event (do truyền thẳng vào onClick), bỏ qua và dùng activeConv
+    const targetConv = (convObj && convObj.id) ? convObj : activeConv;
+    if (!targetConv || !targetConv.id) return;
+    
     setIsTakingOver(true);
     try {
-      const detail = await agentService.takeOver(activeConv.id);
+      const detail = await agentService.takeOver(targetConv.id);
       setMode(detail.mode || 'HUMAN');
-      setActiveConv((prev) => (prev ? { ...prev, mode: detail.mode || 'HUMAN', assigned_agent_id: currentUser.id, assigned_agent_name: currentUser.full_name, is_flagged: false } : prev));
-      showNotice('success', `Bạn đã tiếp quản cuộc trò chuyện với ${activeConv.customer_name || 'khách hàng'}.`);
+      setActiveConv((prev) => (prev && prev.id === targetConv.id ? { ...prev, mode: detail.mode || 'HUMAN', assigned_agent_id: currentUser.id, assigned_agent_name: currentUser.full_name, is_flagged: false } : prev));
+      showNotice('success', `Bạn đã tiếp quản cuộc trò chuyện với ${targetConv.customer_name || 'khách hàng'}.`);
       loadQueue();
-      await loadMessages(activeConv.id);
+      await loadMessages(targetConv.id);
     } catch (error) {
-      showNotice('error', error.response?.data?.detail || 'Tiếp quản thất bại.');
+      showNotice('error', formatErrorDetail(error.response?.data?.detail) || 'Tiếp quản thất bại.');
       loadQueue();
     } finally {
       setIsTakingOver(false);
     }
   };
+
+
+  useEffect(() => {
+    const handleGlobalSelect = async (e) => {
+      const { conversation_id, autoTakeover } = e.detail;
+      if (!conversation_id) return;
+      
+      let conv = queue.find(c => c.id === conversation_id);
+      
+      if (!conv) {
+        // If not in current queue view, try to load fresh queue
+        const freshQueue = await agentService.getQueue();
+        setQueue(freshQueue || []);
+        conv = freshQueue?.find(c => c.id === conversation_id);
+      }
+
+      if (conv) {
+        setActiveConv(conv);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        if (autoTakeover && conv.mode !== 'HUMAN') {
+          handleTakeover(conv);
+        }
+      } else {
+        showNotice('error', 'Không tìm thấy phiên hội thoại này trong hàng đợi.');
+      }
+    };
+
+    window.addEventListener('agent:select_chat', handleGlobalSelect);
+    return () => window.removeEventListener('agent:select_chat', handleGlobalSelect);
+  }, [queue, currentUser]);
+
 
   const handleSend = async (e) => {
     e?.preventDefault();
@@ -221,7 +263,7 @@ export function AgentLiveChat({ currentUser }) {
       const res = await agentService.sendMessage(activeConv.id, content);
       if (res?.message) appendMessage(res.message);
     } catch (error) {
-      showNotice('error', error.response?.data?.detail || 'Không thể gửi tin nhắn.');
+      showNotice('error', formatErrorDetail(error.response?.data?.detail) || 'Không thể gửi tin nhắn.');
     } finally {
       setIsSending(false);
     }
@@ -425,7 +467,7 @@ export function AgentLiveChat({ currentUser }) {
                 </div>
 
                 {mode !== 'HUMAN' && !isReadOnly && (
-                  <Button variant="primary" size="sm" icon={PhoneCall} isLoading={isTakingOver} onClick={handleTakeover}>
+                  <Button variant="primary" size="sm" icon={PhoneCall} isLoading={isTakingOver} onClick={() => handleTakeover()}>
                     Tiếp Quản
                   </Button>
                 )}

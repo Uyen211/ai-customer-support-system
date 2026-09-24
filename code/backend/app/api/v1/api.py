@@ -10,8 +10,12 @@ from app.api.v1.endpoints.ws_alerts import router as ws_alerts_router
 from app.api.v1.endpoints.ws_chat import router as ws_chat_router
 from app.api.v1.endpoints.agent_conversations import router as agent_conversations_router
 from app.api.v1.endpoints.canned_responses import router as canned_responses_router
+from app.api.v1.endpoints.reports import router as reports_router
 
 api_router = APIRouter()
+
+# UC 4.4: Báo cáo thống kê hiệu suất
+api_router.include_router(reports_router)
 
 # Đăng ký Router Tickets (Phân công công việc)
 api_router.include_router(tickets_router)

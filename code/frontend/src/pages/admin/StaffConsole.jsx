@@ -9,7 +9,6 @@ import { ticketService } from '../../services/ticketService';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { getWsBaseUrl } from '../../utils/constants';
 import { AgentLiveChat } from '../../components/agent/AgentLiveChat';
-
 const STATUS_OPTIONS = [
   { value: 'ONLINE', label: 'Trực tuyến', tone: 'bg-emerald-500', message: 'Bạn đã sẵn sàng tiếp nhận hỗ trợ!' },
   { value: 'BUSY', label: 'Bận', tone: 'bg-amber-500', message: 'Bạn sẽ tạm dừng nhận phân công mới.' },
@@ -23,7 +22,7 @@ function statusLabel(status) {
   return STATUS_OPTIONS.find((item) => item.value === status)?.label || status;
 }
 
-function TicketCard({ ticket, onResolve }) {
+function TicketCard({ ticket, onResolve, currentUser }) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [totalTime, setTotalTime] = useState(1); // To calculate percentage
   const [showResolveForm, setShowResolveForm] = useState(false);
@@ -58,6 +57,9 @@ function TicketCard({ ticket, onResolve }) {
     return `${h}:${m}:${s}`;
   };
 
+  const minutesLeft = Math.ceil(timeLeft / 60000);
+  const isEarlyResolve = timeLeft > 0;
+
   const handleResolve = async (e) => {
     e.preventDefault();
     if (resolutionNote.trim().length < 10 || resolutionNote.length > 1000) {
@@ -73,55 +75,101 @@ function TicketCard({ ticket, onResolve }) {
       setSubmitting(false);
     }
   };
+  const handleSecondaryAction = (actionName) => {
+    alert(`Tính năng "${actionName}" đang được phát triển.`);
+  };
+
+  const handleTakeoverOpen = () => {
+    if (ticket.conversation_id) {
+      window.dispatchEvent(new CustomEvent('agent:select_chat', {
+        detail: { conversation_id: ticket.conversation_id, autoTakeover: true }
+      }));
+    } else {
+      alert('Không tìm thấy mã phòng chat cho thẻ này.');
+    }
+  };
+
+  const isAssignedToMe = currentUser && ticket.assigned_to === currentUser.id;
 
   return (
     <div className={`rounded-2xl border p-5 flex flex-col gap-4 group transition-all duration-300 ${
       isOverdue ? 'bg-[#930500]/10 border-[#930500] animate-pulse shadow-md shadow-[#930500]/20' : 
       isWarning ? 'bg-amber-50 border-amber-300' : 'bg-[#95BBEA]/10 border-[#95BBEA]/30'
     }`}>
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <Badge variant="outline">{ticket.priority || 'P3'}</Badge>
-            <span className={`px-2.5 py-1 bg-white rounded-full text-[10px] font-bold tracking-wider uppercase drop-shadow-sm ${isOverdue ? 'text-[#930500]' : 'text-[#95BBEA]'}`}>
-              {isOverdue ? 'Quá Hạn' : 'Đang xử lý'}
-            </span>
-          </div>
-          <h3 className="font-semibold text-lg text-[#2B2523]">{ticket.category || 'Hỗ trợ khách hàng'}</h3>
-          <p className="text-xs opacity-70 mt-1 truncate max-w-sm">
-            Ticket ID: {ticket.id || ticket.ticket_id} | Phòng: {ticket.conversation_id?.slice(0, 8)}...
-          </p>
+      <div className="flex items-start justify-between gap-4 mb-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{ticket.priority || 'P3'}</Badge>
+          <span className={`px-2.5 py-1 bg-white rounded-full text-[10px] font-bold tracking-wider uppercase drop-shadow-sm border ${isOverdue ? 'border-[#930500] text-[#930500]' : 'border-[#95BBEA] text-[#1F242B]'}`}>
+            Đang xử lý
+          </span>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className={`text-xl font-mono font-bold tracking-tight ${isOverdue ? 'text-[#930500]' : isWarning ? 'text-amber-600' : 'text-[#2B2523]'}`}>
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-[#EFE7D3] shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isOverdue ? 'text-[#930500]' : isWarning ? 'text-amber-600' : 'text-[#2B2523]'}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div className={`text-base font-mono font-bold tracking-tight ${isOverdue ? 'text-[#930500]' : isWarning ? 'text-amber-600' : 'text-[#2B2523]'}`}>
             {formatTime(timeLeft)}
           </div>
-          {!showResolveForm && (
-            <Button variant={isOverdue ? 'soft' : 'primary'} size="sm" onClick={() => setShowResolveForm(true)}>
-              Hoàn tất xử lý
-            </Button>
-          )}
+          <span className={`text-xs font-semibold ${isOverdue ? 'text-[#930500]' : 'text-[#2B2523]/70'}`}>
+            ({isOverdue ? 'Đã quá hạn' : `Còn ${minutesLeft} phút`})
+          </span>
         </div>
       </div>
 
-      {showResolveForm && (
-        <form onSubmit={handleResolve} className="mt-2 p-4 bg-white rounded-xl border border-[#EFE7D3]">
-          <label className="text-xs uppercase tracking-wider font-semibold text-[#2B2523]/80 block mb-2">
-            Kết quả xử lý <span className="text-[#930500]">*</span>
-          </label>
+      <div>
+        <h3 className="font-semibold text-lg text-[#2B2523]">{ticket.category || 'Hỗ trợ khách hàng'}</h3>
+        {ticket.summary && (
+          <p className="text-sm text-[#2B2523]/90 mt-1.5 mb-1.5 line-clamp-2 leading-snug">
+            {ticket.summary}
+          </p>
+        )}
+        <p className="text-xs opacity-70 mt-1 truncate max-w-sm font-mono">
+          Ticket ID: {ticket.id || ticket.ticket_id} | Phòng: {ticket.conversation_id?.slice(0, 8)}...
+        </p>
+      </div>
+
+      <form onSubmit={handleResolve} className="mt-2 flex flex-col gap-3 bg-white p-4 rounded-xl border border-[#EFE7D3] shadow-sm">
+        <div>
           <textarea 
             value={resolutionNote} 
             onChange={e => setResolutionNote(e.target.value)}
-            placeholder="Ghi nhận giải pháp xử lý (10 - 1000 ký tự)..."
-            className={`w-full bg-[#FFF8E7] text-[#2B2523] border rounded-xl px-4 py-3 text-sm outline-none resize-y min-h-[80px] ${error ? 'border-[#930500]' : 'border-[#EFE7D3] focus:border-[#930500]/40'}`}
+            placeholder="Ghi chú xử lý (Bắt buộc, 10 - 1000 ký tự)..."
+            className={`w-full bg-[#FFF8E7]/50 text-[#2B2523] border rounded-xl px-4 py-3 text-sm outline-none resize-y min-h-[80px] transition-colors ${error ? 'border-[#930500] focus:ring-1 focus:ring-[#930500]' : 'border-[#EFE7D3] focus:border-[#95BBEA] focus:ring-1 focus:ring-[#95BBEA]'}`}
           />
-          {error && <p className="text-xs text-[#930500] mt-1">{error}</p>}
-          <div className="flex justify-end gap-2 mt-3">
-            <Button type="button" variant="soft" size="sm" onClick={() => setShowResolveForm(false)} disabled={submitting}>Hủy</Button>
-            <Button type="submit" variant="primary" size="sm" isLoading={submitting}>Xác nhận hoàn thành</Button>
+          {error && <p className="text-xs text-[#930500] mt-1 font-medium">{error}</p>}
+          {isEarlyResolve && resolutionNote.length > 0 && !error && (
+            <p className="text-[11px] text-amber-600 mt-1.5 font-medium flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              Bạn đang hoàn tất phiếu sớm hơn thời gian cam kết. Vui lòng kiểm tra kỹ trước khi gửi.
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-3 border-t border-[#EFE7D3]/50">
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button type="button" variant="soft" size="sm" onClick={handleTakeoverOpen} className="flex-1 sm:flex-none">
+              {isAssignedToMe ? 'Mở hội thoại' : 'Tiếp quản'}
+            </Button>
+            <Button type="button" variant="soft" size="sm" onClick={() => handleSecondaryAction('Chuyển tiếp')} className="flex-1 sm:flex-none">
+              Chuyển tiếp
+            </Button>
+            <Button type="button" variant="soft" size="sm" onClick={() => handleSecondaryAction('Tạm dừng')} className="flex-1 sm:flex-none">
+              Tạm dừng
+            </Button>
           </div>
-        </form>
-      )}
+          
+          <button 
+            type="submit" 
+            disabled={submitting}
+            className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-full shadow-md shadow-emerald-600/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-95"
+          >
+            {submitting ? (
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            )}
+            Xác nhận đã xử lý
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
@@ -356,6 +404,14 @@ export function StaffConsole({ onNavigate }) {
               >
                 Bảng công việc Kanban
               </button>
+              {currentUser.role !== 'AGENT' && (
+                <button 
+                  onClick={() => onNavigate('reports')}
+                  className="text-sm font-semibold text-[#2B2523]/60 hover:text-[#930500] transition-colors"
+                >
+                  Báo cáo thống kê
+                </button>
+              )}
             </nav>
           </div>
           
@@ -528,40 +584,43 @@ export function StaffConsole({ onNavigate }) {
             {/* UC 3.3: Hàng đợi hội thoại trực tuyến + tiếp quản + chat realtime */}
             <AgentLiveChat currentUser={currentUser} />
 
-            {/* Agent Active Tickets Workspace */}
-            <div className="rounded-3xl border border-[#EFE7D3] bg-white shadow-editorial p-6">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-2xl bg-[#95BBEA] text-[#2B2523] flex items-center justify-center shadow-inner">
-                  <MessageSquare className="w-5 h-5" />
+            {currentUser?.role === 'AGENT' && (
+              <div className="rounded-3xl border border-[#EFE7D3] bg-white shadow-editorial p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-2xl bg-[#95BBEA] text-[#2B2523] flex items-center justify-center shadow-inner">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-serif-editorial text-2xl font-bold">Vé Hỗ Trợ Đang Xử Lý</h2>
+                    <p className="text-xs text-[#2B2523]/70 mt-1">Các phiên hỗ trợ khách hàng được hệ thống phân công cho bạn.</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="font-serif-editorial text-2xl font-bold">Vé Hỗ Trợ Đang Xử Lý</h2>
-                  <p className="text-xs text-[#2B2523]/70 mt-1">Các phiên hỗ trợ khách hàng được hệ thống phân công cho bạn.</p>
-                </div>
-              </div>
 
-              {activeTickets.length === 0 ? (
-                <div className="py-12 text-center rounded-2xl bg-[#FFF8E7] border border-[#EFE7D3]/50 border-dashed">
-                  <ShieldCheck className="w-10 h-10 mx-auto text-[#2B2523]/30 mb-3" />
-                  <p className="text-sm font-medium text-[#2B2523]/60">Chưa có công việc nào đang diễn ra.</p>
-                  <p className="text-xs text-[#2B2523]/40 mt-1">Hệ thống sẽ tự động gửi vé khi có khách hàng cần hỗ trợ.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4">
-                  {activeTickets.map(ticket => (
-                    <TicketCard 
-                      key={ticket.id || ticket.ticket_id} 
-                      ticket={ticket} 
-                      onResolve={async (id, note) => {
-                        await ticketService.resolveTicket(id, note);
-                        setActiveTickets(prev => prev.filter(t => (t.id || t.ticket_id) !== id));
-                        showNotice('success', 'Đã hoàn tất xử lý phiếu hỗ trợ!');
-                      }} 
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+                {activeTickets.length === 0 ? (
+                  <div className="py-12 text-center rounded-2xl bg-[#FFF8E7] border border-[#EFE7D3]/50 border-dashed">
+                    <ShieldCheck className="w-10 h-10 mx-auto text-[#2B2523]/30 mb-3" />
+                    <p className="text-sm font-medium text-[#2B2523]/60">Chưa có công việc nào đang diễn ra.</p>
+                    <p className="text-xs text-[#2B2523]/40 mt-1">Hệ thống sẽ tự động gửi vé khi có khách hàng cần hỗ trợ.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {activeTickets.map(ticket => (
+                      <TicketCard 
+                        currentUser={currentUser}
+                        key={ticket.id || ticket.ticket_id} 
+                        ticket={ticket} 
+                        onResolve={async (id, note) => {
+                          await ticketService.resolveTicket(id, note);
+                          setActiveTickets(prev => prev.filter(t => (t.id || t.ticket_id) !== id));
+                          showNotice('success', 'Đã hoàn tất xử lý phiếu hỗ trợ!');
+                        }} 
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         </section>
       </main>

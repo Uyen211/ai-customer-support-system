@@ -9,7 +9,7 @@ const KANBAN_COLUMNS = [
   { id: 'CLOSED', title: 'Đóng phiếu' }
 ];
 
-function KanbanCard({ ticket, onDragStart, onDoubleClick }) {
+function KanbanCard({ ticket, onDragStart, onDoubleClick, currentUser, onAssignClick }) {
   const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ function KanbanCard({ ticket, onDragStart, onDoubleClick }) {
         </span>
       </div>
       <div className="text-sm font-semibold text-[#2B2523] mb-3 line-clamp-2 leading-tight">{ticket.summary}</div>
-      <div className="flex items-center text-[11px]">
+      <div className="flex items-center justify-between text-[11px]">
         {ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' ? (
           <span className={`font-mono font-medium flex items-center gap-1 ${isOverdue ? 'text-[#930500]' : 'text-[#2B2523]/70'}`}>
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -65,12 +65,25 @@ function KanbanCard({ ticket, onDragStart, onDoubleClick }) {
             Đã dừng đếm
           </span>
         )}
+        <span className="text-gray-500 max-w-[50%] truncate text-right">
+          {ticket.assigned_to ? '👤 Đã phân công' : '👤 Chưa phân công'}
+        </span>
       </div>
+      {ticket.status === 'PENDING' && currentUser && ['ADMIN', 'MANAGER'].includes(currentUser.role) && (
+        <div className="mt-3 border-t border-[#EFE7D3] pt-3">
+          <button 
+            onClick={(e) => { e.stopPropagation(); if (onAssignClick) onAssignClick(ticket); }}
+            className="w-full py-1.5 px-3 bg-[#FFF8E7] text-[#930500] hover:bg-[#930500] hover:text-white border border-[#EFE7D3] hover:border-[#930500] rounded-lg text-[11px] font-bold transition-colors"
+          >
+            Phân công thủ công
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-export default function KanbanBoard() {
+export default function KanbanBoard({ currentUser, onAssignClick }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,6 +91,10 @@ export default function KanbanBoard() {
 
   useEffect(() => {
     fetchTickets();
+    
+    const handleRefresh = () => fetchTickets();
+    window.addEventListener('kanban:refresh', handleRefresh);
+    return () => window.removeEventListener('kanban:refresh', handleRefresh);
   }, []);
 
   const fetchTickets = async () => {
@@ -164,7 +181,7 @@ export default function KanbanBoard() {
       {KANBAN_COLUMNS.map(column => (
         <div 
           key={column.id} 
-          className="flex flex-col flex-1 min-w-[280px] bg-[#FFF8E7]/50 border border-[#EFE7D3] rounded-2xl shrink-0"
+          className="flex flex-col w-[320px] bg-[#FFF8E7]/50 border border-[#EFE7D3] rounded-2xl shrink-0"
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, column.id)}
         >
@@ -182,6 +199,8 @@ export default function KanbanBoard() {
                 ticket={ticket} 
                 onDragStart={handleDragStart} 
                 onDoubleClick={handleDoubleClick} 
+                currentUser={currentUser}
+                onAssignClick={onAssignClick}
               />
             ))}
           </div>

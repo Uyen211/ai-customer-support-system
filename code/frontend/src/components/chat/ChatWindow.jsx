@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Send, Square, AlertCircle, CheckCircle2, Lock, Clock, UserCheck, Bot } from 'lucide-react';
 import { MessageList } from './MessageList';
 import { SuggestionButtons } from './SuggestionButtons';
@@ -20,10 +20,18 @@ export function ChatWindow({
   onDeleteConversation,
 }) {
   const [inputText, setInputText] = useState('');
+  const inputRef = useRef(null);
 
   const mode = conversation?.mode || 'BOT';
   const isClosed = mode === 'CLOSED';
   const isWaitingHuman = mode === 'WAITING_HUMAN';
+
+  useEffect(() => {
+    if (!isClosed && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [conversation?.id, isClosed]);
+
 
   const handleSend = (e) => {
     e?.preventDefault();
@@ -137,6 +145,7 @@ export function ChatWindow({
       <div className="p-4 sm:p-6 border-t border-[#EFE7D3] bg-[#FFF8E7]">
         <form onSubmit={handleSend} className="relative flex items-center gap-2">
           <textarea
+            ref={inputRef}
             rows={1}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
