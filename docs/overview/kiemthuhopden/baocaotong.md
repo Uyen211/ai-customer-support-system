@@ -2,8 +2,6 @@ TRƯỜNG ĐẠI HỌC THỦY LỢI
 
 **KHOA CÔNG NGHỆ THÔNG TIN**
 
- 
-
 **BÁO CÁO BÀI TẬP LỚN MÔN HỌC**
 
 **KIỂM THỬ VÀ ĐẢM BẢO CHẤT LƯỢNG PHẦN MỀM** 
@@ -139,11 +137,11 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 # **II. ĐẶC TẢ YÊU CẦU CHỨC NĂNG HỆ THỐNG VÀ THIẾT KẾ KIỂM THỬ HỘP ĐEN** {#ii.-đặc-tả-yêu-cầu-chức-năng-hệ-thống}
 
+
 ### Use case 1.1: Quản lý tài khoản khách hàng {#uc-1-1}
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Quản lý tài khoản khách hàng** |
 | **Tác nhân** | Khách hàng |
 | **Điều kiện bắt đầu** | 1. Khách hàng đã truy cập vào trang web của chuỗi cửa hàng đồ dùng thú cưng.<br>2. Thiết bị của khách hàng có kết nối mạng ổn định tới hệ thống. |
 | **Luồng sự kiện chính (Đăng ký tài khoản mới)** | 1. Khách hàng chọn nút "Đăng ký" trên thanh điều hướng của website.<br>2. Hệ thống hiển thị biểu mẫu "Đăng ký tài khoản khách hàng" gồm các trường thông tin:<br>• Họ và tên: Bắt buộc; nhập chữ tiếng Việt hoặc tiếng Anh cùng khoảng trắng, độ dài 2-50 ký tự.<br>• Địa chỉ Email: Bắt buộc; đúng định dạng email tiêu chuẩn (VD: tennguoidung@domain.com), tối đa 255 ký tự.<br>• Số điện thoại: Tùy chọn; nếu nhập phải đủ 10 chữ số bắt đầu bằng số 0.<br>• Mật khẩu: Bắt buộc; độ dài từ 8 ký tự trở lên, chứa ít nhất một chữ cái và một chữ số.<br>• Xác nhận mật khẩu: Bắt buộc; nhập lại chính xác mật khẩu ở trên.<br>(Lưu ý: Biểu mẫu có sẵn liên kết "Bạn đã có tài khoản? Đăng nhập ngay". Nếu chọn, thực hiện Luồng con A-1).<br>3. Khách hàng điền đầy đủ thông tin.<br>4. Khách hàng nhấn nút "Tạo tài khoản".<br>5. Hệ thống kiểm tra thông tin bắt buộc. Nếu để trống, thực hiện E-1.<br>6. Hệ thống kiểm tra định dạng dữ liệu (email, số điện thoại, mật khẩu). Nếu sai, thực hiện E-2.<br>7. Hệ thống so khớp mật khẩu xác nhận. Nếu không khớp, thực hiện E-3.<br>8. Hệ thống kiểm tra sự tồn tại của email. Nếu đã được đăng ký, thực hiện E-4.<br>9. Hệ thống ghi nhận tài khoản mới vào cơ sở dữ liệu với trạng thái hoạt động bình thường, tự động thiết lập phiên đăng nhập.<br>10. Đầu ra: Hệ thống hiển thị thông báo xanh: "Chúc mừng bạn đã tạo tài khoản thành công! Chào mừng bạn đến với PetHome.", chuyển hướng về Trang chủ và cập nhật hiển thị tên khách hàng trên thanh điều hướng. |
@@ -155,17 +153,19 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Tên trường dữ liệu | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Họ và tên** *(Đăng ký)* | • Bắt buộc<br>• Độ dài 2 - 50 ký tự<br>• Chỉ chứa chữ cái tiếng Việt/Anh và khoảng trắng | **V_NAME_01:** Chuỗi chữ hợp lệ có độ dài từ 2 - 50 ký tự (VD: `"Nguyễn Văn A"`) | **I_NAME_01:** Để trống<br>**I_NAME_02:** Chuỗi ngắn hơn 2 ký tự (VD: `"A"`)<br>**I_NAME_03:** Chuỗi dài hơn 50 ký tự<br>**I_NAME_04:** Chứa số hoặc ký tự đặc biệt (VD: `"Nam123"`, `"An@%"`) | • Biên dưới: 1 ký tự (I), 2 ký tự (V), 3 ký tự (V)<br>• Biên trên: 49 ký tự (V), 50 ký tự (V), 51 ký tự (I) |
-| **Địa chỉ Email** *(Đăng ký/Đăng nhập)* | • Bắt buộc<br>• Đúng định dạng email tiêu chuẩn (`ten@domain.com`)<br>• Tối đa 255 ký tự<br>• Duy nhất trên hệ thống | **V_EMAIL_01:** Đúng định dạng email, chưa tồn tại, độ dài ≤ 255 ký tự (VD: `"user@gmail.com"`) | **I_EMAIL_01:** Để trống<br>**I_EMAIL_02:** Sai định dạng (VD: `"user@"` , `"user.com"`, `"user@domain"`)<br>**I_EMAIL_03:** Email vượt quá 255 ký tự<br>**I_EMAIL_04:** Email đã tồn tại trên hệ thống | • Biên trên độ dài: 255 ký tự (V), 256 ký tự (I) |
+| **Địa chỉ Email** *(Đăng ký/Đăng nhập)* | • Bắt buộc<br>• Đúng định dạng email tiêu chuẩn (`ten@domain.com`)<br>• Tối đa 255 ký tự<br>• Duy nhất trên hệ thống | **V_EMAIL_01:** Đúng định dạng email, chưa tồn tại, độ dài $≤ 255$ ký tự (VD: `"user@gmail.com"`) | **I_EMAIL_01:** Để trống<br>**I_EMAIL_02:** Sai định dạng (VD: `"user@"` , `"user.com"`, `"user@domain"`)<br>**I_EMAIL_03:** Email vượt quá 255 ký tự<br>**I_EMAIL_04:** Email đã tồn tại trên hệ thống | • Biên trên độ dài: 255 ký tự (V), 256 ký tự (I) |
 | **Số điện thoại** *(Đăng ký)* | • Tùy chọn (Không bắt buộc)<br>• Nếu nhập: Bắt buộc đủ 10 chữ số và bắt đầu bằng số `0` | **V_PHONE_01:** Để trống không nhập<br>**V_PHONE_02:** Đủ 10 chữ số, bắt đầu bằng số `0` (VD: `"0912345678"`) | **I_PHONE_01:** Ít hơn 10 chữ số (VD: `"091234567"`)<br>**I_PHONE_02:** Nhiều hơn 10 chữ số (VD: `"09123456789"`)<br>**I_PHONE_03:** Đủ 10 chữ số nhưng không bắt đầu bằng số `0` (VD: `"1912345678"`)<br>**I_PHONE_04:** Chứa chữ cái hoặc ký tự đặc biệt (VD: `"0912abc345"`) | • Biên độ dài: 9 chữ số (I), 10 chữ số bắt đầu bằng `0` (V), 11 chữ số (I) |
-| **Mật khẩu** *(Đăng ký/Đăng nhập)* | • Bắt buộc<br>• Độ dài từ 8 ký tự trở lên<br>• Chứa ít nhất 1 chữ cái và 1 chữ số | **V_PASS_01:** Mật khẩu ≥ 8 ký tự, chứa cả chữ và số (VD: `"Abc12345"`) | **I_PASS_01:** Để trống<br>**I_PASS_02:** Ít hơn 8 ký tự (VD: `"Abc1234"`)<br>**I_PASS_03:** Chỉ chứa toàn chữ cái, không có số (VD: `"Abcdefgh"`)<br>**I_PASS_04:** Chỉ chứa toàn chữ số, không có chữ (VD: `"12345678"`) | • Biên độ dài: 7 ký tự (I), 8 ký tự (V), 9 ký tự (V) |
+| **Mật khẩu** *(Đăng ký/Đăng nhập)* | • Bắt buộc<br>• Độ dài từ 8 ký tự trở lên<br>• Chứa ít nhất 1 chữ cái và 1 chữ số | **V_PASS_01:** Mật khẩu $≥ 8$ ký tự, chứa cả chữ và số (VD: `"Abc12345"`) | **I_PASS_01:** Để trống<br>**I_PASS_02:** Ít hơn 8 ký tự (VD: `"Abc1234"`)<br>**I_PASS_03:** Chỉ chứa toàn chữ cái, không có số (VD: `"Abcdefgh"`)<br>**I_PASS_04:** Chỉ chứa toàn chữ số, không có chữ (VD: `"12345678"`) | • Biên độ dài: 7 ký tự (I), 8 ký tự (V), 9 ký tự (V) |
 | **Xác nhận mật khẩu** *(Đăng ký)* | • Bắt buộc<br>• Phải khớp hoàn toàn từng ký tự với ô Mật khẩu | **V_CONFIRM_01:** Chuỗi trùng khớp hoàn toàn với ô Mật khẩu | **I_CONFIRM_01:** Để trống<br>**I_CONFIRM_02:** Không trùng khớp với ô Mật khẩu (VD: gõ sai 1 ký tự) | Không áp dụng biên (so khớp chuỗi) |
 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Người dùng nhấn nút "Tạo tài khoản")*
 
@@ -180,6 +180,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H3: Báo lỗi "Mật khẩu xác nhận không trùng khớp" (E-3)** | | | X | | |
 | **H4: Báo lỗi "Địa chỉ email này đã được sử dụng" (E-4)** | | | | X | |
 | **H5: Đăng ký thành công, thông báo xanh & chuyển về Trang chủ** | | | | | X |
+
 
 *(Tiền đề quy trình: Người dùng nhấn nút "Đăng nhập")*
 
@@ -233,7 +234,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_LOG_06** | Kiểm tra tự động khóa tài khoản khi nhập sai mật khẩu 5 lần liên tiếp | Tài khoản `khachhang1@gmail.com` đã nhập sai 4 lần trước đó | 1. Nhập Email chính xác.<br>2. Nhập Mật khẩu sai lần thứ 5.<br>3. Nhấn "Đăng nhập". | • Email: `"khachhang1@gmail.com"`<br>• Mật khẩu: `"sai_mat_khau_5"` (I) | Hiển thị thông báo: *"Tài khoản hiện đang bị tạm khóa. Vui lòng quay lại sau hoặc liên hệ bộ phận hỗ trợ"*. Tài khoản chuyển sang trạng thái bị khóa 15 phút. | |
 
 ---
-
 ---
 
 ---
@@ -242,7 +242,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Quản lý phiên trò chuyện** |
 | **Tác nhân** | Khách hàng |
 | **Điều kiện bắt đầu** | 1. Khách hàng đã truy cập website PetHome và đăng nhập thành công.<br>2. Khách hàng mở khung "Tư vấn trực tuyến" ở góc màn hình. |
 | **Luồng sự kiện chính (Xem danh sách và Tiếp tục cuộc trò chuyện cũ)** | 1. Khách hàng chọn nút "Lịch sử trò chuyện" trên thanh tiêu đề cửa sổ chat.<br>2. Hệ thống tải và hiển thị danh sách các phiên trò chuyện trước đây của khách hàng. Mỗi mục gồm:<br>• Thời gian tin nhắn gần nhất (ngày/tháng/năm giờ:phút).<br>• Dòng tin nhắn tóm lược gần nhất (10-15 từ đầu).<br>• Nhãn trạng thái phiên: Đang mở (giao tiếp với Bot/Nhân viên) hoặc Đã kết thúc.<br>(Trên giao diện luôn có nút "Bắt đầu cuộc trò chuyện mới". Nếu chọn, thực hiện Luồng con A-1).<br>3. Khách hàng bấm chọn cuộc trò chuyện cũ muốn tiếp tục.<br>4. Hệ thống kiểm tra tình trạng phiên trò chuyện:<br>• Nếu đã "Đã kết thúc", thực hiện luồng rẽ nhánh E-1.<br>• Nếu đang ở chế độ chờ nhân viên tư vấn tiếp quản, thực hiện luồng rẽ nhánh E-2.<br>5. Hệ thống tải nội dung trao đổi gần nhất và hiển thị đầy đủ lên khung chat.<br>6. Hệ thống cuộn màn hình xuống tin nhắn mới nhất và kích hoạt ô nhập liệu.<br>7. Đầu ra: Lịch sử trao đổi hiển thị trọn vẹn, thanh tiêu đề thể hiện rõ trạng thái kết nối với Trợ lý ảo, ô nhập sẵn sàng cho khách hàng gõ nội dung tiếp theo. |
@@ -256,15 +255,17 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 *Khối chức năng Quản lý phiên trò chuyện không có các trường nhập liệu dạng biểu mẫu văn bản phức tạp, mà tập trung vào các hành động tương tác chọn lựa (Click) và kiểm tra dữ liệu hiển thị lịch sử.*
 
+
 | Trường dữ liệu / Tương tác | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Danh sách cuộc trò chuyện cũ** | • Hiển thị phiên trò chuyện thuộc sở hữu của khách hàng<br>• Hiển thị thời gian tin nhắn gần nhất & dòng tóm lược (10-15 từ) | **V_CONV_01:** Danh sách có từ 1 phiên trò chuyện trở lên | **I_CONV_01:** Khách hàng mới chưa từng có phiên trò chuyện nào (Danh sách trống) | Phân vùng danh sách: 0 phiên (I), 1 phiên (V) |
 | **Trạng thái phiên trò chuyện** | • Nhãn trạng thái hiển thị rõ ràng trên từng phiên | **V_STATUS_01:** Trạng thái Đang mở - Chế độ Trợ lý ảo (Bot mode)<br>**V_STATUS_02:** Trạng thái Đang mở - Chế độ Chờ tư vấn viên tiếp quản (Waiting for Agent)<br>**V_STATUS_03:** Trạng thái Đang mở - Chế độ Tư vấn viên đang hỗ trợ (Human Agent mode) | **I_STATUS_01:** Trạng thái Đã kết thúc (Closed) | Không áp dụng biên (Xác định theo tập nhãn trạng thái) |
-| **Tải lịch sử tin nhắn** | • Tải phân đoạn (Lazy Loading)<br>• Tải trước 50 tin nhắn gần nhất | **V_MSG_01:** Số tin nhắn trong phiên ≤  50$ tin<br>**V_MSG_02:** Số tin nhắn trong phiên $> 50$ tin (Tải 50 tin mới nhất, cuộn lên tải thêm) | **I_MSG_01:** Lỗi kết nối đường truyền không tải được tin nhắn | Biên số lượng tin nhắn: 50 tin nhắn (vừa đủ 1 lượt tải phân đoạn), 51 tin nhắn (kích hoạt phân trang cuộn) |
+| **Tải lịch sử tin nhắn** | • Tải phân đoạn (Lazy Loading)<br>• Tải trước 50 tin nhắn gần nhất | **V_MSG_01:** Số tin nhắn trong phiên $≤ 50$ tin<br>**V_MSG_02:** Số tin nhắn trong phiên $> 50$ tin (Tải 50 tin mới nhất, cuộn lên tải thêm) | **I_MSG_01:** Lỗi kết nối đường truyền không tải được tin nhắn | Biên số lượng tin nhắn: 50 tin nhắn (vừa đủ 1 lượt tải phân đoạn), 51 tin nhắn (kích hoạt phân trang cuộn) |
 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 | Điều kiện / Hành động | Rule 1 | Rule 2 | Rule 3 | Rule 4 |
 | :--- | :---: | :---: | :---: | :---: |
@@ -280,6 +281,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 3. Sơ đồ chuyển trạng thái (State Transition Diagram)
+
 
 | Trạng thái hiện tại | Điều kiện / Sự kiện kích hoạt | Trạng thái tiếp theo |
 | :--- | :--- | :--- |
@@ -320,7 +322,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_CONV_07** | Kiểm tra tính năng tải phân đoạn 50 tin nhắn (Lazy Loading) | Phiên trò chuyện có tổng cộng 70 tin nhắn trao đổi | 1. Chọn mở cuộc trò chuyện có 70 tin nhắn.<br>2. Quan sát số tin nhắn tải đầu tiên.<br>3. Cuộn ngược màn hình chat lên trên cùng. | Cuộn trang lên trên | Ban đầu hệ thống chỉ nạp 50 tin nhắn mới nhất. Khi cuộn lên đỉnh khung chat, hệ thống tự động tải thêm 20 tin nhắn cũ hơn còn lại. | |
 
 ---
-
 ---
 
 ---
@@ -329,7 +330,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Tư vấn sản phẩm và giải đáp chính sách** |
 | **Tác nhân** | Khách hàng |
 | **Điều kiện bắt đầu** | 1. Khách hàng đã mở khung trò chuyện với Trợ lý ảo PetHome.<br>2. Phiên hội thoại đang ở chế độ Trợ lý ảo (`mode == 'BOT'`).<br>3. Cơ sở dữ liệu danh mục sản phẩm, tồn kho và kho tài liệu chính sách đã sẵn sàng trên hệ thống. |
 | **Luồng sự kiện chính (Tư vấn đa ý, bóc tách thuộc tính & Sinh phản hồi streaming)** | 1. Tại khung chat, khách hàng gõ câu hỏi hoặc yêu cầu tư vấn (độ dài 2 - 1000 ký tự). Câu hỏi có thể là câu đơn hoặc câu phức hợp ghép nhiều ý (VD: *"Pate Royal Canin 2kg giá bao nhiêu, chính sách freeship thế nào và shop có bán mèo Anh lông ngắn không?"*).<br>2. Khách hàng nhấn nút "Gửi" (hoặc phím Enter).<br>3. Hệ thống kiểm tra tin nhắn. Nếu rỗng hoặc chỉ có khoảng trắng, thực hiện E-1.<br>4. Hệ thống kiểm tra chế độ phiên chat. Nếu đang ở chế độ chờ/đã có nhân viên hỗ trợ (`WAITING_HUMAN` / `HUMAN`), thực hiện E-2.<br>5. Hệ thống hiển thị biểu tượng động "Trợ lý ảo đang phản hồi..." trên khung chat.<br>6. Hệ thống thực hiện quy trình xử lý thông minh qua **RAG Pipeline (Kiến trúc KH-06)**:<br>• **Phân rã câu hỏi & Nhận diện Ý định (Sub-query Decomposition & Intent Router):** Bẻ câu hỏi phức hợp thành các câu hỏi nhỏ nguyên tử, giải quyết đại từ thay thế dựa vào lịch sử chat và phân loại Intent cho từng câu hỏi nhỏ (`SQL_PRODUCT`, `VECTOR_KNOWLEDGE`, `OUT_OF_DOMAIN`, `GREETING_CHITCHAT`, `HUMAN_AGENT_REQUEST`).<br>• **Truy vấn Thông tin Sản phẩm SQL (`SQL_PRODUCT`):** Bóc tách chính xác từ khóa tên sản phẩm, danh mục, loại thú cưng và các thuộc tính linh hoạt (`brand`, `size`, `weight_volume`, `price_max/min`, `in_stock_only`) để tìm kiếm dữ liệu real-time trong CSDL sản phẩm.<br>• **Truy vấn Tri thức Chính sách Vector (`VECTOR_KNOWLEDGE`):** Tạo vector nhúng (768 chiều) và tìm kiếm ngữ nghĩa Cosine HNSW trong cơ sở dữ liệu tri thức về chính sách đổi trả, giao hàng, bảo hành và hướng dẫn chăm sóc.<br>• **Xử lý Ý định Ngoài phạm vi (`OUT_OF_DOMAIN`):** Nếu câu hỏi chứa các nội dung ngoài phạm vi kinh doanh của cửa hàng đồ dùng thú cưng (VD: hỏi mua động vật sống như chó/mèo con, dịch vụ khám bệnh thú y, thông tin xã hội...), hệ thống tự động nhận diện và đóng gói thông báo giải thích phạm vi kèm lời mời chuyển kết nối sang Nhân viên CSKH nếu cần.<br>7. **Tổng hợp & Sinh câu trả lời Streaming:** Hệ thống tổng hợp dữ liệu từ tất cả các nhánh, sinh câu trả lời tự nhiên dưới dạng luồng **gõ chữ thời gian thực (SSE Streaming)** trả về Client UI.<br>8. Bên dưới tin nhắn phản hồi, hệ thống đính kèm nút "Xem trích dẫn nguồn" (cho phép bấm vào để thực hiện Luồng con A-1).<br>9. Hệ thống tự động ghi nhận tin nhắn phản hồi và metadata trích dẫn vào lịch sử trao đổi.<br>10. Đầu ra: Câu trả lời tư vấn hiển thị rõ ràng từng đoạn theo thời gian thực; đầy đủ trích dẫn nguồn; ô nhập làm mới sẵn sàng cho câu hỏi tiếp theo. |
@@ -341,6 +341,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Tên trường dữ liệu | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Nội dung câu hỏi** | • Bắt buộc có nội dung<br>• Độ dài 2 - 1000 ký tự<br>• Không chỉ chứa toàn khoảng trắng<br>• Có thể là câu đơn hoặc câu phức hợp nhiều ý | **V_MSG_01:** Câu hỏi hợp lệ 2 - 1000 ký tự về sản phẩm/giá/tồn kho (VD: *"Pate Royal Canin 2kg giá bao nhiêu?"*)<br>**V_MSG_02:** Câu hỏi hợp lệ về chính sách/bảo hành/đổi trả (VD: *"Shop có chính sách đổi trả hàng hư hỏng như thế nào?"*)<br>**V_MSG_03:** Câu hỏi phức hợp ghép nhiều ý (VD: *"Pate Royal Canin giá bao nhiêu và phí ship thế nào?"*) | **I_MSG_01:** Để trống không nhập gì<br>**I_MSG_02:** Chỉ nhập toàn khoảng trắng (VD: `"   "`)<br>**I_MSG_03:** Nội dung ngắn hơn 2 ký tự (VD: `"A"`)<br>**I_MSG_04:** Nội dung dài vượt quá 1000 ký tự<br>**I_MSG_05:** Câu hỏi ngoài phạm vi kinh doanh (Out of Domain - VD: *"Shop có bán mèo Anh lông ngắn không?"*, *"Dịch vụ khám bệnh thú y bao tiền?"*) | • Biên dưới độ dài: 1 ký tự (I), 2 ký tự (V), 3 ký tự (V)<br>• Biên trên độ dài: 999 ký tự (V), 1000 ký tự (V), 1001 ký tự (I) |
@@ -348,6 +349,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 | Điều kiện / Hành động | Rule 1 | Rule 2 | Rule 3 | Rule 4 | Rule 5 |
 | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -394,7 +396,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_RAG_10** | Kiểm tra nhập câu hỏi 1001 ký tự (Biên lỗi trên) | Khung chat đang mở | 1. Dán một đoạn văn bản dài 1001 ký tự vào ô gõ.<br>2. Nhấn "Gửi". | Nội dung: Chuỗi văn bản 1001 ký tự (I) | Ô nhập liệu tự động chặn không cho gõ/dán vượt quá 1000 ký tự (hoặc hiển thị cảnh báo đỏ dưới ô nhập: *"Nội dung câu hỏi vượt quá độ dài tối đa 1000 ký tự"*). | |
 
 ---
-
 ---
 
 ---
@@ -403,7 +404,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Xóa phiên trò chuyện & vô hiệu hóa Ticket liên quan** |
 | **Tác nhân** | Khách hàng |
 | **Điều kiện bắt đầu** | 1. Khách hàng đã truy cập website PetHome và đăng nhập thành công.<br>2. Khách hàng mở danh sách lịch sử trò chuyện. |
 | **Luồng sự kiện chính (Xóa phiên trò chuyện và vô hiệu hóa Ticket)** | 1. Tại danh sách các phiên trò chuyện, khách hàng rê chuột vào mục cuộc trò chuyện muốn xóa và bấm biểu tượng thùng rác "Xóa cuộc trò chuyện".<br>2. Hệ thống hiển thị hộp thoại xác nhận (Modal): *"Bạn có chắc chắn muốn xóa cuộc trò chuyện này? Toàn bộ tin nhắn và phiếu hỗ trợ liên quan (nếu có) sẽ bị xóa hoặc vô hiệu hóa."* kèm 2 nút "Xác nhận xóa" và "Hủy".<br>3. Nếu khách hàng chọn "Hủy", thực hiện Luồng con A-1.<br>4. Khách hàng bấm nút "Xác nhận xóa".<br>5. Hệ thống kiểm tra các Phiếu Hỗ trợ (Ticket) đang gắn liền với phiên trò chuyện này:<br>• Nếu có Ticket ở trạng thái `PENDING` hoặc `IN_PROGRESS`, hệ thống chuyển trạng thái Ticket sang `CLOSED` (Vô hiệu hóa) kèm lý do ghi nhận "Phiên hội thoại đã bị khách hàng xóa", ngắt đồng hồ SLA và gỡ Ticket khỏi hàng đợi chia việc.<br>6. Hệ thống thực hiện xóa toàn bộ lịch sử tin nhắn và xóa phiên trò chuyện khỏi cơ sở dữ liệu.<br>7. Hệ thống làm mới danh sách lịch sử trò chuyện và chuyển giao diện về trạng thái chưa chọn phiên.<br>8. Đầu ra: Dải thông báo xanh: *"Đã xóa cuộc trò chuyện thành công!"*, phiên trò chuyện biến mất khỏi lịch sử và các phiếu hỗ trợ liên quan được ghi nhận vô hiệu hóa. |
@@ -411,13 +411,10 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **Luồng rẽ nhánh (Ngoại lệ)** | E-1: Gián đoạn kết nối đường truyền khi xóa<br>1. Hệ thống không thực hiện xóa và hiển thị cảnh báo đỏ: "Lỗi kết nối đường truyền. Không thể xóa cuộc trò chuyện lúc này. Vui lòng thử lại!".<br>2. Giữ nguyên phiên trò chuyện và khôi phục trạng thái giao diện.<br><br>E-2: Phiên trò chuyện không tồn tại hoặc đã bị xóa trước đó<br>1. Hệ thống báo lỗi: "Phiên trò chuyện này không còn tồn tại".<br>2. Tự động làm mới danh sách lịch sử trò chuyện. |
 | **Quy tắc Nghiệp vụ (Business Rules / Logic)** | 1. Phân quyền sở hữu: Khách hàng chỉ được phép xóa các phiên trò chuyện thuộc sở hữu của tài khoản mình.<br>2. Xác nhận bắt buộc (Confirmation Gate): Thao tác xóa bắt buộc phải đi qua bước xác nhận để tránh xóa nhầm dữ liệu.<br>3. Vô hiệu hóa Ticket đồng bộ: Khi xóa phiên chat, mọi Ticket đang phát sinh từ phiên này phải lập tức chuyển sang trạng thái vô hiệu hóa (`CLOSED`), dừng đếm ngược SLA và loại khỏi hàng đợi phân công nhân viên.<br>4. Tính không thể khôi phục: Thao tác xóa phiên trò chuyện là vĩnh viễn, toàn bộ tin nhắn liên quan không thể khôi phục sau khi xác nhận. |
 
----
-
-2. ## **Khối chức năng giám sát hội thoại và khởi tạo yêu cầu hỗ trợ khẩn cấp**
-
 #### **Kiểm thử hộp đen Use case 1.4: Xóa phiên trò chuyện & vô hiệu hóa Ticket liên quan**
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
+
 
 | Đối tượng / Thao tác | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
@@ -428,6 +425,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 | Điều kiện / Hành động | Rule 1 | Rule 2 | Rule 3 | Rule 4 |
 | :--- | :---: | :---: | :---: | :---: |
@@ -443,6 +441,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 3. Sơ đồ chuyển trạng thái (State Transition Diagram)
+
 
 | Đối tượng | Trạng thái hiện tại | Điều kiện / Sự kiện kích hoạt | Trạng thái tiếp theo |
 | :--- | :--- | :--- | :--- |
@@ -476,7 +475,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_DEL_05** | Kiểm tra xóa phiên trò chuyện đã bị xóa ở thiết bị/cửa sổ khác (E-2) | Phiên chat đã bị xóa ở cửa sổ trình duyệt khác trước đó vài giây | 1. Bấm nút thùng rác xóa phiên chat.<br>2. Bấm *"Xác nhận xóa"*. | Thao tác trên bản ghi đã mất | Hiển thị cảnh báo lỗi: *"Phiên trò chuyện này không còn tồn tại"*. Hệ thống tự động làm mới danh sách lịch sử trò chuyện. | |
 
 ---
-
 *Tài liệu kiểm thử hộp đen Khối chức năng 1 được biên soạn hoàn chỉnh tuân thủ cấu trúc tài liệu mẫu `cau-truc-kiem-thu-hop-den.md` và chuẩn ngữ phong từ góc nhìn End-User.*
 
 ---
@@ -497,15 +495,17 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Trường dữ liệu / Chỉ số | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Độ dài tin nhắn khách gửi** | • Bắt buộc từ 2 - 1000 ký tự<br>• Không chỉ chứa toàn khoảng trắng | **V_MSG_01:** Chuỗi tin nhắn hợp lệ có độ dài từ 2 - 1000 ký tự | **I_MSG_01:** Để trống không nhập gì<br>**I_MSG_02:** Chỉ chứa toàn khoảng trắng<br>**I_MSG_03:** Ngắn hơn 2 ký tự (1 ký tự)<br>**I_MSG_04:** Dài vượt quá 1000 ký tự | • Biên dưới: 1 ký tự (I), 2 ký tự (V), 3 ký tự (V)<br>• Biên trên: 999 ký tự (V), 1000 ký tự (V), 1001 ký tự (I) |
 | **Thang điểm cảm xúc tin nhắn** *(Do hệ thống đánh giá ngầm)* | • Thang điểm từ -1.00 đến +1.00<br>• Quy ước làm tròn 2 chữ số thập phân | **V_SENT_01:** Điểm Bức xúc cao: [-1.00 đến -0.60]<br>**V_SENT_02:** Điểm Tiêu cực nhẹ: [-0.59 đến -0.30]<br>**V_SENT_03:** Điểm Bình thường: [-0.29 đến +0.29]<br>**V_SENT_04:** Điểm Tích cực: [+0.30 đến +1.00] | **I_SENT_01:** Hệ thống phân tích gặp sự cố / Quá thời gian phản hồi (vượt quá 3 giây) $→$ Ghi nhận điểm mặc định 0.00 (Bình thường) | • Mốc ranh giới P1: -1.00 (V), -0.60 (V), -0.59 (V)<br>• Mốc ranh giới P2: -0.59 (V), -0.30 (V), -0.29 (V)<br>• Mốc an toàn: +1.00 (V) |
-| **Trạng thái cờ cảnh báo đỏ (is_flagged)** | • Tự động bật cờ đỏ khi điểm cảm xúc ≤  -0.30$ | **V_FLAG_01:** Bật cờ cảnh báo đỏ khi điểm cảm xúc đạt mốc P1 hoặc P2 (≤  -0.30$) | **I_FLAG_01:** Điểm cảm xúc an toàn ($> -0.30$) và chưa từng bị cờ đỏ $→$ Giữ trạng thái bình thường | Không áp dụng biên (Cờ bật/tắt) |
+| **Trạng thái cờ cảnh báo đỏ (is_flagged)** | • Tự động bật cờ đỏ khi điểm cảm xúc $≤ -0.30$ | **V_FLAG_01:** Bật cờ cảnh báo đỏ khi điểm cảm xúc đạt mốc P1 hoặc P2 ($≤ -0.30$) | **I_FLAG_01:** Điểm cảm xúc an toàn ($> -0.30$) và chưa từng bị cờ đỏ $→$ Giữ trạng thái bình thường | Không áp dụng biên (Cờ bật/tắt) |
 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Khách hàng gửi 1 tin nhắn mới trong phiên trò chuyện đang ở chế độ Trợ lý ảo - Bot mode)*
 
@@ -524,7 +524,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H6: Ghi nhận điểm cảm xúc bình thường/tích cực, duy trì Bot AI hỗ trợ (E-2)** | | | | | | X |
 
 ---
-
 ---
 
 ---
@@ -545,6 +544,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Trường dữ liệu / Chỉ số | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Đoạn tóm tắt sự cố (Summary)** | • Do hệ thống tự động trích xuất từ 1-10 tin nhắn gần nhất<br>• Độ dài bắt buộc từ 20 đến 255 ký tự | **V_SUM_01:** Chuỗi tóm tắt trích xuất hợp lệ 20 - 255 ký tự | **I_SUM_01:** Trích xuất thất bại / Lỗi nội dung $→$ Ghi nhận tóm tắt mặc định: *"Cần kiểm tra thủ công - Lỗi trích xuất tự động"* (E-1) | • Biên dưới: 19 ký tự (I), 20 ký tự (V), 21 ký tự (V)<br>• Biên trên: 254 ký tự (V), 255 ký tự (V), 256 ký tự (I) |
@@ -555,6 +555,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Tiến trình nhận được tín hiệu yêu cầu hỗ trợ khẩn cấp P1/P2/P3 từ UC 2.1)*
 
@@ -574,6 +575,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 3. Sơ đồ chuyển trạng thái (State Transition Diagram)
 
+
 | Trạng thái hiện tại | Điều kiện / Sự kiện kích hoạt | Trạng thái tiếp theo |
 | :--- | :--- | :--- |
 | **Khởi tạo mới (New)** | Hệ thống phát hiện sự cố P1/P2/P3 từ cuộc trò chuyện | **Chờ tiếp nhận (Pending)** *(Gán đồng hồ SLA đếm ngược)* |
@@ -583,7 +585,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **Chờ tiếp nhận / Đang xử lý** | Khách hàng thực hiện xóa phiên trò chuyện (UC 1.4) | **Đã kết thúc (Closed - Vô hiệu hóa)** |
 
 ---
-
 ---
 
 ---
@@ -600,13 +601,10 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **Luồng rẽ nhánh (Ngoại lệ)** | **E-1: Thông tin cấu hình không hợp lệ**<br><br>1. Hệ thống phát hiện các lỗi như: Bỏ trống hướng dẫn phân loại, ngưỡng điểm cấu hình không phải là số âm, hoặc điểm kích hoạt P1 không nhỏ hơn điểm kích hoạt P2 (ví dụ -0.60 phải nhỏ hơn -0.30).<br><br>2. Hệ thống chặn thao tác lưu và hiển thị cảnh báo màu đỏ ngay dưới trường dữ liệu bị lỗi.<br><br>3. Người dùng phải chỉnh sửa lại dữ liệu cho hợp lệ để tiếp tục thao tác lưu. |
 | **Quy tắc Nghiệp vụ (Business Rules)** | 1. **Phân quyền truy cập:** Nhân viên tư vấn thông thường (Agent) không có quyền xem hoặc chỉnh sửa trang cấu hình này.<br><br>2. **Tính linh hoạt ngôn ngữ (Dynamic Prompting):** Hệ thống phải có khả năng hiểu và áp dụng các hướng dẫn nghiệp vụ được viết bằng ngôn ngữ tự nhiên thay vì bắt buộc người dùng nhập danh sách từ khóa cứng nhắc (hardcode).<br><br>3. **Hiệu lực tức thời:** Bất kỳ thay đổi cấu hình nào sau khi lưu thành công phải lập tức có tác dụng đối với toàn bộ các phiên trò chuyện đang diễn ra, không yêu cầu khởi động lại hệ thống. |
 
----
-
-3. ## **Khối chức năng cổng hỗ trợ trực tiếp dành cho nhân viên tư vấn**
-
 #### **Kiểm thử hộp đen Use case 2.3: Cấu hình quy tắc phân loại sự cố và cảnh báo**
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
+
 
 | Tên trường dữ liệu | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
@@ -618,6 +616,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Quản lý/Admin bấm nút "Lưu thay đổi" trên màn hình Cấu hình Quy tắc Cảnh báo)*
 
@@ -632,8 +631,8 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H4: Lưu thành công, thông báo xanh "Cập nhật cấu hình thành công" & áp dụng tức thì** | | | | X |
 
 ---
-
 ---
+
 
 | Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
 | :--- | :--- | :--- |
@@ -651,12 +650,13 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **UC 2.3 - Rule 1** | Chặn nhân viên tư vấn (Agent) truy cập trang cấu hình | `TC_AUC_14` |
 
 ---
-
 ---
+
+
 
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| **TC_AUC_01** | Kiểm tra phân tích tin nhắn thuộc mức Bức xúc cao P1 (Happy Path) | Khu vực chat ở chế độ Trợ lý ảo, ngưỡng P1 là `-0.60` | 1. Nhập tin nhắn thể hiện sự giận dữ gắt gao.<br>2. Nhấn nút "Gửi".<br>3. Quan sát phản hồi và giao diện. | Nội dung: `"Shop lừa đảo, chuyển tiền xong không thấy giao hàng, làm ăn như rác rưởi!"` (V) | Hệ thống đánh giá điểm cảm xúc ≤  -0.60$ (`CRITICAL`), bật cờ cảnh báo đỏ trên phiên trò chuyện, ngắt phản hồi tự động của AI Bot và gửi câu xin lỗi xoa dịu. Cuộc trò chuyện đưa lên vị trí ưu tiên hàng đợi. | Pass |
+| **TC_AUC_01** | Kiểm tra phân tích tin nhắn thuộc mức Bức xúc cao P1 (Happy Path) | Khu vực chat ở chế độ Trợ lý ảo, ngưỡng P1 là `-0.60` | 1. Nhập tin nhắn thể hiện sự giận dữ gắt gao.<br>2. Nhấn nút "Gửi".<br>3. Quan sát phản hồi và giao diện. | Nội dung: `"Shop lừa đảo, chuyển tiền xong không thấy giao hàng, làm ăn như rác rưởi!"` (V) | Hệ thống đánh giá điểm cảm xúc $≤ -0.60$ (`CRITICAL`), bật cờ cảnh báo đỏ trên phiên trò chuyện, ngắt phản hồi tự động của AI Bot và gửi câu xin lỗi xoa dịu. Cuộc trò chuyện đưa lên vị trí ưu tiên hàng đợi. | Pass |
 | **TC_AUC_02** | Kiểm tra phân tích tin nhắn thuộc mức Tiêu cực nhẹ P2 | Cấu hình ngưỡng P2 là `-0.30` | 1. Nhập tin nhắn phàn nàn nhẹ.<br>2. Nhấn nút "Gửi". | Nội dung: `"Giao hàng chậm quá shop ơi, đợi mãi không thấy đâu chán ghê."` (V) | Điểm cảm xúc xếp mức Tiêu cực nhẹ (`NEGATIVE`), bật cờ cảnh báo đỏ, tự động khởi tạo ngầm phiếu hỗ trợ P2. Trợ lý ảo **vẫn tiếp tục duy trì trả lời tự động** cho khách. | Pass |
 | **TC_AUC_03** | Kiểm tra gửi tin nhắn 1 ký tự (Bỏ qua phân tích - E-1) | Đang ở cửa sổ chat với Trợ lý ảo | 1. Gõ 1 ký tự duy nhất.<br>2. Nhấn nút "Gửi". | Nội dung: `"A"` (I) | Khung chat báo lỗi nhắc nhở: *"Nội dung câu hỏi phải chứa từ 2 ký tự trở lên"*. Tiến trình không chấm điểm cảm xúc, giữ nguyên trạng thái phiên chat. | Pass |
 | **TC_AUC_04** | Kiểm tra gửi tin nhắn khen ngợi tích cực (E-2) | Khung chat đang ở trạng thái bình thường | 1. Nhập tin nhắn khen dịch vụ.<br>2. Nhấn nút "Gửi". | Nội dung: `"Shop giao hàng siêu nhanh, nhân viên tư vấn nhiệt tình lắm!"` (V) | Đánh giá điểm cảm xúc Tích cực (`POSITIVE`), ghi nhận lịch sử phiên chat. Không bật cờ cảnh báo đỏ, AI Bot tiếp tục hỗ trợ bình thường. | Pass |
@@ -664,6 +664,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_AUC_06** | Kiểm tra quy tắc duy trì cờ đỏ khi khách nói câu tích cực tiếp theo | Phiên trò chuyện đã bị bật cờ đỏ ở `TC_AUC_01` trước đó | 1. Khách hàng gửi tiếp một tin nhắn ngắn có thái độ nguội bớt.<br>2. Quan sát cờ cảnh báo đỏ trên giao diện. | Nội dung: `"Dạ vâng shop kiểm tra giúp em"` | Hệ thống ghi nhận điểm cảm xúc tin mới, nhưng **tuyệt đối không tự động gỡ cờ đỏ** của phiên trò chuyện. Cờ đỏ tiếp tục duy trì cho tới khi tư vấn viên vào tiếp quản. | Pass |
 
 ---
+
 
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
@@ -675,6 +676,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ---
 
+
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
 | **TC_AUC_12** | Kiểm tra Quản lý cập nhật quy tắc cấu hình thành công (Happy Path) | Đăng nhập tài khoản Quản lý (Manager), đang ở trang "Cấu hình Cảnh báo" | 1. Nhập Ngưỡng P1 hợp lệ.<br>2. Nhập Ngưỡng P2 hợp lệ.<br>3. Nhập văn bản Hướng dẫn nghiệp vụ.<br>4. Bấm nút "Lưu thay đổi". | • P1: `-0.70` (V)<br>• P2: `-0.35` (V)<br>• Hướng dẫn: `"Ưu tiên P1 cho lỗi thanh toán"` | Hiển thị thông báo xanh: *"Cập nhật cấu hình thành công"*. Mọi tin nhắn tiếp theo của khách hàng được phân tích dựa trên bộ quy tắc mới này ngay lập tức. | Pass |
@@ -682,7 +684,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_AUC_14** | Kiểm tra chặn Nhân viên tư vấn (Agent) truy cập trang cấu hình | Đăng nhập tài khoản Nhân viên tư vấn (`agent.an@brand.com`) | 1. Cố gắng điều hướng truy cập vào đường dẫn trang Cấu hình Quy tắc. | Điều hướng trang Cấu hình | Hệ thống chặn truy cập, hiển thị thông báo lỗi: *"Bạn không có quyền truy cập trang cấu hình này"* và chuyển hướng về màn hình Bàn làm việc CSKH. | Pass |
 
 ---
-
 *Tài liệu kiểm thử hộp đen Khối chức năng 2 đã được chuẩn hóa trọn vẹn 100%, bổ sung đầy đủ EP/BVA, Decision Table, State Transition, RTM và bộ 14 Test Cases chuẩn IEEE.*
 
 ---
@@ -691,7 +692,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Quản lý tài khoản nhân viên** |
 | **Tác nhân** | Nhân viên CSKH / Quản trị viên |
 | **Điều kiện bắt đầu** | 1. Người dùng mở trang Cổng thông tin nội bộ chuỗi cửa hàng PetHome.<br>2. Kết nối mạng ổn định. |
 | **Luồng sự kiện chính (Đăng ký tài khoản nhân viên mới)** | 1. Người dùng chọn "Đăng ký tài khoản nhân sự" trên màn hình quản trị nội bộ.<br>2. Hệ thống hiển thị biểu mẫu bao gồm:<br>• Họ và tên: Bắt buộc (2-100 ký tự).<br>• Email nội bộ: Bắt buộc (VD: nhanvien@pethome.vn).<br>• Số điện thoại: Tùy chọn (10 chữ số bắt đầu bằng 0).<br>• Vai trò: Agent, Manager, hoặc Admin.<br>• Kỹ năng chuyên môn: Đánh dấu danh mục xử lý (Đổi trả, Giao hàng, Tư vấn sản phẩm, Khiếu nại).<br>• Mật khẩu & Xác nhận mật khẩu: Bắt buộc (tối thiểu 8 ký tự, gồm cả chữ và số).<br>(Có sẵn liên kết "Đã có tài khoản? Đăng nhập ngay" -> Luồng con A-1).<br>3. Điền đầy đủ thông tin.<br>4. Nhấn nút "Tạo tài khoản nhân sự".<br>5. Kiểm tra trường bắt buộc. Nếu để trống, thực hiện E-1.<br>6. Kiểm tra định dạng. Nếu sai, thực hiện E-2.<br>7. Kiểm tra mật khẩu xác nhận. Nếu sai, thực hiện E-3.<br>8. Kiểm tra sự tồn tại của email. Nếu trùng, thực hiện E-4.<br>9. Lưu tài khoản mới với trạng thái mặc định Ngoại tuyến (OFFLINE).<br>10. Đầu ra: Thông báo "Tạo tài khoản nhân viên thành công!", làm mới biểu mẫu và cập nhật danh sách nhân sự. |
@@ -703,18 +703,20 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Tên trường dữ liệu | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Họ và tên** *(Tạo tài khoản)* | • Bắt buộc<br>• Độ dài 2 - 100 ký tự | **V_NAME_01:** Chuỗi chữ hợp lệ từ 2 - 100 ký tự (VD: `"Nguyễn Văn Bình"`) | **I_NAME_01:** Để trống<br>**I_NAME_02:** Ngắn hơn 2 ký tự (1 ký tự)<br>**I_NAME_03:** Dài hơn 100 ký tự | • Biên dưới: 1 ký tự (I), 2 ký tự (V), 3 ký tự (V)<br>• Biên trên: 99 ký tự (V), 100 ký tự (V), 101 ký tự (I) |
 | **Email nội bộ** *(Tạo tài khoản / Đăng nhập)* | • Bắt buộc<br>• Đúng định dạng email nội bộ (`ten@domain.com`)<br>• Tối đa 255 ký tự<br>• Duy nhất trên hệ thống | **V_EMAIL_01:** Email nội bộ hợp lệ, chưa tồn tại trên hệ thống (VD: `"agent.binh@brand.com"`) | **I_EMAIL_01:** Để trống<br>**I_EMAIL_02:** Sai cấu trúc định dạng email<br>**I_EMAIL_03:** Email vượt quá 255 ký tự<br>**I_EMAIL_04:** Email đã tồn tại trên hệ thống | • Biên trên độ dài: 255 ký tự (V), 256 ký tự (I)<br>• Kiểm tra trùng lặp email đã có |
 | **Số điện thoại** *(Tạo tài khoản)* | • Tùy chọn (Không bắt buộc)<br>• Nếu nhập: Đủ 10 chữ số, bắt đầu bằng số `0` | **V_PHONE_01:** Để trống không nhập<br>**V_PHONE_02:** Đủ 10 chữ số bắt đầu bằng số `0` (VD: `"0987654321"`) | **I_PHONE_01:** Ít hơn 10 chữ số<br>**I_PHONE_02:** Nhiều hơn 10 chữ số<br>**I_PHONE_03:** Không bắt đầu bằng số `0`<br>**I_PHONE_04:** Chứa chữ cái/ký tự đặc biệt | • Biên độ dài: 9 chữ số (I), 10 chữ số bắt đầu số `0` (V), 11 chữ số (I) |
-| **Mật khẩu** *(Tạo tài khoản / Đăng nhập)* | • Bắt buộc<br>• Tối thiểu 8 ký tự trở lên<br>• Chứa ít nhất 1 chữ cái và 1 chữ số | **V_PASS_01:** Mật khẩu ≥ 8 ký tự, chứa đủ chữ và số (VD: `"Agent1234"`)| **I_PASS_01:** Để trống<br>**I_PASS_02:** Ngắn hơn 8 ký tự (7 ký tự)<br>**I_PASS_03:** Chỉ chứa chữ cái, thiếu số<br>**I_PASS_04:** Chỉ chứa chữ số, thiếu chữ | • Biên độ dài: 7 ký tự (I), 8 ký tự (V), 9 ký tự (V) |
+| **Mật khẩu** *(Tạo tài khoản / Đăng nhập)* | • Bắt buộc<br>• Tối thiểu 8 ký tự trở lên<br>• Chứa ít nhất 1 chữ cái và 1 chữ số | **V_PASS_01:** Mật khẩu $≥ 8$ ký tự, chứa đủ chữ và số (VD: `"Agent1234"`)| **I_PASS_01:** Để trống<br>**I_PASS_02:** Ngắn hơn 8 ký tự (7 ký tự)<br>**I_PASS_03:** Chỉ chứa chữ cái, thiếu số<br>**I_PASS_04:** Chỉ chứa chữ số, thiếu chữ | • Biên độ dài: 7 ký tự (I), 8 ký tự (V), 9 ký tự (V) |
 | **Kỹ năng chuyên môn** *(Dành cho Agent)* | • Bắt buộc đối với tài khoản vai trò Agent: Phải chọn ít nhất 1 danh mục kỹ năng | **V_SKILL_01:** Chọn từ 1 danh mục kỹ năng trở lên (VD: `["Đổi trả", "Giao hàng"]`) | **I_SKILL_01:** Tạo tài khoản vai trò Agent nhưng không tích chọn kỹ năng nào (0 kỹ năng) | Biên số lượng kỹ năng chọn: 0 kỹ năng (I), 1 kỹ năng (V) |
 | **Quyền khởi tạo tài khoản** | • Chỉ dành cho tài khoản có vai trò Quản lý (Manager) hoặc Quản trị viên (Admin) | **V_AUTH_01:** Đăng nhập với tài khoản Quản lý / Admin để tạo tài khoản nhân sự mới | **I_AUTH_01:** Đăng nhập với tài khoản Agent thông thường | Phân quyền thao tác |
 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Quản lý/Admin bấm nút "Tạo tài khoản nhân sự")*
 
@@ -732,6 +734,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H5: Báo lỗi "Địa chỉ email này đã được sử dụng" (E-4)** | | | | | X | |
 | **H6: Tạo tài khoản thành công ở trạng thái Ngoại tuyến (OFFLINE), làm mới biểu mẫu** | | | | | | X |
 
+
 *(Tiền đề quy trình: Nhân viên bấm nút "Đăng nhập")*
 
 | Điều kiện / Hành động | Rule 1 | Rule 2 | Rule 3 | Rule 4 | Rule 5 |
@@ -747,8 +750,33 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H5: Đăng nhập thành công, chuyển tới Live Console ở trạng thái mặc định OFFLINE** | | | | | X |
 
 ---
-
 ---
+
+##### 3. Ma trận truy xuất nguồn gốc ca kiểm thử (RTM)
+
+| Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
+| :--- | :--- | :--- |
+| **UC 3.1 - Luồng chính** | Quản lý/Admin tạo tài khoản nhân sự mới thành công | `TC_LCS_01` |
+| **UC 3.1 - E-1** | Để trống trường thông tin bắt buộc khi tạo tài khoản nhân sự | `TC_LCS_02` |
+| **UC 3.1 - E-2** | Định dạng dữ liệu không hợp lệ (Tên, Email, SĐT, Mật khẩu) | `TC_LCS_03`, `TC_LCS_04` |
+| **UC 3.1 - E-4** | Email nội bộ đã tồn tại | `TC_LCS_05` |
+| **UC 3.1 - Rule 2** | Tạo tài khoản Agent nhưng để trống kỹ năng chuyên môn | `TC_LCS_06` |
+| **UC 3.1 - A-1** | Đăng nhập Bàn làm việc CSKH thành công (mặc định OFFLINE) | `TC_LCS_07` |
+| **UC 3.1 - E-5** | Đăng nhập tài khoản nhân viên đang bị khóa | `TC_LCS_08` |
+| **UC 3.1 - E-6** | Đăng nhập sai Email nội bộ hoặc Mật khẩu | `TC_LCS_09` |
+
+##### 4. Thiết kế ca kiểm thử chi tiết (Test Case Specification)
+
+| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
+| **TC_LCS_01** | Kiểm tra Quản lý tạo tài khoản nhân viên mới thành công (Happy Path) | Đăng nhập tài khoản Quản lý, đang ở màn hình Quản lý nhân sự | 1. Nhập Họ tên hợp lệ.<br>2. Nhập Email nội bộ mới.<br>3. Nhập SĐT hợp lệ.<br>4. Chọn Vai trò là Agent.<br>5. Chọn 2 Kỹ năng chuyên môn.<br>6. Nhập Mật khẩu hợp lệ.<br>7. Bấm nút "Tạo tài khoản nhân sự". | • Họ tên: `"Nguyễn Văn Bình"` (V)<br>• Email: `"agent.binh@brand.com"` (V)<br>• SĐT: `"0987654321"` (V)<br>• Vai trò: Agent<br>• Kỹ năng: `["Đổi trả", "Giao hàng"]`<br>• Mật khẩu: `"Agent1234"` | Thông báo xanh: *"Tạo tài khoản nhân viên thành công!"*, làm mới biểu mẫu và tài khoản mới xuất hiện trong danh sách ở trạng thái Ngoại tuyến (OFFLINE). | Pass |
+| **TC_LCS_02** | Kiểm tra tạo tài khoản khi để trống Email | Đang ở màn hình Tạo tài khoản nhân sự | 1. Để trống ô Email.<br>2. Điền hợp lệ các ô còn lại.<br>3. Bấm "Tạo tài khoản nhân sự". | • Email: `""` (I)<br>• Các ô khác: Nhập đúng V | Viền ô Email hằn đỏ, hiển thị thông báo lỗi ngay bên dưới: *"Vui lòng không để trống trường thông tin này"*. | Pass |
+| **TC_LCS_03** | Kiểm tra tạo tài khoản với Mật khẩu 7 ký tự (Biên lỗi) | Đang ở màn hình Tạo tài khoản nhân sự | 1. Nhập Mật khẩu 7 ký tự.<br>2. Điền hợp lệ các ô còn lại.<br>3. Bấm "Tạo tài khoản nhân sự". | • Mật khẩu: `"Agent12"` (I)<br>• Các ô khác: Nhập đúng V | Báo lỗi dưới ô Mật khẩu: *"Mật khẩu tối thiểu 8 ký tự gồm chữ và số"*. | Pass |
+| **TC_LCS_04** | Kiểm tra tạo tài khoản với Email đã tồn tại | Đang ở màn hình Tạo tài khoản nhân sự | 1. Nhập Email đã có trên hệ thống.<br>2. Điền hợp lệ các ô còn lại.<br>3. Bấm "Tạo tài khoản nhân sự". | • Email: `"agent.an@brand.com"` (I)<br>• Các ô khác: Nhập đúng V | Hiển thị cảnh báo lỗi: *"Địa chỉ email này đã được sử dụng"*. | Pass |
+| **TC_LCS_05** | Kiểm tra tạo tài khoản Agent nhưng không chọn kỹ năng nào | Đang ở màn hình Tạo tài khoản nhân sự | 1. Chọn Vai trò là Agent.<br>2. Không tích chọn kỹ năng nào.<br>3. Bấm "Tạo tài khoản nhân sự". | • Vai trò: Agent<br>• Kỹ năng: Không chọn (0 kỹ năng) (I) | Báo lỗi màu đỏ: *"Tạo tài khoản Nhân viên tư vấn bắt buộc chọn ít nhất 1 danh mục kỹ năng xử lý"*. | Pass |
+| **TC_LCS_06** | Kiểm tra Đăng nhập Bàn làm việc CSKH thành công | Đang ở màn hình Đăng nhập nội bộ | 1. Nhập Email nội bộ chính xác.<br>2. Nhập Mật khẩu chính xác.<br>3. Nhấn nút "Đăng nhập". | • Email: `"agent.an@brand.com"` (V)<br>• Mật khẩu: `"123456"` (V) | Chuyển hướng thành công vào giao diện Bàn làm việc CSKH (Live Support Console) với trạng thái mặc định ban đầu là Ngoại tuyến (OFFLINE). | Pass |
+| **TC_LCS_07** | Kiểm tra Đăng nhập vào tài khoản nhân viên đang bị khóa | Tài khoản `agent.binh@brand.com` bị khóa | 1. Nhập Email nhân viên bị khóa.<br>2. Nhập đúng Mật khẩu.<br>3. Bấm "Đăng nhập". | • Email: `"agent.binh@brand.com"`<br>• Mật khẩu: `"123456"` | Hiển thị cảnh báo: *"Tài khoản hiện đang bị khóa hoặc ngừng kích hoạt"*. | Pass |
+| **TC_LCS_08** | Kiểm tra Đăng nhập sai Mật khẩu | Đang ở màn hình Đăng nhập nội bộ | 1. Nhập Email chính xác.<br>2. Nhập Mật khẩu sai.<br>3. Bấm "Đăng nhập". | • Email: `"agent.an@brand.com"`<br>• Mật khẩu: `"sai_mat_khau"` (I) | Báo lỗi: *"Địa chỉ email hoặc mật khẩu không chính xác"*. | Pass |
 
 ---
 
@@ -756,7 +784,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Quản lý trạng thái làm việc của nhân viên** |
 | **Tác nhân** | Nhân viên CSKH |
 | **Điều kiện bắt đầu** | 1. Nhân viên đã đăng nhập Bàn làm việc CSKH (Live Support Console).<br>2. Duy trì kết nối mạng thời gian thực tới hệ thống. |
 | **Luồng sự kiện chính (Chuyển đổi trạng thái làm việc)** | 1. Nhân viên nhấp chọn thanh trạng thái ở góc trên bên phải màn hình.<br>2. Hệ thống hiển thị danh sách 3 trạng thái:<br>• Trực tuyến (ONLINE): Chấm xanh; sẵn sàng tiếp nhận cuộc trò chuyện mới và nhận phân công ticket.<br>• Bận (BUSY): Chấm cam; tạm dừng phân công việc mới (đang xử lý khiếu nại khó/nghỉ giải lao).<br>• Ngoại tuyến (OFFLINE): Chấm xám; kết thúc ca trực.<br>3. Nhân viên chọn trạng thái muốn chuyển (VD: chuyển từ OFFLINE sang ONLINE).<br>4. Hệ thống kiểm tra kết nối thời gian thực. Nếu mất mạng, thực hiện E-1.<br>5. Ghi nhận và đồng bộ trạng thái mới toàn hệ thống.<br>6. Nếu chuyển sang ONLINE, kích hoạt tiếp nhận thông báo cuộc trò chuyện và phân công ticket tự động.<br>7. Đầu ra: Đổi màu chỉ thị trạng thái và hiển thị thông báo: "Đã chuyển sang trạng thái Trực tuyến - Bạn đã sẵn sàng tiếp nhận hỗ trợ!". |
@@ -768,6 +795,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Trường dữ liệu / Thao tác | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Trạng thái làm việc (Status)** | • Thuộc 1 trong 3 trạng thái chuẩn hóa | **V_STT_01:** Trạng thái Trực tuyến (`ONLINE`) - Chấm xanh<br>**V_STT_02:** Trạng thái Bận (`BUSY`) - Chấm cam<br>**V_STT_03:** Trạng thái Ngoại tuyến (`OFFLINE`) - Chấm xám | **I_STT_01:** Trạng thái không thuộc tập hợp quy định (VD: Rỗng) | Tập hợp 3 trạng thái chuẩn hóa |
@@ -776,6 +804,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Nhân viên nhấp chọn một trạng thái trên thanh chỉ thị trạng thái)*
 
@@ -791,6 +820,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 3. Sơ đồ chuyển trạng thái (State Transition Diagram)
 
+
 | Trạng thái hiện tại | Điều kiện / Sự kiện kích hoạt | Trạng thái tiếp theo |
 | :--- | :--- | :--- |
 | **Ngoại tuyến (OFFLINE)** | Nhân viên chọn trạng thái "Trực tuyến" | **Trực tuyến (ONLINE)** *(Kích hoạt tự động nhận việc)* |
@@ -800,8 +830,22 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **Ngoại tuyến (OFFLINE)** | Đường truyền mạng kết nối trở lại | **Trực tuyến / Bận** *(Khôi phục chọn trạng thái)* |
 
 ---
-
 ---
+
+##### 4. Ma trận truy xuất nguồn gốc ca kiểm thử (RTM)
+
+| Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
+| :--- | :--- | :--- |
+| **UC 3.2 - Luồng chính** | Chuyển đổi trạng thái làm việc (ONLINE / BUSY / OFFLINE) | `TC_LCS_09`, `TC_LCS_10` |
+| **UC 3.2 - E-1** | Mất kết nối đường truyền mạng quá 30 giây (Tự động đổi OFFLINE) | `TC_LCS_11` |
+
+##### 5. Thiết kế ca kiểm thử chi tiết (Test Case Specification)
+
+| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
+| **TC_LCS_09** | Kiểm tra chuyển trạng thái từ OFFLINE sang ONLINE (Happy Path) | Đã đăng nhập Live Console, trạng thái đang là OFFLINE (Chấm xám) | 1. Nhấp chọn thanh trạng thái ở góc trên bên phải.<br>2. Chọn trạng thái "Trực tuyến" (ONLINE). | Click chọn "Trực tuyến" (V) | Nút chỉ thị chuyển sang **màu xanh lá (ONLINE)**, hiển thị thông báo: *"Đã chuyển sang trạng thái Trực tuyến - Bạn đã sẵn sàng tiếp nhận hỗ trợ!"*. Kích hoạt tự động nhận phân công ticket. | Pass |
+| **TC_LCS_10** | Kiểm tra chuyển trạng thái từ ONLINE sang BUSY | Trạng thái hiện tại đang là ONLINE | 1. Nhấp thanh trạng thái.<br>2. Chọn trạng thái "Bận" (BUSY). | Click chọn "Bận" (V) | Nút chỉ thị chuyển sang **màu cam (BUSY)**, thông báo chuyển trạng thái thành công. Tạm dừng phân công ticket mới nhưng vẫn giữ các việc đang xử lý. | Pass |
+| **TC_LCS_11** | Kiểm tra tự động đổi trạng thái sang OFFLINE khi mất mạng > 30s (E-1) | Đã đăng nhập, trạng thái đang là ONLINE | 1. Ngắt kết nối mạng thiết bị.<br>2. Quan sát nút chỉ thị sau 30 giây. | Ngắt mạng 30 giây | Nút chỉ thị trạng thái tự động đổi sang **màu xám (OFFLINE)**. Hiển thị dải cảnh báo cam: *"Đang mất kết nối thời gian thực. Hệ thống đang tự động kết nối lại..."*. | Pass |
 
 ---
 
@@ -809,7 +853,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Theo dõi hàng đợi và tiếp quản cuộc trò chuyện** |
 | **Tác nhân** | Nhân viên CSKH (Khách hàng cùng tương tác) |
 | **Điều kiện bắt đầu** | 1. Nhân viên đăng nhập thành công Bàn làm việc CSKH.<br>2. Trạng thái nhân viên ở chế độ ONLINE.<br>3. Cuộc trò chuyện của khách hàng đang ở chế độ Trợ lý ảo hoặc danh sách chờ hỗ trợ (bật cờ đỏ/khách yêu cầu gặp tư vấn viên). |
 | **Luồng sự kiện chính (Tiếp quản cuộc trò chuyện & Nhắn tin hai chiều)** | 1. Nhân viên theo dõi danh sách hàng đợi bên trái màn hình và chọn phiên trò chuyện cần hỗ trợ.<br>2. Hệ thống tải toàn bộ lịch sử trao đổi cũ, bản tóm tắt sự cố và điểm cảm xúc khách hàng lên khung hiển thị.<br>3. Nhân viên kiểm tra và bấm nút "Tiếp quản cuộc trò chuyện".<br>4. Nếu cuộc trò chuyện đã được nhân viên khác bấm nhận trước đó ít giây, thực hiện E-1.<br>5. Hệ thống xác nhận quyền tiếp quản cho nhân viên hiện tại, tự động gỡ cờ đỏ trên hàng đợi và ngắt chế độ trả lời tự động của Trợ lý ảo trong phiên này.<br>6. Hệ thống gửi thông báo tự động vào khung chat khách hàng: "Nhân viên tư vấn đã tham gia cuộc trò chuyện".<br>7. Mở khóa ô nhập tin nhắn cho nhân viên.<br>8. Nhân viên gõ nội dung tư vấn (1-4000 ký tự).<br>9. Nhấn nút "Gửi" (hoặc phím Enter).<br>10. Nếu để trống, thực hiện E-2.<br>11. Nếu mất kết nối mạng thời gian thực khi gửi, thực hiện E-3.<br>12. Lưu tin nhắn với `sender_type = 'AGENT'` và hiển thị ngay tức thì sang màn hình khách hàng.<br>13. Hai bên nhắn tin tương tác thời gian thực cho đến khi hoàn tất hỗ trợ.<br>14. Đầu ra: Thẻ cuộc trò chuyện trên hàng đợi chuyển sang "Đang hỗ trợ", tin nhắn hai chiều hiển thị mượt mà không độ trễ. |
@@ -821,6 +864,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Thao tác / Trường dữ liệu | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Tiếp quản cuộc trò chuyện (Takeover)** | • Chỉ cho phép tiếp quản phiên chat chưa có nhân viên nào nhận | **V_TK_01:** Bấm "Tiếp quản" cuộc trò chuyện chưa có nhân viên phụ trách | **I_TK_01:** Bấm "Tiếp quản" cuộc trò chuyện đã bị nhân viên khác nhận trước đó vài giây (E-1) | Xung đột tranh chấp tiếp quản |
@@ -830,6 +874,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Nhân viên nhấn nút "Tiếp quản cuộc trò chuyện" hoặc bấm nút "Gửi" tin nhắn)*
 
@@ -847,6 +892,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 3. Sơ đồ chuyển trạng thái (State Transition Diagram)
 
+
 | Trạng thái hiện tại | Điều kiện / Sự kiện kích hoạt | Trạng thái tiếp theo |
 | :--- | :--- | :--- |
 | **Chờ tư vấn viên (Waiting for Agent)** | Nhân viên A bấm nút "Tiếp quản cuộc trò chuyện" thành công | **Tư vấn viên A đang hỗ trợ (Human Agent mode)** |
@@ -854,8 +900,24 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **Tư vấn viên A đang hỗ trợ** | Nhân viên A bấm "Kết thúc hỗ trợ" | **Đã kết thúc (Closed)** |
 
 ---
-
 ---
+
+##### 4. Ma trận truy xuất nguồn gốc ca kiểm thử (RTM)
+
+| Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
+| :--- | :--- | :--- |
+| **UC 3.3 - Luồng chính** | Tiếp quản cuộc trò chuyện & Nhắn tin 2 chiều thời gian thực | `TC_LCS_12`, `TC_LCS_13` |
+| **UC 3.3 - E-1** | Xung đột tiếp quản (Người khác bấm trước) → Chế độ Chỉ xem | `TC_LCS_14` |
+| **UC 3.3 - E-2** | Để trống tin nhắn tư vấn hoặc vượt quá 4000 ký tự | `TC_LCS_15` |
+
+##### 5. Thiết kế ca kiểm thử chi tiết (Test Case Specification)
+
+| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
+| **TC_LCS_12** | Kiểm tra tiếp quản cuộc trò chuyện thành công (Happy Path) | Trạng thái ONLINE, hàng đợi có 1 phiên chat màu đỏ đang chờ hỗ trợ | 1. Nhấn chọn phiên chat cần hỗ trợ.<br>2. Bấm nút "Tiếp quản cuộc trò chuyện". | Click nút "Tiếp quản cuộc trò chuyện" (V) | Xác nhận quyền tiếp quản, tự động gỡ cờ đỏ, ngắt trả lời của Bot AI và gửi thông báo tự động vào chat khách hàng: *"Nhân viên tư vấn đã tham gia cuộc trò chuyện"*. Mở khóa ô nhập cho nhân viên. | Pass |
+| **TC_LCS_13** | Kiểm tra nhắn tin 2 chiều thời gian thực | Nhân viên đã tiếp quản thành công ở `TC_LCS_12` | 1. Nhập nội dung tư vấn vào ô chat.<br>2. Nhấn nút "Gửi" (hoặc phím Enter). | Nội dung: `"Chào bạn, mình là An tư vấn viên PetHome. Mình có thể hỗ trợ gì cho bạn ạ?"` (V) | Tin nhắn tư vấn hiển thị lập tức sang khung chat của khách hàng với vai trò Nhân viên tư vấn. | Pass |
+| **TC_LCS_14** | Kiểm tra xung đột tiếp quản khi người khác nhận trước (E-1) | Phiên chat `#105` đang chờ hỗ trợ | 1. Nhân viên A chuẩn bị bấm tiếp quản.<br>2. Nhân viên B bấm tiếp quản trước 1 giây.<br>3. Nhân viên A bấm tiếp quản ngay sau đó. | Thao tác bấm sau | Báo lỗi: *"Cuộc trò chuyện đã được nhận bởi nhân viên khác"*. Đặt màn hình của Nhân viên A về **Chế độ Chỉ xem (Read-only)**, khóa ô nhập tin nhắn. | Pass |
+| **TC_LCS_15** | Kiểm tra gửi tin nhắn rỗng (E-2) | Nhân viên đang ở khung chat đã tiếp quản | 1. Để trống ô nhập tin nhắn.<br>2. Nhấn nút "Gửi". | Nội dung: `""` (I) | Nút gửi không kích hoạt (hoặc báo nhắc nhở: *"Vui lòng nhập nội dung tin nhắn tư vấn"*). | Pass |
 
 ---
 
@@ -863,7 +925,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Quản lý và sử dụng mẫu phản hồi nhanh** |
 | **Tác nhân** | Nhân viên CSKH, Quản lý CSKH |
 | **Điều kiện bắt đầu** | 1. Người dùng đăng nhập tài khoản Nhân viên hoặc Quản lý.<br>2. Kết nối mạng ổn định. |
 | **Luồng sự kiện chính (Tìm kiếm và chèn nhanh mẫu câu)** | 1. Tại ô nhập tin nhắn, nhân viên gõ ký tự `/`.<br>2. Hệ thống hiển thị bảng gợi ý các mẫu phản hồi (Phím tắt, Tiêu đề, Danh mục).<br>3. Nhân viên gõ từ khóa phím tắt (VD: `/chao`, `/xloi`, `/doitra`) hoặc phím mũi tên để duyệt.<br>(Nếu cần tạo thêm mẫu câu mới, thực hiện Luồng con A-1).<br>4. Nếu từ khóa không khớp mẫu nào, thực hiện E-1.<br>5. Nhân viên bấm phím Enter hoặc nhấp chọn mẫu câu.<br>6. Hệ thống tự động điền văn bản mẫu vào ô soạn thảo.<br>7. Nhân viên đọc lại, chỉnh sửa thêm chi tiết và bấm "Gửi".<br>8. Đầu ra: Tin nhắn mẫu chuẩn mực được gửi ngay tới khung chat khách hàng. |
@@ -871,13 +932,10 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **Luồng rẽ nhánh (Ngoại lệ)** | E-1: Không tìm thấy mẫu câu phù hợp<br>1. Bảng gợi ý hiển thị: "Không tìm thấy mẫu câu phù hợp".<br>2. Nhân viên gõ trả lời thủ công.<br><br>E-2: Để trống trường thông tin bắt buộc khi tạo mẫu<br>1. Báo lỗi đỏ dưới ô chưa điền thông tin.<br><br>E-3: Phím tắt không hợp lệ hoặc đã bị trùng lặp<br>1. Báo lỗi: "Phím tắt bắt buộc bắt đầu bằng '/' và không chứa khoảng trắng" hoặc "Phím tắt này đã được sử dụng". |
 | **Quy tắc Nghiệp vụ (Business Rules / Logic)** | 1. Tính duy nhất phím tắt: Mỗi phím tắt (bắt đầu bằng `/`) là mã duy nhất trên toàn hệ thống.<br>2. Quyền chỉnh sửa: Mẫu câu sau khi chèn vào ô chat cho phép nhân viên tùy biến chỉnh sửa trước khi gửi.<br>3. Đồng bộ dùng chung: Mẫu câu mới tạo có hiệu lực tức thì cho toàn bộ nhân viên trực ca. |
 
----
-
-4. ## **Khối chức năng điều phối phân việc, giám sát cam kết dịch vụ và báo cáo**
-
 #### **Kiểm thử hộp đen Use case 3.4: Quản lý và sử dụng mẫu phản hồi nhanh**
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
+
 
 | Tên trường / Thao tác | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
@@ -889,6 +947,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Nhân viên/Quản lý bấm nút "Tạo mẫu phản hồi")*
 
@@ -905,8 +964,8 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H5: Lưu mẫu phản hồi mới thành công, đồng bộ ngay bảng gợi ý cho nhân viên đang trực ca** | | | | | X |
 
 ---
-
 ---
+
 
 | Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
 | :--- | :--- | :--- |
@@ -927,8 +986,9 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **UC 3.4 - E-4** | Tạo mẫu phản hồi trùng phím tắt / sai ký tự `/` | `TC_LCS_19` |
 
 ---
-
 ---
+
+
 
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
@@ -943,6 +1003,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ---
 
+
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
 | **TC_LCS_09** | Kiểm tra chuyển trạng thái từ OFFLINE sang ONLINE (Happy Path) | Đã đăng nhập Live Console, trạng thái đang là OFFLINE (Chấm xám) | 1. Nhấp chọn thanh trạng thái ở góc trên bên phải.<br>2. Chọn trạng thái "Trực tuyến" (ONLINE). | Click chọn "Trực tuyến" (V) | Nút chỉ thị chuyển sang **màu xanh lá (ONLINE)**, hiển thị thông báo: *"Đã chuyển sang trạng thái Trực tuyến - Bạn đã sẵn sàng tiếp nhận hỗ trợ!"*. Kích hoạt tự động nhận phân công ticket. | Pass |
@@ -950,6 +1011,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_LCS_11** | Kiểm tra tự động đổi trạng thái sang OFFLINE khi mất mạng > 30s (E-1) | Đã đăng nhập, trạng thái đang là ONLINE | 1. Ngắt kết nối mạng thiết bị.<br>2. Quan sát nút chỉ thị sau 30 giây. | Ngắt mạng 30 giây | Nút chỉ thị trạng thái tự động đổi sang **màu xám (OFFLINE)**. Hiển thị dải cảnh báo cam: *"Đang mất kết nối thời gian thực. Hệ thống đang tự động kết nối lại..."*. | Pass |
 
 ---
+
 
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
@@ -960,6 +1022,28 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ---
 
+
+| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
+| **TC_LCS_16** | Kiểm tra gõ phím tắt `/` gợi ý danh sách mẫu câu | Đang ở khung chat tư vấn | 1. Tại ô nhập văn bản, gõ ký tự `/`.<br>2. Quan sát menu thả xuống. | Nội dung: `/` (V) | Hiển thị menu danh sách gợi ý các mẫu phản hồi nhanh kèm phím tắt và tiêu đề. Bấm chọn mẫu câu sẽ chèn nguyên văn nội dung vào ô gõ. | Pass |
+| **TC_LCS_17** | Kiểm tra tạo Mẫu phản hồi nhanh mới thành công | Đang ở màn hình Quản lý Mẫu phản hồi | 1. Nhập Phím tắt bắt đầu bằng `/`.<br>2. Nhập Tiêu đề.<br>3. Chọn Danh mục.<br>4. Nhập Nội dung mẫu.<br>5. Bấm "Lưu mẫu câu". | • Phím tắt: `/xloi_tre` (V)<br>• Tiêu đề: `"Xin lỗi giao hàng trễ"`<br>• Danh mục: `"Vận chuyển"`<br>• Nội dung: `"PetHome rất xin lỗi vì..."` | Thông báo *"Tạo mẫu phản hồi mới thành công"*. Mẫu câu mới lập tức có hiệu lực cho tất cả nhân viên đang trực ca khi gõ `/xloi_tre`. | Pass |
+| **TC_LCS_18** | Kiểm tra báo lỗi khi tạo phím tắt không bắt đầu bằng `/` | Đang ở màn hình Tạo mẫu phản hồi | 1. Nhập Phím tắt không có ký tự `/` đầu.<br>2. Bấm "Lưu mẫu câu". | • Phím tắt: `xloi_tre` (I) | Hiển thị thông báo lỗi ngay dưới ô Phím tắt: *"Phím tắt bắt buộc phải bắt đầu bằng ký tự / và không chứa khoảng trắng"*. | Pass |
+
+---
+*Tài liệu kiểm thử hộp đen Khối chức năng 3 được chuẩn hóa toàn bộ 100%, tuân thủ cấu trúc chuẩn và đạt góc nhìn người dùng cuối (End-User).*
+
+---
+*Tài liệu kiểm thử hộp đen Khối chức năng 3 được chuẩn hóa toàn bộ 100%, tuân thủ cấu trúc chuẩn và đạt góc nhìn người dùng cuối (End-User).*
+
+##### 3. Ma trận truy xuất nguồn gốc ca kiểm thử (RTM)
+
+| Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
+| :--- | :--- | :--- |
+| **UC 3.4 - Luồng chính** | Gõ `/` gợi ý mẫu phản hồi & Tạo mẫu phản hồi mới thành công | `TC_LCS_16`, `TC_LCS_17` |
+| **UC 3.4 - E-4** | Tạo mẫu phản hồi trùng phím tắt / sai ký tự `/` | `TC_LCS_18` |
+
+##### 4. Thiết kế ca kiểm thử chi tiết (Test Case Specification)
+
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
 | **TC_LCS_16** | Kiểm tra gõ phím tắt `/` gợi ý danh sách mẫu câu | Đang ở khung chat tư vấn | 1. Tại ô nhập văn bản, gõ ký tự `/`.<br>2. Quan sát menu thả xuống. | Nội dung: `/` (V) | Hiển thị menu danh sách gợi ý các mẫu phản hồi nhanh kèm phím tắt và tiêu đề. Bấm chọn mẫu câu sẽ chèn nguyên văn nội dung vào ô gõ. | Pass |
@@ -968,19 +1052,10 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ---
 
-*Tài liệu kiểm thử hộp đen Khối chức năng 3 được chuẩn hóa toàn bộ 100%, tuân thủ cấu trúc chuẩn và đạt góc nhìn người dùng cuối (End-User).*
-
----
-
-*Tài liệu kiểm thử hộp đen Khối chức năng 3 được chuẩn hóa toàn bộ 100%, tuân thủ cấu trúc chuẩn và đạt góc nhìn người dùng cuối (End-User).*
-
----
-
 ### Use case 4.1: Phân chia công việc tự động {#uc-4-1}
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Phân chia công việc tự động** |
 | **Tác nhân** | Hệ thống ngầm |
 | **Điều kiện bắt đầu** | 1. Có một phiếu hỗ trợ khẩn cấp mới được khởi tạo ở trạng thái "Chờ tiếp nhận" và chưa có người phụ trách.<br>2. Danh sách nhân sự và chuyên môn trực ca của nhân viên đã được kích hoạt trong hệ thống. |
 | **Luồng sự kiện chính (Tự động chia việc cho nhân viên rảnh nhất)** | 1. Hệ thống tiếp nhận thông tin từ phiếu hỗ trợ mới và tiến hành kiểm tra tính hợp lệ của các trường dữ liệu đầu vào bắt buộc:<br>• Mã phiếu hỗ trợ: Chuỗi ký tự định danh, chiều dài cố định chính xác 36 ký tự, cấu tạo từ các chữ cái in thường a-f, chữ cái in hoa A-F, chữ số 0-9 và dấu gạch ngang phân tách.<br>• Danh mục sự cố: Chuỗi ký tự, bắt buộc phải khớp tuyệt đối với một trong sáu giá trị: Lỗi đơn hàng, Đổi trả/Hoàn tiền, Sản phẩm lỗi, Lỗi thanh toán, Thái độ phục vụ, hoặc Vấn đề khác.<br>• Mức độ ưu tiên: Chuỗi ký tự, bắt buộc phải khớp chính xác một trong ba giá trị: P1, P2, hoặc P3.<br>• Tóm tắt sự cố: Chuỗi văn bản chữ tự nhiên, yêu cầu độ dài đạt tối thiểu 20 ký tự và giới hạn tối đa là 255 ký tự.<br>2. Hệ thống quét danh sách nhân viên tư vấn đang ở trạng thái làm việc "Trực tuyến".<br>3. Hệ thống lọc ra các nhân viên trực tuyến có kỹ năng xử lý phù hợp với danh mục sự cố của phiếu. Nếu không có nhân viên trực tuyến nào phù hợp, hệ thống thực hiện luồng rẽ nhánh E-1.<br>4. Hệ thống đếm số lượng công việc chưa hoàn tất (các phiếu đang ở trạng thái "Chờ tiếp nhận" hoặc "Đang xử lý") của từng nhân viên hợp lệ.<br>5. Hệ thống chọn nhân viên có kết quả đếm số lượng công việc ở mức thấp nhất (giá trị tối thiểu từ 0 trở lên) để phân công. Nếu có từ hai nhân viên trở lên sở hữu số lượng phiếu bằng nhau, hệ thống truy xuất dữ liệu thời gian và ưu tiên chọn người có khoảng cách từ lúc nhận việc lần cuối đến thời điểm hiện tại là lớn nhất.<br>6. Hệ thống gán phiếu hỗ trợ cho nhân viên được chọn và chuyển trạng thái phiếu sang "Đang xử lý".<br>7. Hệ thống chuyển tiếp thông tin phiếu sang chức năng Giám sát thời hạn xử lý cam kết để theo dõi tiến độ.<br>8. Đầu ra: Phiếu hỗ trợ hiển thị trên màn hình làm việc cá nhân của nhân viên được chỉ định kèm thông báo nổi góc màn hình: "Bạn có một phiếu hỗ trợ mới được phân công!". Trạng thái người phụ trách trên danh sách công việc chung được cập nhật theo tên nhân viên. |
@@ -992,6 +1067,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Tiêu chí / Trường dữ liệu | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Trạng thái làm việc nhân viên** | • Chỉ gán Ticket cho nhân viên đang ở trạng thái Trực tuyến (`ONLINE`) | **V_STT_01:** Có ít nhất 1 nhân viên ở trạng thái Trực tuyến (`ONLINE`) | **I_STT_01:** Tất cả nhân viên đều ở trạng thái Bận (`BUSY`) hoặc Ngoại tuyến (`OFFLINE`) (E-1) | Trạng thái sẵn sàng nhận việc |
@@ -1002,6 +1078,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Có một Phiếu hỗ trợ mới rơi vào hàng đợi xử lý)*
 
@@ -1016,8 +1093,23 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H3: Phân công Ticket cho nhân viên có thời gian rảnh lâu nhất trong nhóm đồng tải** | | | | X | |
 
 ---
-
 ---
+
+##### 3. Ma trận truy xuất nguồn gốc ca kiểm thử (RTM)
+
+| Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
+| :--- | :--- | :--- |
+| **UC 4.1 - Luồng chính** | Tự động phân công Ticket cho nhân viên rảnh nhất & đúng kỹ năng | `TC_DIS_01` |
+| **UC 4.1 - Rule 4** | Xử lý trường hợp trùng tải (Giao cho người có thời gian chờ việc lâu hơn) | `TC_DIS_02` |
+| **UC 4.1 - E-1** | Bẫy lỗi thiếu nhân viên ONLINE hoặc không có nhân viên đúng kỹ năng | `TC_DIS_03` |
+
+##### 4. Thiết kế ca kiểm thử chi tiết (Test Case Specification)
+
+| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
+| **TC_DIS_01** | Kiểm tra tự động giao Ticket cho nhân viên có ít việc nhất (Happy Path) | Nhân viên A có 1 Ticket đang mở, Nhân viên B có 3 Ticket. Cả 2 đang ONLINE & đúng kỹ năng. | 1. Tạo một phiếu hỗ trợ khẩn cấp P1.<br>2. Đăng nhập tài khoản Nhân viên A và kiểm tra màn hình Bàn làm việc. | Ticket P1, Danh mục `Lỗi đơn hàng` (V) | Hệ thống tự động gán thẳng phiếu hỗ trợ P1 cho Nhân viên A. Phiếu xuất hiện trên màn hình Bàn làm việc của Nhân viên A ở trạng thái *Đang xử lý (In Progress)*. | Pass |
+| **TC_DIS_02** | Kiểm tra xử lý trùng tải công việc (Chọn người có thời gian chờ rảnh lâu hơn) | Nhân viên A và B cùng gánh 2 Ticket. Nhân viên A rảnh 30 phút, Nhân viên B rảnh 5 phút. | 1. Tạo một phiếu hỗ trợ P2.<br>2. Đăng nhập kiểm tra màn hình của cả 2 nhân viên. | Ticket P2, Danh mục `Sản phẩm lỗi` (V) | Phiếu hỗ trợ P2 được tự động gán cho Nhân viên A (do thời gian chờ việc lâu hơn Nhân viên B). | Pass |
+| **TC_DIS_03** | Kiểm tra xử lý khi không có nhân viên trực tuyến đúng kỹ năng (E-1) | Nhân viên A (đúng kỹ năng) OFFLINE. Nhân viên B (sai kỹ năng) ONLINE. | 1. Tạo một phiếu hỗ trợ P1 danh mục `Đổi trả/Hoàn tiền`.<br>2. Đăng nhập tài khoản Quản lý quan sát màn hình. | Ticket P1, Danh mục `Đổi trả/Hoàn tiền` (I) | Màn hình của Quản lý bật thông báo cảnh báo đỏ. Ticket bị giữ ở trạng thái *Chờ tiếp nhận (Pending)* không có người nhận để Quản lý gán thủ công. | Pass |
 
 ---
 
@@ -1025,7 +1117,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Giám sát thời hạn xử lý cam kết** |
 | **Tác nhân** | Hệ thống ngầm (Nhân viên CSKH và Quản lý CSKH tiếp nhận kết quả giám sát) |
 | **Điều kiện bắt đầu** | 1. Phiếu hỗ trợ đã được phân công cho nhân viên và chuyển sang trạng thái "Đang xử lý".<br>2. Khung chính sách thời gian xử lý theo mức độ ưu tiên đã được ban hành trong hệ thống. |
 | **Luồng sự kiện chính (Kích hoạt đếm ngược và ghi nhận hoàn thành đúng hạn)** | 1. Hệ thống tiếp nhận thông tin từ phiếu hỗ trợ vừa được giao việc và tiến hành kiểm tra tính hợp lệ của các trường dữ liệu đầu vào bắt buộc:<br>• Mã phiếu hỗ trợ: Chuỗi ký tự định danh, độ dài cố định chính xác 36 ký tự, định dạng UUID v4, bao gồm chữ cái in thường a-f, in hoa A-F, chữ số 0-9 và dấu gạch ngang phân tách.<br>• Mức độ ưu tiên: Chuỗi ký tự, bắt buộc thuộc một trong ba giá trị hợp lệ: P1: 15 phút, P2: 60 phút, hoặc P3: 240 phút.<br>• Thời hạn xử lý cam kết (T_cam_kết): Thời lượng tối đa quy định theo mức độ ưu tiên: P1 (Cực kỳ khẩn cấp): 900 giây; P2 (Khẩn cấp cao): 3.600 giây; P3 (Trung bình): 14.400 giây.<br>2. Hệ thống tính toán mốc thời gian hạn chót cần hoàn tất sự việc và hiển thị đồng hồ đếm ngược trực tiếp trên thẻ công việc.<br>• Thời điểm hạn chót = T_bắt_đầu + T_cam_kết.<br>3. Hệ thống liên tục chạy ngầm để theo dõi, đối chiếu thời gian còn lại (T_còn_lại, tính bằng giây) và phân loại trạng thái:<br>• Trạng thái Bình thường: T_còn_lại > 20% tổng thời gian cam kết (P1 > 180 giây; P2 > 720 giây; P3 > 2.880 giây).<br>• Trạng thái Cảnh báo: 1 giây ≤ T_còn_lại ≤ 20% tổng thời gian cam kết.<br>• Nếu T_còn_lại ≤ 0 giây, hệ thống thực hiện luồng rẽ nhánh E-1.<br>4. Khi nhân viên xử lý xong khiếu nại cho khách hàng, nhân viên chọn nút "Hoàn tất xử lý" trên thẻ công việc.<br>5. Hệ thống hiển thị biểu mẫu yêu cầu nhập kết quả xử lý: Nội dung kết quả xử lý là chuỗi văn bản chữ tự nhiên bắt buộc, không được rỗng hoặc chỉ chứa khoảng trắng, yêu cầu độ dài kí tự trong đoạn [10, 1.000].<br>6. Nhân viên nhập nội dung và bấm "Xác nhận hoàn thành".<br>7. Hệ thống kiểm tra dữ liệu nội dung. Nếu độ dài < 10 ký tự, > 1.000 ký tự, hoặc chuỗi không hợp lệ, hệ thống thực hiện luồng rẽ nhánh E-2.<br>8. Hệ thống dừng đồng hồ đếm ngược, chuyển trạng thái phiếu sang "Đã giải quyết" và ghi nhận đạt chuẩn cam kết thời gian.<br>9. Đầu ra: Thẻ công việc chuyển sang màu xanh lá cây với nhãn "Đạt chuẩn cam kết". Hệ thống hiển thị thông báo nổi: "Phiếu hỗ trợ đã được xử lý thành công đúng thời hạn!". |
@@ -1037,15 +1128,17 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Mức độ ưu tiên | Ràng buộc thời hạn SLA | Phân vùng Bình thường (V) | Phân vùng Cảnh báo cam (V) | Phân vùng Vi phạm đỏ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Sự cố P1 (Khẩn cấp)** | Cam kết **15 phút** (900 giây)<br>Cảnh báo $< 20\%$ (180s) | **V_P1_01:** Còn từ 181 đến 900 giây | **V_P1_02:** Còn từ 1 đến 180 giây | **I_P1_01:** Còn ≤  0$ giây (Quá hạn) | 900s, 181s, 180s, 1s, 0s, -1s |
-| **Sự cố P2 (Khẩn cấp cao)** | Cam kết **60 phút** (3600 giây)<br>Cảnh báo $< 20\%$ (720s) | **V_P2_01:** Còn từ 721 đến 3600 giây | **V_P2_02:** Còn từ 1 đến 720 giây | **I_P2_01:** Còn ≤  0$ giây (Quá hạn) | 3600s, 721s, 720s, 1s, 0s |
-| **Sự cố P3 (Trung bình)** | Cam kết **240 phút** (14400s)<br>Cảnh báo $< 20\%$ (2880s) | **V_P3_01:** Còn từ 2881 đến 14400s | **V_P3_02:** Còn từ 1 đến 2880s | **I_P3_01:** Còn ≤  0$ giây (Quá hạn) | 14400s, 2881s, 2880s, 0s |
+| **Sự cố P1 (Khẩn cấp)** | Cam kết **15 phút** (900 giây)<br>Cảnh báo $< 20\%$ (180s) | **V_P1_01:** Còn từ 181 đến 900 giây | **V_P1_02:** Còn từ 1 đến 180 giây | **I_P1_01:** Còn $≤ 0$ giây (Quá hạn) | 900s, 181s, 180s, 1s, 0s, -1s |
+| **Sự cố P2 (Khẩn cấp cao)** | Cam kết **60 phút** (3600 giây)<br>Cảnh báo $< 20\%$ (720s) | **V_P2_01:** Còn từ 721 đến 3600 giây | **V_P2_02:** Còn từ 1 đến 720 giây | **I_P2_01:** Còn $≤ 0$ giây (Quá hạn) | 3600s, 721s, 720s, 1s, 0s |
+| **Sự cố P3 (Trung bình)** | Cam kết **240 phút** (14400s)<br>Cảnh báo $< 20\%$ (2880s) | **V_P3_01:** Còn từ 2881 đến 14400s | **V_P3_02:** Còn từ 1 đến 2880s | **I_P3_01:** Còn $≤ 0$ giây (Quá hạn) | 14400s, 2881s, 2880s, 0s |
 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Tiến trình Cron Job kiểm tra thời gian đếm ngược SLA mỗi 30 giây)*
 
@@ -1053,7 +1146,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | :--- | :---: | :---: | :---: | :---: |
 | **C1: Nhân viên bấm nút "Xác nhận đã xử lý" khi thời gian đếm ngược còn > 0s?** | T | F | F | F |
 | **C2: Thời gian đếm ngược còn lại ở mức $< 20\%$ tổng thời lượng SLA?** | - | F | T | T |
-| **C3: Thời gian đếm ngược trôi về mốc 0 giây (≤  0$s)?** | - | - | F | T |
+| **C3: Thời gian đếm ngược trôi về mốc 0 giây ($≤ 0$s)?** | - | - | F | T |
 | **H1: Dừng đồng hồ SLA, ghi nhận Hoàn thành Đúng hạn (SLA Met), thẻ hiển thị màu xanh** | X | | | |
 | **H2: Giữ đồng hồ đếm ngược, hiển thị thẻ và đồng hồ ở trạng thái màu sắc Bình thường** | | X | | |
 | **H3: Đổi thẻ và đồng hồ đếm ngược sang tông màu Vàng Cam cảnh báo** | | | X | |
@@ -1063,16 +1156,34 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 3. Sơ đồ chuyển trạng thái (State Transition Diagram)
 
+
 | Trạng thái hiện tại | Điều kiện / Sự kiện kích hoạt | Trạng thái tiếp theo |
 | :--- | :--- | :--- |
 | **Bình thường (SLA Normal)** | Thời gian đếm ngược trôi xuống mốc $< 20\%$ thời lượng SLA | **Cảnh báo (SLA Warning - Nền cam)** |
 | **Bình thường / Cảnh báo** | Nhân viên nhấn nút "Xác nhận đã xử lý" khi thời gian còn $> 0$s | **Hoàn thành đúng hạn (SLA Met)** |
-| **Cảnh báo (SLA Warning)** | Thời gian đếm ngược trôi về mốc 0 giây (≤  0$s) | **Vi phạm quá hạn (SLA Breached - Nền đỏ)** |
+| **Cảnh báo (SLA Warning)** | Thời gian đếm ngược trôi về mốc 0 giây ($≤ 0$s) | **Vi phạm quá hạn (SLA Breached - Nền đỏ)** |
 | **Vi phạm quá hạn (SLA Breached)** | Nhân viên bấm "Xác nhận đã xử lý" muộn | **Hoàn thành quá hạn (SLA Missed)** |
 
 ---
-
 ---
+
+##### 4. Ma trận truy xuất nguồn gốc ca kiểm thử (RTM)
+
+| Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
+| :--- | :--- | :--- |
+| **UC 4.2 - Luồng chính** | Đồng hồ đếm ngược SLA ở trạng thái màu sắc Bình thường | `TC_DIS_04` |
+| **UC 4.2 - Rule 3** | Kích hoạt trạng thái Cảnh báo màu cam khi thời gian SLA còn < 20% | `TC_DIS_05` |
+| **UC 4.2 - E-1** | Quá hạn SLA (0 giây) → Thẻ chuyển màu đỏ nhấp nháy & bắn báo động | `TC_DIS_06` |
+| **UC 4.2 - Rule 1** | Dừng đồng hồ SLA đúng hạn khi nhân viên bấm "Xác nhận đã xử lý" | `TC_DIS_07` |
+
+##### 5. Thiết kế ca kiểm thử chi tiết (Test Case Specification)
+
+| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
+| **TC_DIS_04** | Kiểm tra đồng hồ đếm ngược SLA ở trạng thái màu sắc Bình thường | Ticket P1 vừa được gán sang trạng thái *Đang xử lý* | 1. Đăng nhập tài khoản Nhân viên CSKH.<br>2. Quan sát thẻ công việc của phiếu P1. | Thời gian còn lại = 900 giây (15 phút) | Thẻ hiển thị đồng hồ đếm ngược từ 15:00. Nền thẻ và đồng hồ hiển thị màu sắc Bình thường. | Pass |
+| **TC_DIS_05** | Kiểm tra kích hoạt Cảnh báo màu cam tại mốc < 20% SLA (180 giây) | Ticket P1 đang chạy đồng hồ đếm ngược | 1. Quan sát đồng hồ đếm ngược trên thẻ phiếu P1.<br>2. Chờ cho đến khi đồng hồ nhảy xuống mốc 03:00 (đúng 180 giây). | Thời gian còn lại = 180 giây (V) | Thẻ và đồng hồ đếm ngược lập tức đổi sang **tông màu Vàng Cam cảnh báo** chính xác tại mốc 180 giây. | Pass |
+| **TC_DIS_06** | Kiểm tra vi phạm quá hạn SLA tại mốc 0 giây (E-1) | Phiên chat đang ở trạng thái Cảnh báo màu cam | 1. Giữ nguyên không bấm xử lý phiếu P1.<br>2. Quan sát đồng hồ khi trôi về mốc 00:00. | Thời gian còn lại = 0 giây (I) | Thẻ chuyển sang **màu Đỏ nhấp nháy**, hệ thống phát âm thanh báo động vi phạm và gửi cảnh báo đỏ lên màn hình Quản lý. Ghi nhận trừ điểm SLA của nhân viên. | Pass |
+| **TC_DIS_07** | Kiểm tra dừng đồng hồ SLA khi bấm hoàn thành đúng hạn | Ticket đang đếm ngược ở mốc Cảnh báo màu cam | 1. Nhấn nút "Xác nhận đã xử lý" trên thẻ phiếu P1.<br>2. Nhập ghi chú xử lý hợp lệ và bấm Xác nhận khi đồng hồ còn > 0s. | Ghi chú hợp lệ, thời gian còn lại = 45s (V) | Ghi nhận Hoàn thành Đúng hạn (SLA Met). Đồng hồ SLA ngừng đếm ngược lập tức và thẻ hiển thị đánh dấu màu xanh lá. | Pass |
 
 ---
 
@@ -1080,7 +1191,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Quản lý tiến độ trên bảng Kanban** |
 | **Tác nhân** | Nhân viên CSKH, Quản lý CSKH, Quản trị viên |
 | **Điều kiện bắt đầu** | 1. Người dùng đã đăng nhập thành công vào hệ thống bằng tài khoản Nhân viên, Quản lý hoặc Quản trị viên.<br>2. Bảng Kanban đang hiển thị ít nhất một phiếu hỗ trợ mà người dùng có quyền cập nhật tiến độ. |
 | **Luồng sự kiện chính (Kéo thả thẻ công việc sang trạng thái Đã giải quyết)** | 1. Người dùng mở mục "Bảng công việc Kanban" trên thanh điều hướng.<br>2. Hệ thống hiển thị bảng Kanban gồm 4 cột tiến độ: "Chờ tiếp nhận", "Đang xử lý", "Đã giải quyết" và "Đóng phiếu". Mỗi thẻ công việc hiển thị đầy đủ thông tin mã phiếu, tóm tắt sự cố, nhãn ưu tiên và đồng hồ đếm ngược.<br>3. Nhân viên nhấn giữ một thẻ phiếu hỗ trợ ở cột "Đang xử lý" và kéo thả sang cột "Đã giải quyết".<br>4. Hệ thống tiếp nhận thông tin thẻ phiếu và tiến hành kiểm tra tính hợp lệ của các trường dữ liệu đầu vào bắt buộc:<br>• Mã phiếu hỗ trợ: Chuỗi ký tự định danh, chiều dài cố định chính xác 36 ký tự, định dạng UUID v4, gồm chữ cái in thường a-f, in hoa A-F, chữ số 0-9 và dấu gạch ngang phân tách.<br>• Trạng thái hiện tại: Chuỗi ký tự, bắt buộc phải khớp chính xác giá trị "Đang xử lý".<br>• Trạng thái đích: Chuỗi ký tự, bắt buộc phải khớp chính xác giá trị "Đã giải quyết".<br>5. Hệ thống kiểm tra quyền hạn xử lý phiếu của người dùng. Nếu phiếu không thuộc quyền phụ trách của nhân viên đang thao tác (và nhân viên không có vai trò Quản lý/Quản trị viên), hệ thống thực hiện luồng rẽ nhánh E-1.<br>6. Hệ thống kiểm tra quy tắc luân chuyển trạng thái một chiều. Nếu hướng chuyển trạng thái không hợp lệ (ví dụ kéo ngược về trạng thái trước đó), hệ thống thực hiện luồng rẽ nhánh E-2.<br>7. Hệ thống hiển thị biểu mẫu yêu cầu ghi nhận kết quả xử lý: Nội dung kết quả xử lý là chuỗi văn bản chữ tự nhiên bắt buộc; không được rỗng hoặc chỉ chứa khoảng trắng; độ dài nằm trong đoạn biên [10, 1.000] ký tự.<br>8. Nhân viên nhập nội dung kết quả xử lý và nhấn nút "Xác nhận hoàn thành".<br>9. Hệ thống kiểm tra dữ liệu nội dung kết quả xử lý. Nếu độ dài < 10 ký tự, > 1.000 ký tự hoặc chuỗi rỗng/khoảng trắng, hệ thống thực hiện luồng rẽ nhánh E-3.<br>10. Hệ thống kiểm tra kết nối mạng truyền dữ liệu. Nếu mất kết nối trong quá trình lưu dữ liệu về máy chủ, hệ thống thực hiện luồng rẽ nhánh E-4.<br>11. Hệ thống cập nhật trạng thái phiếu sang "Đã giải quyết", dừng đồng hồ đếm ngược cam kết thời gian, lưu vết thời điểm hoàn tất và tài khoản người thực hiện.<br>12. Đầu ra: Hệ thống đóng hộp thoại, hiển thị thông báo nổi màu xanh lá ở góc màn hình: "Cập nhật trạng thái phiếu hỗ trợ thành công!", thẻ công việc nằm cố định tại cột "Đã giải quyết" với nhãn ghi nhận kết quả và đồng hồ đếm ngược dừng lại. |
@@ -1092,6 +1202,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Trường dữ liệu / Thao tác | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Luân chuyển trạng thái 1 chiều** | • Luân chuyển tiến theo thứ tự: `Chờ tiếp nhận` $→$ `Đang xử lý` $→$ `Đã giải quyết` $→$ `Đã kết thúc` | **V_FLOW_01:** Kéo thả thẻ công việc tiến theo đúng chiều thứ tự quy định | **I_FLOW_01:** Kéo ngược lùi trạng thái (VD: Kéo từ `Đang xử lý` lùi về `Chờ tiếp nhận`) (E-2) | Luân chuyển tiến lên / kéo lùi |
@@ -1101,6 +1212,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Người dùng kéo thả một thẻ công việc trên bảng Kanban)*
 
@@ -1115,8 +1227,27 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H4: Cập nhật vị trí thẻ sang cột mới thành công, dừng đồng hồ SLA (nếu Resolved)** | | | | X |
 
 ---
-
 ---
+
+##### 3. Ma trận truy xuất nguồn gốc ca kiểm thử (RTM)
+
+| Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
+| :--- | :--- | :--- |
+| **UC 4.3 - Luồng chính** | Kéo thả thẻ công việc tiến lên theo đúng thứ tự 1 chiều | `TC_DIS_08` |
+| **UC 4.3 - E-1** | Bẫy lỗi Agent cố tình kéo thả thẻ do nhân viên khác phụ trách | `TC_DIS_09` |
+| **UC 4.3 - E-2** | Bẫy lỗi kéo ngược lùi trạng thái thẻ công việc | `TC_DIS_10` |
+| **UC 4.3 - E-3** | Báo lỗi khi ghi chú xử lý ngắn hơn 10 ký tự | `TC_DIS_11` |
+| **UC 4.3 - Rule 1** | Quản lý/Admin có toàn quyền kéo thả thẻ công việc bất kỳ | `TC_DIS_12` |
+
+##### 4. Thiết kế ca kiểm thử chi tiết (Test Case Specification)
+
+| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
+| **TC_DIS_08** | Kiểm tra kéo thả thẻ tiến lên hợp lệ (Happy Path) | Đăng nhập Nhân viên A, có phiếu X ở cột `Đang xử lý` | 1. Kéo thả thẻ phiếu X từ cột `Đang xử lý` sang cột `Đã giải quyết`.<br>2. Tại hộp thoại hiện lên, nhập ghi chú xử lý hợp lệ.<br>3. Bấm "Xác nhận hoàn thành". | Ghi chú: `"Đã kiểm tra và hoàn tiền đơn hàng cho khách"` (40 ký tự) (V) | Thẻ nằm cố định ở cột `Đã giải quyết`, dừng đồng hồ SLA. Hiển thị thông báo xanh thành công. | Pass |
+| **TC_DIS_09** | Kiểm tra chặn Agent kéo thả thẻ do nhân viên khác phụ trách (E-1) | Đăng nhập Nhân viên A, màn hình có phiếu Y của Nhân viên B | 1. Thử kéo thả thẻ phiếu Y của Nhân viên B sang cột khác. | Thao tác trên thẻ Nhân viên B (I) | Thẻ nảy trượt trở lại vị trí cột cũ. Hiển thị báo lỗi: *"Bạn không có quyền cập nhật phiếu do nhân viên khác phụ trách"*. | Pass |
+| **TC_DIS_10** | Kiểm tra chặn kéo lùi trạng thái thẻ công việc (E-2) | Đăng nhập Nhân viên A, phiếu X ở cột `Đang xử lý` | 1. Kéo thả thẻ phiếu X từ cột `Đang xử lý` lùi về cột `Chờ tiếp nhận`. | Kéo lùi trạng thái (I) | Thẻ nảy về cột cũ `Đang xử lý`. Hiển thị báo lỗi: *"Tiến độ chỉ được phép luân chuyển tiến lên"*. | Pass |
+| **TC_DIS_11** | Kiểm tra báo lỗi khi ghi chú xử lý ngắn hơn 10 ký tự (E-3) | Đang mở hộp thoại hoàn thành phiếu ở cột `Đã giải quyết` | 1. Nhập 3 ký tự vào ô ghi chú xử lý.<br>2. Bấm "Xác nhận hoàn thành". | Ghi chú: `"Xong"` (4 ký tự) (I) | Viền ô nhập hằn đỏ, hiển thị cảnh báo: *"Ghi chú xử lý sự cố bắt buộc từ 10 đến 1000 ký tự"*. Hệ thống chặn thao tác chuyển thẻ. | Pass |
+| **TC_DIS_12** | Kiểm tra Quản lý có toàn quyền kéo thả thẻ công việc | Đăng nhập tài khoản Quản lý, chọn phiếu Y của Nhân viên B | 1. Kéo thả thẻ phiếu Y sang cột `Đã giải quyết`.<br>2. Nhập ghi chú xử lý và bấm Xác nhận. | Thao tác bởi Quản lý (V) | Kéo thả thành công, hộp thoại cập nhật trạng thái xuất hiện cho phép Quản lý ghi đè ghi chú xử lý mà không bị chặn quyền. | Pass |
 
 ---
 
@@ -1124,7 +1255,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 | Thuộc tính | Nội dung đặc tả chi tiết |
 | :--- | :--- |
-| **Tên Use Case** | **Báo cáo thống kê hiệu suất** |
 | **Tác nhân** | Quản lý CSKH, Quản trị viên |
 | **Điều kiện bắt đầu** | 1. Người dùng đã đăng nhập vào hệ thống bằng tài khoản có vai trò Quản lý CSKH hoặc Quản trị viên.<br>2. Hệ thống đã có dữ liệu về các cuộc trò chuyện và các phiếu hỗ trợ đã phát sinh trong quá trình vận hành. |
 | **Luồng sự kiện chính (Lọc và xem biểu đồ số liệu vận hành tổng hợp)** | 1. Người dùng chọn mục "Báo cáo thống kê" trên thanh điều hướng quản trị.<br>2. Hệ thống hiển thị màn hình bộ lọc gồm các trường thông tin đầu vào với quy chuẩn kiểm thử cụ thể:<br>• Khoảng thời gian (Từ ngày - Đến ngày): Trường bắt buộc; định dạng ngày chuẩn DD/MM/YYYY. Ràng buộc biên: T_bắt_đầu <= T_kết_thúc, T_kết_thúc <= T_hiện_tại, và khoảng cách thời gian ΔT = T_kết_thúc - T_bắt_đầu <= 365 ngày.<br>• Nhân viên phụ trách: Trường tùy chọn; chuỗi ký tự chọn từ danh sách nhân viên hiện có hoặc mặc định "Tất cả nhân viên".<br>• Mức độ ưu tiên: Trường tùy chọn; lọc theo một trong các giá trị P1, P2, P3 hoặc mặc định "Tất cả các mức".<br>• Danh mục sự cố: Trường tùy chọn; chọn một trong sáu danh mục sự cố hợp lệ hoặc mặc định "Tất cả danh mục". (Lưu ý: Người dùng có thể sử dụng các nút chọn nhanh khoảng thời gian có sẵn bằng cách thực hiện Luồng con A-1).<br>3. Người dùng thiết lập các tiêu chí lọc mong muốn và nhấn nút "Lọc dữ liệu". Nút bấm tạm thời chuyển sang trạng thái mờ kèm biểu tượng "Đang tải dữ liệu..." để tránh bấm lặp thao tác.<br>4. Hệ thống kiểm tra tính hợp lệ của khoảng thời gian đã nhập theo các quy chuẩn dữ liệu (định dạng DD/MM/YYYY, T_bắt_đầu <= T_kết_thúc, T_kết_thúc <= T_hiện_tại, và ΔT <= 365 ngày). Nếu vi phạm bất kỳ điều kiện nào, hệ thống thực hiện luồng rẽ nhánh E-1.<br>5. Nếu kết nối máy chủ bị gián đoạn khi đang truy xuất dữ liệu, hệ thống thực hiện luồng rẽ nhánh E-2.<br>6. Hệ thống tổng hợp toàn bộ các phiếu hỗ trợ phát sinh trong khoảng thời gian thỏa mãn điều kiện lọc. Nếu không có dữ liệu nào phát sinh, hệ thống thực hiện luồng rẽ nhánh E-3.<br>7. Hệ thống tính toán các chỉ số vận hành cốt lõi:<br>• Tổng số phiếu phát sinh (N_tổng), số phiếu đã giải quyết (N_giải_quyết), số phiếu đang xử lý (N_đang_xử_lý), số phiếu vi phạm cam kết thời gian (N_vi_phạm).<br>• Tỷ lệ vi phạm cam kết SLA: Công thức tính toán cụ thể: Tỷ lệ vi phạm (%) = (N_vi_phạm / N_tổng) * 100%. Nếu N_tổng = 0, Tỷ lệ vi phạm = 0%.<br>• Tỷ lệ phân bổ cảm xúc của khách hàng (Tích cực, Bình thường, Tiêu cực nhẹ, Bức xúc cao).<br>8. Đầu ra: Hệ thống hiển thị kết quả gồm các khối số liệu tổng quan nổi bật ở trên cùng, biểu đồ tròn phân bổ mức độ cam kết xử lý và biểu đồ cột so sánh năng suất giải quyết giữa các nhân viên. Góc màn hình hiển thị nút "Xuất báo cáo" (cho phép xuất dữ liệu ra tệp bảng tính excel để lưu trữ). |
@@ -1136,6 +1266,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ##### 1. Phân vùng tương đương (EP) & Phân tích giá trị biên (BVA)
 
+
 | Trường dữ liệu / Chỉ số | Điều kiện đặc tả (Ràng buộc) | Phân vùng hợp lệ (V) | Phân vùng không hợp lệ (I) | Điểm biên cần test |
 | :--- | :--- | :--- | :--- | :--- |
 | **Khoảng thời gian tra cứu (Delta)** | • Ngày bắt đầu phải nhỏ hơn hoặc bằng Ngày kết thúc (`from_date <= to_date`)<br>• Khoảng cách giữa 2 mốc tối đa **365 ngày**<br>• Không chọn mốc trong tương lai | **V_DATE_01:** Khoảng thời gian hợp lệ từ 0 đến 365 ngày (VD: 30 ngày qua)<br>**V_DATE_02:** Chọn nút mốc thời gian nhanh ("7 ngày qua", "30 ngày qua") | **I_DATE_01:** Để trống ngày bắt đầu hoặc ngày kết thúc<br>**I_DATE_02:** Ngày bắt đầu lớn hơn Ngày kết thúc (`from_date > to_date`) (E-1)<br>**I_DATE_03:** Khoảng cách thời gian vượt quá 365 ngày (VD: 366 ngày)<br>**I_DATE_04:** Chọn mốc ngày trong tương lai | • Biên khoảng cách: -1 ngày (Bắt đầu > Kết thúc) (I), 0 ngày (Trùng ngày) (V), 364 ngày (V), 365 ngày (V), 366 ngày (I) |
@@ -1144,6 +1275,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 ---
 
 ##### 2. Bảng quyết định (Decision Table)
+
 
 *(Tiền đề quy trình: Quản lý/Admin bấm nút "Lọc dữ liệu" hoặc "Xuất báo cáo Excel")*
 
@@ -1160,8 +1292,8 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H5: Hiển thị biểu đồ tròn/cột phân tích & Kích hoạt nút "Xuất báo cáo Excel" sáng lên** | | | | | X |
 
 ---
-
 ---
+
 
 | Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
 | :--- | :--- | :--- |
@@ -1184,8 +1316,9 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **UC 4.4 - E-3** | Mốc thời gian tra cứu không có dữ liệu | `TC_DIS_17` |
 
 ---
-
 ---
+
+
 
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
@@ -1195,6 +1328,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ---
 
+
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
 | **TC_DIS_04** | Kiểm tra đồng hồ đếm ngược SLA ở trạng thái màu sắc Bình thường | Ticket P1 vừa được gán sang trạng thái *Đang xử lý* | 1. Đăng nhập tài khoản Nhân viên CSKH.<br>2. Quan sát thẻ công việc của phiếu P1. | Thời gian còn lại = 900 giây (15 phút) | Thẻ hiển thị đồng hồ đếm ngược từ 15:00. Nền thẻ và đồng hồ hiển thị màu sắc Bình thường. | Pass |
@@ -1203,6 +1337,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_DIS_07** | Kiểm tra dừng đồng hồ SLA khi bấm hoàn thành đúng hạn | Ticket đang đếm ngược ở mốc Cảnh báo màu cam | 1. Nhấn nút "Xác nhận đã xử lý" trên thẻ phiếu P1.<br>2. Nhập ghi chú xử lý hợp lệ và bấm Xác nhận khi đồng hồ còn $> 0$s. | Ghi chú hợp lệ, thời gian còn lại = 45s (V) | Ghi nhận Hoàn thành Đúng hạn (SLA Met). Đồng hồ SLA ngừng đếm ngược lập tức và thẻ hiển thị đánh dấu màu xanh lá. | Pass |
 
 ---
+
 
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
@@ -1214,6 +1349,7 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 
 ---
 
+
 | TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
 | **TC_DIS_13** | Kiểm tra lọc báo cáo thống kê hợp lệ (Happy Path) | Đăng nhập tài khoản Quản lý, đang ở màn hình Báo cáo | 1. Click chọn nút lọc nhanh mốc thời gian "30 ngày qua".<br>2. Bấm nút "Lọc dữ liệu". | Mốc "30 ngày qua" (V) | Hiển thị đầy đủ biểu đồ tròn/cột phân tích và bảng số liệu thống kê. Nút "Xuất báo cáo Excel" sáng lên cho phép bấm tải file. | Pass |
@@ -1223,8 +1359,26 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_DIS_17** | Kiểm tra hiển thị giao diện khi mốc thời gian không có dữ liệu (E-3) | Đang ở màn hình Báo cáo | 1. Chọn khoảng thời gian rơi vào ngày nghỉ lễ không có dữ liệu.<br>2. Bấm "Lọc dữ liệu". | Khoảng thời gian trống dữ liệu | Tạm ẩn các biểu đồ tròn/cột, hiển thị hình minh họa trống kèm thông báo: *"Không có dữ liệu phiếu hỗ trợ trong khoảng thời gian này"*. Các chỉ số đo lường trả về 0. | Pass |
 
 ---
-
 *Tài liệu kiểm thử hộp đen Khối chức năng 4 được chuẩn hóa hoàn thiện 100%, bổ sung đầy đủ EP/BVA, Decision Table, State Transition, RTM và bộ 17 Test Cases chuẩn IEEE.*
 
----
+##### 3. Ma trận truy xuất nguồn gốc ca kiểm thử (RTM)
 
+| Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
+| :--- | :--- | :--- |
+| **UC 4.4 - Luồng chính** | Lọc dữ liệu báo cáo thành công & Hiển thị biểu đồ phân tích | `TC_DIS_13` |
+| **UC 4.4 - BVA** | Kiểm tra mốc lọc đúng điểm biên tối đa 365 ngày | `TC_DIS_14` |
+| **UC 4.4 - E-1** | Báo lỗi khi chọn Ngày bắt đầu lớn hơn Ngày kết thúc | `TC_DIS_15` |
+| **UC 4.4 - BVA** | Báo lỗi khi chọn khoảng thời gian vượt biên (366 ngày) | `TC_DIS_16` |
+| **UC 4.4 - E-3** | Mốc thời gian tra cứu không có dữ liệu | `TC_DIS_17` |
+
+##### 4. Thiết kế ca kiểm thử chi tiết (Test Case Specification)
+
+| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
+| **TC_DIS_13** | Kiểm tra lọc báo cáo thống kê hợp lệ (Happy Path) | Đăng nhập tài khoản Quản lý, đang ở màn hình Báo cáo | 1. Click chọn nút lọc nhanh mốc thời gian "30 ngày qua".<br>2. Bấm nút "Lọc dữ liệu". | Mốc "30 ngày qua" (V) | Hiển thị đầy đủ biểu đồ tròn/cột phân tích và bảng số liệu thống kê. Nút "Xuất báo cáo Excel" sáng lên cho phép bấm tải file. | Pass |
+| **TC_DIS_14** | Kiểm tra lọc dữ liệu đúng điểm biên 365 ngày (BVA Max) | Đang ở màn hình Báo cáo | 1. Chọn Ngày bắt đầu là 01/01/2026.<br>2. Chọn Ngày kết thúc là 31/12/2026 (khoảng cách đúng 365 ngày).<br>3. Bấm "Lọc dữ liệu". | Delta = 365 ngày (V) | Dữ liệu báo cáo được tải thành công, hiển thị trọn vẹn số liệu phân tích của nguyên 365 ngày. | Pass |
+| **TC_DIS_15** | Kiểm tra báo lỗi chọn Ngày bắt đầu lớn hơn Ngày kết thúc (E-1) | Đang ở màn hình Báo cáo | 1. Chọn Ngày bắt đầu là 15/10/2026.<br>2. Chọn Ngày kết thúc là 01/10/2026.<br>3. Bấm "Lọc dữ liệu". | `from_date > to_date` (I) | Giữ nguyên giao diện biểu đồ cũ. Khoanh viền đỏ ô ngày tháng và báo lỗi: *"Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc"*. | Pass |
+| **TC_DIS_16** | Kiểm tra báo lỗi khi chọn khoảng thời gian vượt quá 365 ngày (BVA Max+) | Đang ở màn hình Báo cáo | 1. Chọn Ngày bắt đầu là 01/01/2026.<br>2. Chọn Ngày kết thúc là 01/01/2027 (khoảng cách 366 ngày).<br>3. Bấm "Lọc dữ liệu". | Delta = 366 ngày (I) | Báo lỗi khoanh đỏ ô ngày tháng: *"Khoảng thời gian tra cứu tối đa không được vượt quá 365 ngày"*. Chặn thao tác lọc. | Pass |
+| **TC_DIS_17** | Kiểm tra hiển thị giao diện khi mốc thời gian không có dữ liệu (E-3) | Đang ở màn hình Báo cáo | 1. Chọn khoảng thời gian rơi vào ngày nghỉ lễ không có dữ liệu.<br>2. Bấm "Lọc dữ liệu". | Khoảng thời gian trống dữ liệu | Tạm ẩn các biểu đồ tròn/cột, hiển thị hình minh họa trống kèm thông báo: *"Không có dữ liệu phiếu hỗ trợ trong khoảng thời gian này"*. Các chỉ số đo lường trả về 0. | Pass |
+
+---
