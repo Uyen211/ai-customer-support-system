@@ -964,76 +964,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H5: Lưu mẫu phản hồi mới thành công, đồng bộ ngay bảng gợi ý cho nhân viên đang trực ca** | | | | | X |
 
 ---
----
-
-
-| Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
-| :--- | :--- | :--- |
-| **UC 3.1 - Luồng chính** | Quản lý/Admin tạo tài khoản nhân sự mới thành công | `TC_LCS_01` |
-| **UC 3.1 - E-1** | Để trống trường thông tin bắt buộc khi tạo tài khoản nhân sự | `TC_LCS_02` |
-| **UC 3.1 - E-2** | Định dạng dữ liệu không hợp lệ (Tên, Email, SĐT, Mật khẩu) | `TC_LCS_03`, `TC_LCS_04` |
-| **UC 3.1 - E-4** | Email nội bộ đã tồn tại | `TC_LCS_05` |
-| **UC 3.1 - Rule 2** | Tạo tài khoản Agent nhưng để trống kỹ năng chuyên môn | `TC_LCS_06` |
-| **UC 3.1 - A-1** | Đăng nhập Bàn làm việc CSKH thành công (mặc định OFFLINE) | `TC_LCS_07` |
-| **UC 3.1 - E-5** | Đăng nhập tài khoản nhân viên đang bị khóa | `TC_LCS_08` |
-| **UC 3.1 - E-6** | Đăng nhập sai Email nội bộ hoặc Mật khẩu | `TC_LCS_09` |
-| **UC 3.2 - Luồng chính** | Chuyển đổi trạng thái làm việc (ONLINE / BUSY / OFFLINE) | `TC_LCS_10`, `TC_LCS_11` |
-| **UC 3.2 - E-1** | Mất kết nối đường truyền mạng quá 30 giây (Tự động đổi OFFLINE) | `TC_LCS_12` |
-| **UC 3.3 - Luồng chính** | Tiếp quản cuộc trò chuyện & Nhắn tin 2 chiều thời gian thực | `TC_LCS_13`, `TC_LCS_14` |
-| **UC 3.3 - E-1** | Xung đột tiếp quản (Người khác bấm trước) $→$ Chế độ Chỉ xem | `TC_LCS_15` |
-| **UC 3.3 - E-2** | Để trống tin nhắn tư vấn hoặc vượt quá 4000 ký tự | `TC_LCS_16` |
-| **UC 3.4 - Luồng chính** | Gõ `/` gợi ý mẫu phản hồi & Tạo mẫu phản hồi mới thành công | `TC_LCS_17`, `TC_LCS_18` |
-| **UC 3.4 - E-4** | Tạo mẫu phản hồi trùng phím tắt / sai ký tự `/` | `TC_LCS_19` |
-
----
----
-
-
-
-| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| **TC_LCS_01** | Kiểm tra Quản lý tạo tài khoản nhân viên mới thành công (Happy Path) | Đăng nhập tài khoản Quản lý, đang ở màn hình Quản lý nhân sự | 1. Nhập Họ tên hợp lệ.<br>2. Nhập Email nội bộ mới.<br>3. Nhập SĐT hợp lệ.<br>4. Chọn Vai trò là Agent.<br>5. Chọn 2 Kỹ năng chuyên môn.<br>6. Nhập Mật khẩu hợp lệ.<br>7. Bấm nút "Tạo tài khoản nhân sự". | • Họ tên: `"Nguyễn Văn Bình"` (V)<br>• Email: `"agent.binh@brand.com"` (V)<br>• SĐT: `"0987654321"` (V)<br>• Vai trò: Agent<br>• Kỹ năng: `["Đổi trả", "Giao hàng"]`<br>• Mật khẩu: `"Agent1234"` | Thông báo xanh: *"Tạo tài khoản nhân viên thành công!"*, làm mới biểu mẫu và tài khoản mới xuất hiện trong danh sách ở trạng thái Ngoại tuyến (OFFLINE). | Pass |
-| **TC_LCS_02** | Kiểm tra tạo tài khoản khi để trống Email | Đang ở màn hình Tạo tài khoản nhân sự | 1. Để trống ô Email.<br>2. Điền hợp lệ các ô còn lại.<br>3. Bấm "Tạo tài khoản nhân sự". | • Email: `""` (I)<br>• Các ô khác: Nhập đúng (V) | Viền ô Email hằn đỏ, hiển thị thông báo lỗi ngay bên dưới: *"Vui lòng không để trống trường thông tin này"*. | Pass |
-| **TC_LCS_03** | Kiểm tra tạo tài khoản với Mật khẩu 7 ký tự (Biên lỗi) | Đang ở màn hình Tạo tài khoản nhân sự | 1. Nhập Mật khẩu 7 ký tự.<br>2. Điền hợp lệ các ô còn lại.<br>3. Bấm "Tạo tài khoản nhân sự". | • Mật khẩu: `"Agent12"` (I)<br>• Các ô khác: Nhập đúng (V) | Báo lỗi dưới ô Mật khẩu: *"Mật khẩu tối thiểu 8 ký tự gồm chữ và số"*. | Pass |
-| **TC_LCS_04** | Kiểm tra tạo tài khoản với Email đã tồn tại | Đang ở màn hình Tạo tài khoản nhân sự | 1. Nhập Email đã có trên hệ thống.<br>2. Điền hợp lệ các ô còn lại.<br>3. Bấm "Tạo tài khoản nhân sự". | • Email: `"agent.an@brand.com"` (I)<br>• Các ô khác: Nhập đúng (V) | Hiển thị cảnh báo lỗi: *"Địa chỉ email này đã được sử dụng"*. | Pass |
-| **TC_LCS_05** | Kiểm tra tạo tài khoản Agent nhưng không chọn kỹ năng nào | Đang ở màn hình Tạo tài khoản nhân sự | 1. Chọn Vai trò là Agent.<br>2. Không tích chọn kỹ năng nào.<br>3. Bấm "Tạo tài khoản nhân sự". | • Vai trò: Agent<br>• Kỹ năng: Không chọn (0 kỹ năng) (I) | Báo lỗi màu đỏ: *"Tạo tài khoản Nhân viên tư vấn bắt buộc chọn ít nhất 1 danh mục kỹ năng xử lý"*. | Pass |
-| **TC_LCS_06** | Kiểm tra Đăng nhập Bàn làm việc CSKH thành công | Đang ở màn hình Đăng nhập nội bộ | 1. Nhập Email nội bộ chính xác.<br>2. Nhập Mật khẩu chính xác.<br>3. Nhấn nút "Đăng nhập". | • Email: `"agent.an@brand.com"` (V)<br>• Mật khẩu: `"123456"` (V) | Chuyển hướng thành công vào giao diện Bàn làm việc CSKH (Live Support Console) với trạng thái mặc định ban đầu là Ngoại tuyến (OFFLINE). | Pass |
-| **TC_LCS_07** | Kiểm tra Đăng nhập vào tài khoản nhân viên đang bị khóa | Tài khoản `agent.binh@brand.com` bị khóa | 1. Nhập Email nhân viên bị khóa.<br>2. Nhập đúng Mật khẩu.<br>3. Bấm "Đăng nhập". | • Email: `"agent.binh@brand.com"`<br>• Mật khẩu: `"123456"` | Hiển thị cảnh báo: *"Tài khoản hiện đang bị khóa hoặc ngừng kích hoạt"*. | Pass |
-| **TC_LCS_08** | Kiểm tra Đăng nhập sai Mật khẩu | Đang ở màn hình Đăng nhập nội bộ | 1. Nhập Email chính xác.<br>2. Nhập Mật khẩu sai.<br>3. Bấm "Đăng nhập". | • Email: `"agent.an@brand.com"`<br>• Mật khẩu: `"sai_mat_khau"` (I) | Báo lỗi: *"Địa chỉ email hoặc mật khẩu không chính xác"*. | Pass |
-
----
-
-
-| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| **TC_LCS_09** | Kiểm tra chuyển trạng thái từ OFFLINE sang ONLINE (Happy Path) | Đã đăng nhập Live Console, trạng thái đang là OFFLINE (Chấm xám) | 1. Nhấp chọn thanh trạng thái ở góc trên bên phải.<br>2. Chọn trạng thái "Trực tuyến" (ONLINE). | Click chọn "Trực tuyến" (V) | Nút chỉ thị chuyển sang **màu xanh lá (ONLINE)**, hiển thị thông báo: *"Đã chuyển sang trạng thái Trực tuyến - Bạn đã sẵn sàng tiếp nhận hỗ trợ!"*. Kích hoạt tự động nhận phân công ticket. | Pass |
-| **TC_LCS_10** | Kiểm tra chuyển trạng thái từ ONLINE sang BUSY | Trạng thái hiện tại đang là ONLINE | 1. Nhấp thanh trạng thái.<br>2. Chọn trạng thái "Bận" (BUSY). | Click chọn "Bận" (V) | Nút chỉ thị chuyển sang **màu cam (BUSY)**, thông báo chuyển trạng thái thành công. Tạm dừng phân công ticket mới nhưng vẫn giữ các việc đang xử lý. | Pass |
-| **TC_LCS_11** | Kiểm tra tự động đổi trạng thái sang OFFLINE khi mất mạng > 30s (E-1) | Đã đăng nhập, trạng thái đang là ONLINE | 1. Ngắt kết nối mạng thiết bị.<br>2. Quan sát nút chỉ thị sau 30 giây. | Ngắt mạng 30 giây | Nút chỉ thị trạng thái tự động đổi sang **màu xám (OFFLINE)**. Hiển thị dải cảnh báo cam: *"Đang mất kết nối thời gian thực. Hệ thống đang tự động kết nối lại..."*. | Pass |
-
----
-
-
-| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| **TC_LCS_12** | Kiểm tra tiếp quản cuộc trò chuyện thành công (Happy Path) | Trạng thái ONLINE, hàng đợi có 1 phiên chat màu đỏ đang chờ hỗ trợ | 1. Nhấn chọn phiên chat cần hỗ trợ.<br>2. Bấm nút "Tiếp quản cuộc trò chuyện". | Click nút "Tiếp quản cuộc trò chuyện" (V) | Xác nhận quyền tiếp quản, tự động gỡ cờ đỏ, ngắt trả lời của Bot AI và gửi thông báo tự động vào chat khách hàng: *"Nhân viên tư vấn đã tham gia cuộc trò chuyện"*. Mở khóa ô nhập cho nhân viên. | Pass |
-| **TC_LCS_13** | Kiểm tra nhắn tin 2 chiều thời gian thực | Nhân viên đã tiếp quản thành công ở `TC_LCS_12` | 1. Nhập nội dung tư vấn vào ô chat.<br>2. Nhấn nút "Gửi" (hoặc phím Enter). | Nội dung: `"Chào bạn, mình là An tư vấn viên PetHome. Mình có thể hỗ trợ gì cho bạn ạ?"` (V) | Tin nhắn tư vấn hiển thị lập tức sang khung chat của khách hàng với vai trò Nhân viên tư vấn. | Pass |
-| **TC_LCS_14** | Kiểm tra xung đột tiếp quản khi người khác nhận trước (E-1) | Phiên chat `#105` đang chờ hỗ trợ | 1. Nhân viên A chuẩn bị bấm tiếp quản.<br>2. Nhân viên B bấm tiếp quản trước 1 giây.<br>3. Nhân viên A bấm tiếp quản ngay sau đó. | Thao tác bấm sau | Báo lỗi: *"Cuộc trò chuyện đã được nhận bởi nhân viên khác"*. Đặt màn hình của Nhân viên A về **Chế độ Chỉ xem (Read-only)**, khóa ô nhập tin nhắn. | Pass |
-| **TC_LCS_15** | Kiểm tra gửi tin nhắn rỗng (E-2) | Nhân viên đang ở khung chat đã tiếp quản | 1. Để trống ô nhập tin nhắn.<br>2. Nhấn nút "Gửi". | Nội dung: `""` (I) | Nút gửi không kích hoạt (hoặc báo nhắc nhở: *"Vui lòng nhập nội dung tin nhắn tư vấn"*). | Pass |
-
----
-
-
-| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| **TC_LCS_16** | Kiểm tra gõ phím tắt `/` gợi ý danh sách mẫu câu | Đang ở khung chat tư vấn | 1. Tại ô nhập văn bản, gõ ký tự `/`.<br>2. Quan sát menu thả xuống. | Nội dung: `/` (V) | Hiển thị menu danh sách gợi ý các mẫu phản hồi nhanh kèm phím tắt và tiêu đề. Bấm chọn mẫu câu sẽ chèn nguyên văn nội dung vào ô gõ. | Pass |
-| **TC_LCS_17** | Kiểm tra tạo Mẫu phản hồi nhanh mới thành công | Đang ở màn hình Quản lý Mẫu phản hồi | 1. Nhập Phím tắt bắt đầu bằng `/`.<br>2. Nhập Tiêu đề.<br>3. Chọn Danh mục.<br>4. Nhập Nội dung mẫu.<br>5. Bấm "Lưu mẫu câu". | • Phím tắt: `/xloi_tre` (V)<br>• Tiêu đề: `"Xin lỗi giao hàng trễ"`<br>• Danh mục: `"Vận chuyển"`<br>• Nội dung: `"PetHome rất xin lỗi vì..."` | Thông báo *"Tạo mẫu phản hồi mới thành công"*. Mẫu câu mới lập tức có hiệu lực cho tất cả nhân viên đang trực ca khi gõ `/xloi_tre`. | Pass |
-| **TC_LCS_18** | Kiểm tra báo lỗi khi tạo phím tắt không bắt đầu bằng `/` | Đang ở màn hình Tạo mẫu phản hồi | 1. Nhập Phím tắt không có ký tự `/` đầu.<br>2. Bấm "Lưu mẫu câu". | • Phím tắt: `xloi_tre` (I) | Hiển thị thông báo lỗi ngay dưới ô Phím tắt: *"Phím tắt bắt buộc phải bắt đầu bằng ký tự / và không chứa khoảng trắng"*. | Pass |
-
----
-*Tài liệu kiểm thử hộp đen Khối chức năng 3 được chuẩn hóa toàn bộ 100%, tuân thủ cấu trúc chuẩn và đạt góc nhìn người dùng cuối (End-User).*
-
----
-*Tài liệu kiểm thử hộp đen Khối chức năng 3 được chuẩn hóa toàn bộ 100%, tuân thủ cấu trúc chuẩn và đạt góc nhìn người dùng cuối (End-User).*
 
 ##### 3. Ma trận truy xuất nguồn gốc ca kiểm thử (RTM)
 
@@ -1041,6 +971,8 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | :--- | :--- | :--- |
 | **UC 3.4 - Luồng chính** | Gõ `/` gợi ý mẫu phản hồi & Tạo mẫu phản hồi mới thành công | `TC_LCS_16`, `TC_LCS_17` |
 | **UC 3.4 - E-4** | Tạo mẫu phản hồi trùng phím tắt / sai ký tự `/` | `TC_LCS_18` |
+
+---
 
 ##### 4. Thiết kế ca kiểm thử chi tiết (Test Case Specification)
 
@@ -1051,6 +983,8 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_LCS_18** | Kiểm tra báo lỗi khi tạo phím tắt không bắt đầu bằng `/` | Đang ở màn hình Tạo mẫu phản hồi | 1. Nhập Phím tắt không có ký tự `/` đầu.<br>2. Bấm "Lưu mẫu câu". | • Phím tắt: `xloi_tre` (I) | Hiển thị thông báo lỗi ngay dưới ô Phím tắt: *"Phím tắt bắt buộc phải bắt đầu bằng ký tự / và không chứa khoảng trắng"*. | Pass |
 
 ---
+
+
 
 ### Use case 4.1: Phân chia công việc tự động {#uc-4-1}
 
@@ -1292,74 +1226,6 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **H5: Hiển thị biểu đồ tròn/cột phân tích & Kích hoạt nút "Xuất báo cáo Excel" sáng lên** | | | | | X |
 
 ---
----
-
-
-| Mã Yêu cầu / Luồng Nghiệp vụ | Nội dung Yêu cầu / Luồng | Mã Ca kiểm thử (Test Case ID) |
-| :--- | :--- | :--- |
-| **UC 4.1 - Luồng chính** | Tự động phân công Ticket cho nhân viên rảnh nhất & đúng kỹ năng | `TC_DIS_01` |
-| **UC 4.1 - Rule 4** | Xử lý trường hợp trùng tải (Giao cho người có thời gian chờ việc lâu hơn) | `TC_DIS_02` |
-| **UC 4.1 - E-1** | Bẫy lỗi thiếu nhân viên ONLINE hoặc không có nhân viên đúng kỹ năng | `TC_DIS_03` |
-| **UC 4.2 - Luồng chính** | Đồng hồ đếm ngược SLA ở trạng thái màu sắc Bình thường | `TC_DIS_04` |
-| **UC 4.2 - Rule 3** | Kích hoạt trạng thái Cảnh báo màu cam khi thời gian SLA còn $< 20\%$ | `TC_DIS_05` |
-| **UC 4.2 - E-1** | Quá hạn SLA (0 giây) $→$ Thẻ chuyển màu đỏ nhấp nháy & bắn báo động | `TC_DIS_06` |
-| **UC 4.2 - Rule 1** | Dừng đồng hồ SLA đúng hạn khi nhân viên bấm "Xác nhận đã xử lý" | `TC_DIS_07` |
-| **UC 4.3 - Luồng chính** | Kéo thả thẻ công việc tiến lên theo đúng thứ tự 1 chiều | `TC_DIS_08` |
-| **UC 4.3 - E-1** | Bẫy lỗi Agent cố tình kéo thả thẻ do nhân viên khác phụ trách | `TC_DIS_09` |
-| **UC 4.3 - E-2** | Bẫy lỗi kéo ngược lùi trạng thái thẻ công việc | `TC_DIS_10` |
-| **UC 4.3 - E-3** | Báo lỗi khi ghi chú xử lý ngắn hơn 10 ký tự | `TC_DIS_11` |
-| **UC 4.3 - Rule 1** | Quản lý/Admin có toàn quyền kéo thả thẻ công việc bất kỳ | `TC_DIS_12` |
-| **UC 4.4 - Luồng chính** | Lọc dữ liệu báo cáo thành công & Hiển thị biểu đồ phân tích | `TC_DIS_13` |
-| **UC 4.4 - BVA** | Kiểm tra mốc lọc đúng điểm biên tối đa 365 ngày | `TC_DIS_14` |
-| **UC 4.4 - E-1** | Báo lỗi khi chọn Ngày bắt đầu lớn hơn Ngày kết thúc | `TC_DIS_15` |
-| **UC 4.4 - BVA** | Báo lỗi khi chọn khoảng thời gian vượt biên (366 ngày) | `TC_DIS_16` |
-| **UC 4.4 - E-3** | Mốc thời gian tra cứu không có dữ liệu | `TC_DIS_17` |
-
----
----
-
-
-
-| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| **TC_DIS_01** | Kiểm tra tự động giao Ticket cho nhân viên có ít việc nhất (Happy Path) | Nhân viên A có 1 Ticket đang mở, Nhân viên B có 3 Ticket. Cả 2 đang ONLINE & đúng kỹ năng. | 1. Tạo một phiếu hỗ trợ khẩn cấp P1.<br>2. Đăng nhập tài khoản Nhân viên A và kiểm tra màn hình Bàn làm việc. | Ticket P1, Danh mục `Lỗi đơn hàng` (V) | Hệ thống tự động gán thẳng phiếu hỗ trợ P1 cho Nhân viên A. Phiếu xuất hiện trên màn hình Bàn làm việc của Nhân viên A ở trạng thái *Đang xử lý (In Progress)*. | Pass |
-| **TC_DIS_02** | Kiểm tra xử lý trùng tải công việc (Chọn người có thời gian chờ rảnh lâu hơn) | Nhân viên A và B cùng gánh 2 Ticket. Nhân viên A rảnh 30 phút, Nhân viên B rảnh 5 phút. | 1. Tạo một phiếu hỗ trợ P2.<br>2. Đăng nhập kiểm tra màn hình của cả 2 nhân viên. | Ticket P2, Danh mục `Sản phẩm lỗi` (V) | Phiếu hỗ trợ P2 được tự động gán cho Nhân viên A (do thời gian chờ việc lâu hơn Nhân viên B). | Pass |
-| **TC_DIS_03** | Kiểm tra xử lý khi không có nhân viên trực tuyến đúng kỹ năng (E-1) | Nhân viên A (đúng kỹ năng) OFFLINE. Nhân viên B (sai kỹ năng) ONLINE. | 1. Tạo một phiếu hỗ trợ P1 danh mục `Đổi trả/Hoàn tiền`.<br>2. Đăng nhập tài khoản Quản lý quan sát màn hình. | Ticket P1, Danh mục `Đổi trả/Hoàn tiền` (I) | Màn hình của Quản lý bật thông báo cảnh báo đỏ. Ticket bị giữ ở trạng thái *Chờ tiếp nhận (Pending)* không có người nhận để Quản lý gán thủ công. | Pass |
-
----
-
-
-| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| **TC_DIS_04** | Kiểm tra đồng hồ đếm ngược SLA ở trạng thái màu sắc Bình thường | Ticket P1 vừa được gán sang trạng thái *Đang xử lý* | 1. Đăng nhập tài khoản Nhân viên CSKH.<br>2. Quan sát thẻ công việc của phiếu P1. | Thời gian còn lại = 900 giây (15 phút) | Thẻ hiển thị đồng hồ đếm ngược từ 15:00. Nền thẻ và đồng hồ hiển thị màu sắc Bình thường. | Pass |
-| **TC_DIS_05** | Kiểm tra kích hoạt Cảnh báo màu cam tại mốc $< 20\%$ SLA (180 giây) | Ticket P1 đang chạy đồng hồ đếm ngược | 1. Quan sát đồng hồ đếm ngược trên thẻ phiếu P1.<br>2. Chờ cho đến khi đồng hồ nhảy xuống mốc 03:00 (đúng 180 giây). | Thời gian còn lại = 180 giây (V) | Thẻ và đồng hồ đếm ngược lập tức đổi sang **tông màu Vàng Cam cảnh báo** chính xác tại mốc 180 giây. | Pass |
-| **TC_DIS_06** | Kiểm tra vi phạm quá hạn SLA tại mốc 0 giây (E-1) | Phiên chat đang ở trạng thái Cảnh báo màu cam | 1. Giữ nguyên không bấm xử lý phiếu P1.<br>2. Quan sát đồng hồ khi trôi về mốc 00:00. | Thời gian còn lại = 0 giây (I) | Thẻ chuyển sang **màu Đỏ nhấp nháy**, hệ thống phát âm thanh báo động vi phạm và gửi cảnh báo đỏ lên màn hình Quản lý. Ghi nhận trừ điểm SLA của nhân viên. | Pass |
-| **TC_DIS_07** | Kiểm tra dừng đồng hồ SLA khi bấm hoàn thành đúng hạn | Ticket đang đếm ngược ở mốc Cảnh báo màu cam | 1. Nhấn nút "Xác nhận đã xử lý" trên thẻ phiếu P1.<br>2. Nhập ghi chú xử lý hợp lệ và bấm Xác nhận khi đồng hồ còn $> 0$s. | Ghi chú hợp lệ, thời gian còn lại = 45s (V) | Ghi nhận Hoàn thành Đúng hạn (SLA Met). Đồng hồ SLA ngừng đếm ngược lập tức và thẻ hiển thị đánh dấu màu xanh lá. | Pass |
-
----
-
-
-| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| **TC_DIS_08** | Kiểm tra kéo thả thẻ tiến lên hợp lệ (Happy Path) | Đăng nhập Nhân viên A, có phiếu X ở cột `Đang xử lý` | 1. Kéo thả thẻ phiếu X từ cột `Đang xử lý` sang cột `Đã giải quyết`.<br>2. Tại hộp thoại hiện lên, nhập ghi chú xử lý hợp lệ.<br>3. Bấm "Xác nhận hoàn thành". | Ghi chú: `"Đã kiểm tra và hoàn tiền đơn hàng cho khách"` (40 ký tự) (V) | Thẻ nằm cố định ở cột `Đã giải quyết`, dừng đồng hồ SLA. Hiển thị thông báo xanh thành công. | Pass |
-| **TC_DIS_09** | Kiểm tra chặn Agent kéo thả thẻ do nhân viên khác phụ trách (E-1) | Đăng nhập Nhân viên A, màn hình có phiếu Y của Nhân viên B | 1. Thử kéo thả thẻ phiếu Y của Nhân viên B sang cột khác. | Thao tác trên thẻ Nhân viên B (I) | Thẻ nảy trượt trở lại vị trí cột cũ. Hiển thị báo lỗi: *"Bạn không có quyền cập nhật phiếu do nhân viên khác phụ trách"*. | Pass |
-| **TC_DIS_10** | Kiểm tra chặn kéo lùi trạng thái thẻ công việc (E-2) | Đăng nhập Nhân viên A, phiếu X ở cột `Đang xử lý` | 1. Kéo thả thẻ phiếu X từ cột `Đang xử lý` lùi về cột `Chờ tiếp nhận`. | Kéo lùi trạng thái (I) | Thẻ nảy về cột cũ `Đang xử lý`. Hiển thị báo lỗi: *"Tiến độ chỉ được phép luân chuyển tiến lên"*. | Pass |
-| **TC_DIS_11** | Kiểm tra báo lỗi khi nhập ghi chú xử lý ngắn hơn 10 ký tự (E-3) | Đang mở hộp thoại hoàn thành phiếu ở cột `Đã giải quyết` | 1. Nhập 3 ký tự vào ô ghi chú xử lý.<br>2. Bấm "Xác nhận hoàn thành". | Ghi chú: `"Xong"` (4 ký tự) (I) | Viền ô nhập hằn đỏ, hiển thị cảnh báo: *"Ghi chú xử lý sự cố bắt buộc từ 10 đến 1000 ký tự"*. Hệ thống chặn thao tác chuyển thẻ. | Pass |
-| **TC_DIS_12** | Kiểm tra Quản lý có toàn quyền kéo thả thẻ công việc | Đăng nhập tài khoản Quản lý, chọn phiếu Y của Nhân viên B | 1. Kéo thả thẻ phiếu Y sang cột `Đã giải quyết`.<br>2. Nhập ghi chú xử lý và bấm Xác nhận. | Thao tác bởi Quản lý (V) | Kéo thả thành công, hộp thoại cập nhật trạng thái xuất hiện cho phép Quản lý ghi đè ghi chú xử lý mà không bị chặn quyền. | Pass |
-
----
-
-
-| TC_ID | Mục đích kịch bản | Tiền điều kiện | Các bước thực hiện | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected Result) | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| **TC_DIS_13** | Kiểm tra lọc báo cáo thống kê hợp lệ (Happy Path) | Đăng nhập tài khoản Quản lý, đang ở màn hình Báo cáo | 1. Click chọn nút lọc nhanh mốc thời gian "30 ngày qua".<br>2. Bấm nút "Lọc dữ liệu". | Mốc "30 ngày qua" (V) | Hiển thị đầy đủ biểu đồ tròn/cột phân tích và bảng số liệu thống kê. Nút "Xuất báo cáo Excel" sáng lên cho phép bấm tải file. | Pass |
-| **TC_DIS_14** | Kiểm tra lọc dữ liệu đúng điểm biên 365 ngày (BVA Max) | Đang ở màn hình Báo cáo | 1. Chọn Ngày bắt đầu là 01/01/2026.<br>2. Chọn Ngày kết thúc là 31/12/2026 (khoảng cách đúng 365 ngày).<br>3. Bấm "Lọc dữ liệu". | Delta = 365 ngày (V) | Dữ liệu báo cáo được tải thành công, hiển thị trọn vẹn số liệu phân tích của nguyên 365 ngày. | Pass |
-| **TC_DIS_15** | Kiểm tra báo lỗi chọn Ngày bắt đầu lớn hơn Ngày kết thúc (E-1) | Đang ở màn hình Báo cáo | 1. Chọn Ngày bắt đầu là 15/10/2026.<br>2. Chọn Ngày kết thúc là 01/10/2026.<br>3. Bấm "Lọc dữ liệu". | `from_date > to_date` (I) | Giữ nguyên giao diện biểu đồ cũ. Khoanh viền đỏ ô ngày tháng và báo lỗi: *"Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc"*. | Pass |
-| **TC_DIS_16** | Kiểm tra báo lỗi khi chọn khoảng thời gian vượt quá 365 ngày (BVA Max+) | Đang ở màn hình Báo cáo | 1. Chọn Ngày bắt đầu là 01/01/2026.<br>2. Chọn Ngày kết thúc là 01/01/2027 (khoảng cách 366 ngày).<br>3. Bấm "Lọc dữ liệu". | Delta = 366 ngày (I) | Báo lỗi khoanh đỏ ô ngày tháng: *"Khoảng thời gian tra cứu tối đa không được vượt quá 365 ngày"*. Chặn thao tác lọc. | Pass |
-| **TC_DIS_17** | Kiểm tra hiển thị giao diện khi mốc thời gian không có dữ liệu (E-3) | Đang ở màn hình Báo cáo | 1. Chọn khoảng thời gian rơi vào ngày nghỉ lễ không có dữ liệu.<br>2. Bấm "Lọc dữ liệu". | Khoảng thời gian trống dữ liệu | Tạm ẩn các biểu đồ tròn/cột, hiển thị hình minh họa trống kèm thông báo: *"Không có dữ liệu phiếu hỗ trợ trong khoảng thời gian này"*. Các chỉ số đo lường trả về 0. | Pass |
-
----
-*Tài liệu kiểm thử hộp đen Khối chức năng 4 được chuẩn hóa hoàn thiện 100%, bổ sung đầy đủ EP/BVA, Decision Table, State Transition, RTM và bộ 17 Test Cases chuẩn IEEE.*
 
 ##### 3. Ma trận truy xuất nguồn gốc ca kiểm thử (RTM)
 
@@ -1370,6 +1236,8 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **UC 4.4 - E-1** | Báo lỗi khi chọn Ngày bắt đầu lớn hơn Ngày kết thúc | `TC_DIS_15` |
 | **UC 4.4 - BVA** | Báo lỗi khi chọn khoảng thời gian vượt biên (366 ngày) | `TC_DIS_16` |
 | **UC 4.4 - E-3** | Mốc thời gian tra cứu không có dữ liệu | `TC_DIS_17` |
+
+---
 
 ##### 4. Thiết kế ca kiểm thử chi tiết (Test Case Specification)
 
@@ -1382,3 +1250,4 @@ Hệ thống được thiết kế xoay quanh bốn nhóm chức năng nghiệp 
 | **TC_DIS_17** | Kiểm tra hiển thị giao diện khi mốc thời gian không có dữ liệu (E-3) | Đang ở màn hình Báo cáo | 1. Chọn khoảng thời gian rơi vào ngày nghỉ lễ không có dữ liệu.<br>2. Bấm "Lọc dữ liệu". | Khoảng thời gian trống dữ liệu | Tạm ẩn các biểu đồ tròn/cột, hiển thị hình minh họa trống kèm thông báo: *"Không có dữ liệu phiếu hỗ trợ trong khoảng thời gian này"*. Các chỉ số đo lường trả về 0. | Pass |
 
 ---
+
