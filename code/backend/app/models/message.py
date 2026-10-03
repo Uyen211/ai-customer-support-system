@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from sqlalchemy import Column, String, DateTime, Numeric, Text, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
@@ -14,6 +15,6 @@ class Message(Base):
     content = Column(Text, nullable=False)
     citations = Column(JSONB, nullable=True)
     sentiment_score = Column(Numeric(4, 2), nullable=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), server_default=func.now())
 
     conversation = relationship("Conversation", back_populates="messages")

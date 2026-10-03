@@ -160,16 +160,23 @@ class RAGPipelineService:
         finally:
             db.close()
 
-        # BƯỚC 1.6: Graceful Handover cho P1
-        if final_priority == "P1":
-            logger.info("Kích hoạt Graceful Handover cho P1 qua SSE Stream")
-            apology_msg = "Mình rất xin lỗi về trải nghiệm này. Hệ thống đã đánh dấu yêu cầu khẩn cấp và nhân viên CSKH đang vào hỗ trợ bạn ngay lập tức."
+        # BƯỚC 1.6: Graceful Handover cho P1 hoặc Yêu cầu gặp nhân viên (HUMAN_AGENT_REQUEST)
+        is_human_request = any(sq.intent == "HUMAN_AGENT_REQUEST" for sq in decomposer_output.sub_queries)
+
+        if final_priority == "P1" or is_human_request:
+            if is_human_request:
+                logger.info("Kích hoạt chuyển giao nhân viên tư vấn (HUMAN_AGENT_REQUEST) qua SSE Stream")
+                handover_msg = "Dạ, em đã ghi nhận yêu cầu và đang chuyển cuộc trò chuyện của anh/chị tới nhân viên tư vấn CSKH. Vui lòng chờ trong giây lát..."
+            else:
+                logger.info("Kích hoạt Graceful Handover cho P1 qua SSE Stream")
+                handover_msg = "Mình rất xin lỗi về trải nghiệm này. Hệ thống đã đánh dấu yêu cầu khẩn cấp và nhân viên CSKH đang vào hỗ trợ bạn ngay lập tức."
             
             db: Session = SessionLocal()
             try:
                 conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
                 if conv:
                     conv.mode = "WAITING_HUMAN"
+                    conv.is_flagged = True
                     db.commit()
             except Exception as e:
                 db.rollback()
@@ -182,24 +189,24 @@ class RAGPipelineService:
                     "channel:ws_alerts",
                     json.dumps({
                         "event": "QUEUE_UPDATED",
-                        "payload": {"conversation_id": conversation_id, "mode": "WAITING_HUMAN"}
+                        "payload": {"conversation_id": conversation_id, "mode": "WAITING_HUMAN", "is_flagged": True}
                     }, ensure_ascii=False)
                 )
             except Exception:
                 pass
 
             # Tự stream thẳng qua SSE mà không gọi RAG/Synthesizer
-            yield f"event: token\ndata: {json.dumps({'token': apology_msg}, ensure_ascii=False)}\n\n"
-            self._save_bot_message_to_db(conversation_id, apology_msg, [])
+            yield f"event: token\ndata: {json.dumps({'token': handover_msg}, ensure_ascii=False)}\n\n"
+            self._save_bot_message_to_db(conversation_id, handover_msg, [])
             
             done_payload = json.dumps({
-                "full_text": apology_msg,
+                "full_text": handover_msg,
                 "citations": [],
                 "standalone_query": standalone_query,
                 "is_complex": False
             }, ensure_ascii=False)
             yield f"event: done\ndata: {done_payload}\n\n"
-            logger.info(f"=== [HOÀN THÀNH RAG KH-06 PIPELINE (GRACEFUL HANDOVER)] ===")
+            logger.info(f"=== [HOÀN THÀNH RAG KH-06 PIPELINE (HANDOVER TO HUMAN)] ===")
             return
 
         # BƯỚC 2: Parallel Retrieval Workers (SQL, Vector HNSW, OutOfDomain)

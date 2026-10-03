@@ -1,4 +1,4 @@
-import React, { useState, Component } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { LandingPage } from './pages/customer/LandingPage';
@@ -38,11 +38,43 @@ class ErrorBoundary extends Component {
 
 function AppContent() {
   const { isLoggedIn, loading, accountType, user } = useAuth();
-  const [currentPage, setCurrentPage] = useState('landing');
+  
+  const [currentPage, setCurrentPage] = useState(() => {
+    const saved = sessionStorage.getItem('activePage');
+    if (saved) return saved;
+    const hash = window.location.hash.replace('#', '');
+    if (hash) return hash;
+    return 'landing';
+  });
 
   const handleNavigate = (page) => {
+    sessionStorage.setItem('activePage', page);
+    window.location.hash = page;
     setCurrentPage(page);
   };
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash) {
+        setCurrentPage(hash);
+        sessionStorage.setItem('activePage', hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Tự động khôi phục trang làm việc phù hợp sau khi đăng nhập / F5
+  useEffect(() => {
+    if (!loading && isLoggedIn) {
+      const currentSaved = sessionStorage.getItem('activePage');
+      if (!currentSaved || currentSaved === 'landing' || currentSaved === 'login' || currentSaved === 'register' || currentSaved === 'staff-login') {
+        const defaultPage = accountType === 'STAFF' ? 'staff-console' : 'chat';
+        handleNavigate(defaultPage);
+      }
+    }
+  }, [loading, isLoggedIn, accountType]);
 
   if (loading) {
     return (

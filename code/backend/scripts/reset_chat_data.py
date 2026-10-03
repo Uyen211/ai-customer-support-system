@@ -1,8 +1,8 @@
 import sys
 import os
 
-# Add backend directory to sys.path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Thêm thư mục backend vào sys.path để import được app
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.db.session import SessionLocal
 from app.models.message import Message
