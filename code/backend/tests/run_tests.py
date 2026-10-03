@@ -22,6 +22,8 @@ from tests.test_block2_sentiment_tickets import TestBlock2SentimentAndTickets
 from tests.test_staff_management import TestStaffAuth, TestStaffManagement
 from tests.test_agent_conversations import TestAgentConversations
 from tests.test_canned_responses import TestCannedResponses
+from tests.test_ticket_dispatcher import TestTicketDispatcher
+from tests.test_block4_sla_kanban_reports import TestBlock4SLAKanbanReports
 
 def suite():
     test_suite = unittest.TestSuite()
@@ -47,6 +49,10 @@ def suite():
 
     # 7. Khối 3 - Use Case 3.4: Mẫu phản hồi nhanh
     test_suite.addTest(unittest.makeSuite(TestCannedResponses))
+
+    # 8. Khối 4 - Use Case 4.1 đến 4.4: Dispatcher, SLA, Kanban & Báo cáo
+    test_suite.addTest(unittest.makeSuite(TestTicketDispatcher))
+    test_suite.addTest(unittest.makeSuite(TestBlock4SLAKanbanReports))
 
     return test_suite
 

@@ -1,5 +1,6 @@
 import uuid
 import json
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
@@ -148,7 +149,7 @@ def resolve_ticket(
     # 4. Cập nhật dữ liệu
     ticket.status = "RESOLVED"
     ticket.resolution_note = req.resolution_note.strip()
-    ticket.resolved_at = func.now()
+    ticket.resolved_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(ticket)
@@ -228,7 +229,7 @@ def update_ticket_status(
                 detail="Nội dung kết quả xử lý là bắt buộc, độ dài từ 10 đến 1.000 ký tự."
             )
         ticket.resolution_note = req.resolution_note.strip()
-        ticket.resolved_at = func.now()
+        ticket.resolved_at = datetime.now(timezone.utc)
 
     ticket.status = req.status
     
