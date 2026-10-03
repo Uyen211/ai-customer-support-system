@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { ArrowLeft, BriefcaseBusiness, Lock, Mail, AlertTriangle } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
@@ -7,34 +8,29 @@ import { useAuth } from '../../hooks/useAuth';
 
 export function StaffLogin({ onNavigate }) {
   const { login } = useAuth();
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const validate = () => {
-    const nextErrors = {};
-    if (!formData.email.trim()) nextErrors.email = 'Vui lòng nhập email nội bộ';
-    if (!formData.password) nextErrors.password = 'Vui lòng nhập mật khẩu';
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    mode: 'onTouched',
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: null }));
-    setApiError(null);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (!validate()) return;
-
+  const onSubmit = async (data) => {
     setIsLoading(true);
     setApiError(null);
     try {
-      const res = await staffService.loginStaff(formData);
+      const res = await staffService.loginStaff({
+        email: data.email.trim(),
+        password: data.password,
+      });
       login(res.access_token, res.user, 'STAFF');
       onNavigate('staff-console');
     } catch (error) {
@@ -72,28 +68,32 @@ export function StaffLogin({ onNavigate }) {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <Input
               label="Email nội bộ"
-              name="email"
               type="email"
               placeholder="agent.an@brand.com"
               icon={Mail}
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
+              error={errors.email?.message}
               required
+              {...register('email', {
+                required: 'Vui lòng nhập email nội bộ',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: 'Địa chỉ email không đúng định dạng',
+                },
+              })}
             />
             <Input
               label="Mật khẩu"
-              name="password"
               type="password"
               placeholder="Nhập mật khẩu..."
               icon={Lock}
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
+              error={errors.password?.message}
               required
+              {...register('password', {
+                required: 'Vui lòng nhập mật khẩu',
+              })}
             />
             <Button type="submit" variant="primary" size="lg" isLoading={isLoading} className="w-full justify-center">
               Đăng Nhập Nhân Viên

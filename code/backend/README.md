@@ -66,11 +66,14 @@ code/backend/
 │   │
 │   └── main.py                        # Điểm khởi chạy ứng dụng FastAPI (CORS, Middlewares, Routes)
 │
-├── tests/                             # Thư mục kiểm thử & Phòng thí nghiệm (RAG Lab)
+├── scripts/                            # Thư mục chứa các script tiện ích & quản trị CSDL
+│   ├── README.md                      # Hướng dẫn sử dụng các script
+│   ├── fix_db.py                      # Script tự động bổ sung cột CSDL còn thiếu
+│   └── reset_chat_data.py             # Script làm sạch dữ liệu chat & ticket thử nghiệm
+│
+├── tests/                             # Thư mục kiểm thử tự động
 │   ├── run_tests.py                   # Test runner tự động (unittest)
-│   ├── test_rag_pipeline.py           # Bộ kiểm thử RAG Pipeline KH-06
-│   ├── rag_lab/                       # Nơi chứa mã chạy thử nghiệm benchmark KH-01 -> KH-08
-│   └── unit/                          # Thư mục chứa Unit tests bổ sung
+│   └── test_*.py                      # Các bộ kiểm thử API & RAG Pipeline
 │
 ├── Dockerfile                         # Container đóng gói cs_backend
 └── requirements.txt                   # Danh sách thư viện cần thiết

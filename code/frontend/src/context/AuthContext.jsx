@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
 import { staffService } from '../services/staffService';
+import { LogoutConfirmModal } from '../components/common/LogoutConfirmModal';
 
 export const AuthContext = createContext();
 
@@ -13,6 +14,7 @@ export function AuthProvider({ children }) {
   });
   const [accountType, setAccountType] = useState(() => sessionStorage.getItem('accountType') || 'CUSTOMER');
   const [loading, setLoading] = useState(true);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   useEffect(() => {
     async function initAuth() {
@@ -23,7 +25,7 @@ export function AuthProvider({ children }) {
           sessionStorage.setItem('user', JSON.stringify(meData));
         } catch (error) {
           console.error("Auth verification failed:", error);
-          logout();
+          performLogout();
         }
       }
       setLoading(false);
@@ -40,13 +42,24 @@ export function AuthProvider({ children }) {
     setAccountType(type);
   };
 
-  const logout = () => {
+  const performLogout = () => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
     sessionStorage.removeItem('accountType');
+    sessionStorage.removeItem('activePage');
+    window.location.hash = '';
     setToken(null);
     setUser(null);
     setAccountType('CUSTOMER');
+    setIsLogoutModalOpen(false);
+  };
+
+  const openLogoutModal = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const closeLogoutModal = () => {
+    setIsLogoutModalOpen(false);
   };
 
   return (
@@ -58,10 +71,18 @@ export function AuthProvider({ children }) {
         isLoggedIn: !!token,
         loading,
         login,
-        logout,
+        logout: openLogoutModal,       // Mặc định gọi logout sẽ mở Modal xác nhận
+        confirmLogout: performLogout, // Thực hiện đăng xuất thực sự
+        openLogoutModal,
+        closeLogoutModal,
       }}
     >
       {children}
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={closeLogoutModal}
+        onConfirm={performLogout}
+      />
     </AuthContext.Provider>
   );
 }

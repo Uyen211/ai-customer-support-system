@@ -66,6 +66,8 @@ class TestTicketDispatcher(unittest.TestCase):
         mock_ticket.id = "valid-ticket-id"
         mock_ticket.status = "PENDING"
         mock_ticket.category = "support"
+        mock_ticket.priority = "P2"
+        mock_ticket.summary = "Hỗ trợ khách hàng khẩn cấp"
         mock_db.query().with_for_update().filter().first.return_value = mock_ticket
         
         # Mock empty agent list

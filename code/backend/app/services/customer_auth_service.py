@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.models.customer import Customer
@@ -31,6 +32,7 @@ class CustomerAuthService:
         # Băm mật khẩu và lưu vào CSDL
         hashed_pwd = get_password_hash(req.password)
         new_customer = Customer(
+            id=uuid.uuid4(),
             email=normalized_email,
             password_hash=hashed_pwd,
             full_name=req.full_name.strip(),

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Mail, Lock, ArrowLeft, AlertTriangle, ShieldAlert, BriefcaseBusiness } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
@@ -9,49 +10,31 @@ import logoAsset from '../../assets/logo.png';
 
 export function CustomerLogin({ onNavigate }) {
   const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const validate = () => {
-    const errs = {};
-    if (!formData.email.trim()) {
-      errs.email = 'Vui lòng nhập địa chỉ email';
-    }
-    if (!formData.password) {
-      errs.password = 'Vui lòng nhập mật khẩu';
-    }
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    mode: 'onTouched',
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }));
-    }
-    setApiError(null);
-    setIsLocked(false);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
+  const onSubmit = async (data) => {
     setIsLoading(true);
     setApiError(null);
     setIsLocked(false);
 
     try {
       const res = await authService.loginCustomer({
-        email: formData.email,
-        password: formData.password,
+        email: data.email.trim(),
+        password: data.password,
       });
 
       if (res && res.access_token) {
@@ -62,7 +45,7 @@ export function CustomerLogin({ onNavigate }) {
       const status = err.response?.status;
       const detail = err.response?.data?.detail || 'Đăng nhập thất bại.';
 
-      if (status === 423 || detail.includes('15')) {
+      if (status === 423 || (typeof detail === 'string' && detail.includes('15'))) {
         setIsLocked(true);
         setApiError('Tài khoản đã bị tạm khóa 15 phút do nhập sai mật khẩu quá 5 lần liên tiếp.');
       } else if (status === 401) {
@@ -119,29 +102,33 @@ export function CustomerLogin({ onNavigate }) {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <Input
               label="Địa chỉ Email"
-              name="email"
               type="email"
               placeholder="khachhang@example.com"
               icon={Mail}
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
+              error={errors.email?.message}
               required
+              {...register('email', {
+                required: 'Vui lòng nhập địa chỉ email',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: 'Địa chỉ email không đúng định dạng (VD: ten@domain.com)',
+                },
+              })}
             />
 
             <Input
               label="Mật khẩu"
-              name="password"
               type="password"
               placeholder="Nhập mật khẩu..."
               icon={Lock}
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
+              error={errors.password?.message}
               required
+              {...register('password', {
+                required: 'Vui lòng nhập mật khẩu',
+              })}
             />
 
             <div className="pt-2">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, Phone, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { Mail, Lock, User, Phone, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { authService } from '../../services/authService';
@@ -9,65 +10,37 @@ import logoAsset from '../../assets/logo.png';
 
 export function CustomerRegister({ onNavigate }) {
   const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    password: '',
-    phone_number: '',
-  });
-  const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const validate = () => {
-    const errs = {};
-    if (!formData.full_name.trim()) {
-      errs.full_name = 'Vui lòng nhập họ và tên';
-    }
-    if (!formData.email.trim()) {
-      errs.email = 'Vui lòng nhập địa chỉ email';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errs.email = 'Email không hợp lệ (ví dụ: user@example.com)';
-    }
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
+    mode: 'onTouched',
+    defaultValues: {
+      full_name: '',
+      email: '',
+      phone_number: '',
+      password: '',
+      confirm_password: '',
+    },
+  });
 
-    if (!formData.password) {
-      errs.password = 'Vui lòng nhập mật khẩu';
-    } else if (formData.password.length < 8) {
-      errs.password = 'Mật khẩu phải có ít nhất 8 ký tự';
-    } else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(formData.password)) {
-      errs.password = 'Mật khẩu phải bao gồm cả chữ cái và chữ số';
-    }
+  const passwordValue = watch('password');
 
-    if (formData.phone_number && !/^(0[3|5|7|8|9])+([0-9]{8})$/.test(formData.phone_number)) {
-      errs.phone_number = 'Số điện thoại không hợp lệ (10 chữ số bắt đầu bằng 0)';
-    }
-
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }));
-    }
-    setApiError(null);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
+  const onSubmit = async (data) => {
     setIsLoading(true);
     setApiError(null);
 
     try {
       const res = await authService.registerCustomer({
-        full_name: formData.full_name,
-        email: formData.email,
-        password: formData.password,
-        phone_number: formData.phone_number || undefined,
+        full_name: data.full_name.trim(),
+        email: data.email.trim(),
+        password: data.password,
+        phone: data.phone_number ? data.phone_number.trim() : undefined,
       });
 
       if (res && res.access_token) {
@@ -114,51 +87,86 @@ export function CustomerRegister({ onNavigate }) {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <Input
               label="Họ và tên"
-              name="full_name"
               placeholder="Nguyễn Văn A"
               icon={User}
-              value={formData.full_name}
-              onChange={handleChange}
-              error={errors.full_name}
+              error={errors.full_name?.message}
               required
+              {...register('full_name', {
+                required: 'Vui lòng không để trống họ và tên',
+                minLength: {
+                  value: 2,
+                  message: 'Họ và tên phải có ít nhất 2 ký tự',
+                },
+                maxLength: {
+                  value: 50,
+                  message: 'Họ và tên không được vượt quá 50 ký tự',
+                },
+              })}
             />
 
             <Input
               label="Địa chỉ Email"
-              name="email"
               type="email"
               placeholder="khachhang@example.com"
               icon={Mail}
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
+              error={errors.email?.message}
               required
+              {...register('email', {
+                required: 'Vui lòng không để trống địa chỉ email',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: 'Địa chỉ email không đúng định dạng (VD: ten@domain.com)',
+                },
+              })}
             />
 
             <Input
               label="Số điện thoại (tùy chọn)"
-              name="phone_number"
               type="tel"
               placeholder="0912345678"
               icon={Phone}
-              value={formData.phone_number}
-              onChange={handleChange}
-              error={errors.phone_number}
+              error={errors.phone_number?.message}
+              {...register('phone_number', {
+                validate: (value) => {
+                  if (!value || !value.trim()) return true;
+                  return /^0\d{9}$/.test(value.trim()) || 'Số điện thoại phải gồm 10 chữ số bắt đầu bằng 0';
+                },
+              })}
             />
 
             <Input
               label="Mật khẩu"
-              name="password"
               type="password"
-              placeholder="Ít nhất 8 ký tự (gồm chữ & số)"
+              placeholder="Ít nhất 8 ký tự (gồm cả chữ & số)"
               icon={Lock}
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
+              error={errors.password?.message}
               required
+              {...register('password', {
+                required: 'Vui lòng không để trống mật khẩu',
+                minLength: {
+                  value: 8,
+                  message: 'Mật khẩu tối thiểu 8 ký tự gồm chữ và số',
+                },
+                validate: (value) =>
+                  /(?=.*[A-Za-z])(?=.*\d)/.test(value) || 'Mật khẩu bắt buộc phải chứa cả chữ cái và chữ số',
+              })}
+            />
+
+            <Input
+              label="Xác nhận mật khẩu"
+              type="password"
+              placeholder="Nhập lại mật khẩu..."
+              icon={Lock}
+              error={errors.confirm_password?.message}
+              required
+              {...register('confirm_password', {
+                required: 'Vui lòng xác nhận lại mật khẩu',
+                validate: (value) =>
+                  value === passwordValue || 'Mật khẩu xác nhận không trùng khớp',
+              })}
             />
 
             <div className="pt-2">

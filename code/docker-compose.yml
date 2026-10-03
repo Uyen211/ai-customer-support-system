@@ -44,7 +44,7 @@ services:
       - ./backend:/app
       - hf_cache:/root/.cache/huggingface
     env_file:
-      - ../../.env
+      - .env
     environment:
       - REDIS_URL=redis://redis:6379/0
       - HF_HOME=/root/.cache/huggingface

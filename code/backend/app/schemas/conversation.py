@@ -4,20 +4,20 @@ from datetime import datetime
 from uuid import UUID
 
 class MessageItemSchema(BaseModel):
-    id: UUID
+    id: Optional[UUID] = None
     conversation_id: UUID
     sender_type: str
     sender_id: Optional[UUID] = None
     content: str
     citations: Optional[List[Dict[str, Any]]] = None
     sentiment_score: Optional[float] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
 class ConversationListItemSchema(BaseModel):
-    id: UUID
+    id: Optional[UUID] = None
     customer_id: UUID
     assigned_agent_id: Optional[UUID] = None
     mode: str
@@ -25,21 +25,21 @@ class ConversationListItemSchema(BaseModel):
     last_sentiment: Optional[str] = None
     last_message_content: Optional[str] = None
     last_message_time: Optional[datetime] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
 class ConversationDetailSchema(BaseModel):
-    id: UUID
+    id: Optional[UUID] = None
     customer_id: UUID
     assigned_agent_id: Optional[UUID] = None
     mode: str
     is_flagged: bool
     last_sentiment: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -1,4 +1,5 @@
 from typing import List, Optional
+import uuid
 from uuid import UUID
 from datetime import datetime, timezone
 import json
@@ -76,6 +77,7 @@ class ConversationService:
         """
         # 1. Tạo bản ghi Conversation mới
         conv = Conversation(
+            id=uuid.uuid4(),
             customer_id=customer_id,
             mode="BOT",
             is_flagged=False
@@ -85,6 +87,7 @@ class ConversationService:
         
         # 2. Tạo tin nhắn BOT chào đầu tiên
         initial_msg = Message(
+            id=uuid.uuid4(),
             conversation_id=conv.id,
             sender_type="BOT",
             content=DEFAULT_BOT_GREETING,

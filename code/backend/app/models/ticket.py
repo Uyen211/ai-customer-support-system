@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from sqlalchemy import Column, String, Boolean, DateTime, Text, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
@@ -19,7 +20,7 @@ class Ticket(Base):
     sla_breached = Column(Boolean, nullable=False, default=False)
     resolution_note = Column(Text, nullable=True)
     resolved_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), server_default=func.now(), onupdate=func.now())
 
     conversation = relationship("Conversation", back_populates="tickets")
