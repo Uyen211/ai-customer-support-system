@@ -12,8 +12,9 @@ export function CustomerRegister({ onNavigate }) {
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
-    password: '',
     phone_number: '',
+    password: '',
+    confirm_password: '',
   });
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState(null);
@@ -22,24 +23,33 @@ export function CustomerRegister({ onNavigate }) {
   const validate = () => {
     const errs = {};
     if (!formData.full_name.trim()) {
-      errs.full_name = 'Vui lòng nhập họ và tên';
+      errs.full_name = 'Vui lòng không để trống họ và tên';
+    } else if (formData.full_name.trim().length < 2 || formData.full_name.trim().length > 50) {
+      errs.full_name = 'Họ và tên phải có độ dài từ 2 đến 50 ký tự';
     }
+
     if (!formData.email.trim()) {
-      errs.email = 'Vui lòng nhập địa chỉ email';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errs.email = 'Email không hợp lệ (ví dụ: user@example.com)';
+      errs.email = 'Vui lòng không để trống địa chỉ email';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      errs.email = 'Địa chỉ email không đúng định dạng (VD: ten@domain.com)';
+    }
+
+    if (formData.phone_number && !/^0\d{9}$/.test(formData.phone_number.trim())) {
+      errs.phone_number = 'Số điện thoại phải gồm 10 chữ số bắt đầu bằng 0';
     }
 
     if (!formData.password) {
-      errs.password = 'Vui lòng nhập mật khẩu';
+      errs.password = 'Vui lòng không để trống mật khẩu';
     } else if (formData.password.length < 8) {
-      errs.password = 'Mật khẩu phải có ít nhất 8 ký tự';
+      errs.password = 'Mật khẩu tối thiểu 8 ký tự gồm chữ và số';
     } else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(formData.password)) {
-      errs.password = 'Mật khẩu phải bao gồm cả chữ cái và chữ số';
+      errs.password = 'Mật khẩu bắt buộc phải chứa cả chữ cái và chữ số';
     }
 
-    if (formData.phone_number && !/^(0[3|5|7|8|9])+([0-9]{8})$/.test(formData.phone_number)) {
-      errs.phone_number = 'Số điện thoại không hợp lệ (10 chữ số bắt đầu bằng 0)';
+    if (!formData.confirm_password) {
+      errs.confirm_password = 'Vui lòng xác nhận lại mật khẩu';
+    } else if (formData.password !== formData.confirm_password) {
+      errs.confirm_password = 'Mật khẩu xác nhận không trùng khớp';
     }
 
     setErrors(errs);
@@ -64,10 +74,10 @@ export function CustomerRegister({ onNavigate }) {
 
     try {
       const res = await authService.registerCustomer({
-        full_name: formData.full_name,
-        email: formData.email,
+        full_name: formData.full_name.trim(),
+        email: formData.email.trim(),
         password: formData.password,
-        phone_number: formData.phone_number || undefined,
+        phone: formData.phone_number ? formData.phone_number.trim() : undefined,
       });
 
       if (res && res.access_token) {
@@ -153,11 +163,23 @@ export function CustomerRegister({ onNavigate }) {
               label="Mật khẩu"
               name="password"
               type="password"
-              placeholder="Ít nhất 8 ký tự (gồm chữ & số)"
+              placeholder="Ít nhất 8 ký tự (gồm cả chữ & số)"
               icon={Lock}
               value={formData.password}
               onChange={handleChange}
               error={errors.password}
+              required
+            />
+
+            <Input
+              label="Xác nhận mật khẩu"
+              name="confirm_password"
+              type="password"
+              placeholder="Nhập lại mật khẩu..."
+              icon={Lock}
+              value={formData.confirm_password}
+              onChange={handleChange}
+              error={errors.confirm_password}
               required
             />
 

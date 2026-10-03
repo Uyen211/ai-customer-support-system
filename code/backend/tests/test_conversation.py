@@ -195,5 +195,81 @@ class TestConversationManagement(unittest.TestCase):
 
         asyncio.run(run())
 
+    def test_05_delete_conversation_success(self):
+        """SPEC-1.8: Xóa phiên trò chuyện thành công & tự động vô hiệu hóa các Ticket liên quan (Use Case 1.4)."""
+        conv_id = uuid.uuid4()
+        conv = Conversation(
+            id=conv_id,
+            customer_id=self.customer_id,
+            mode="BOT",
+            is_flagged=False
+        )
+
+        from app.models.ticket import Ticket
+        ticket = Ticket(
+            id=uuid.uuid4(),
+            conversation_id=conv_id,
+            category="Lỗi đơn hàng",
+            priority="P2",
+            status="PENDING",
+            summary="Sự cố kiểm tra đơn hàng",
+            sla_deadline=datetime.now(timezone.utc)
+        )
+
+        mock_db = MagicMock()
+        def query_side_effect(model):
+            mock_q = MagicMock()
+            if model == Customer:
+                mock_q.filter.return_value.first.return_value = self.customer
+            elif model == Conversation:
+                mock_q.filter.return_value.first.return_value = conv
+            elif model == Ticket:
+                mock_q.filter.return_value.all.return_value = [ticket]
+                mock_q.filter.return_value.delete.return_value = 1
+            elif model == Message:
+                mock_q.filter.return_value.delete.return_value = 5
+            return mock_q
+
+        mock_db.query.side_effect = query_side_effect
+
+        async def run():
+            app.dependency_overrides[get_db] = lambda: mock_db
+            try:
+                async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+                    response = await ac.delete(f"/api/conversations/{conv_id}", headers=self.headers)
+                    self.assertEqual(response.status_code, 200)
+                    data = response.json()
+                    self.assertEqual(data["status"], "success")
+                    self.assertIn("Đã xóa phiên trò chuyện", data["message"])
+            finally:
+                app.dependency_overrides.clear()
+
+        asyncio.run(run())
+
+    def test_06_delete_conversation_not_found(self):
+        """SPEC-1.8 E-2: Báo lỗi 404 khi cố gắng xóa phiên không tồn tại."""
+        conv_id = uuid.uuid4()
+        mock_db = MagicMock()
+        def query_side_effect(model):
+            mock_q = MagicMock()
+            if model == Customer:
+                mock_q.filter.return_value.first.return_value = self.customer
+            elif model == Conversation:
+                mock_q.filter.return_value.first.return_value = None
+            return mock_q
+
+        mock_db.query.side_effect = query_side_effect
+
+        async def run():
+            app.dependency_overrides[get_db] = lambda: mock_db
+            try:
+                async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+                    response = await ac.delete(f"/api/conversations/{conv_id}", headers=self.headers)
+                    self.assertEqual(response.status_code, 404)
+            finally:
+                app.dependency_overrides.clear()
+
+        asyncio.run(run())
+
 if __name__ == "__main__":
     unittest.main()
