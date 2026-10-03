@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 
 from app.db.session import get_db
 from app.models.ai_rule import AIRule
+from app.models.user import User
+from app.api.deps import get_current_user, require_roles
 from app.core.redis import redis_client
 
 router = APIRouter()
@@ -20,7 +22,10 @@ class AlertConfigResponse(BaseModel):
     p2_threshold: float
 
 @router.get("/alerts", response_model=AlertConfigResponse)
-def get_alert_config(db: Session = Depends(get_db)):
+def get_alert_config(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("MANAGER", "ADMIN"))
+):
     config = db.query(AIRule).first()
     
     # Auto-seeding if empty (Singleton)
@@ -42,12 +47,16 @@ def get_alert_config(db: Session = Depends(get_db)):
     }
 
 @router.put("/alerts", response_model=AlertConfigResponse)
-def update_alert_config(payload: AlertConfigUpdate, db: Session = Depends(get_db)):
+def update_alert_config(
+    payload: AlertConfigUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("MANAGER", "ADMIN"))
+):
     # Validation E-1
     if payload.p1_threshold >= payload.p2_threshold:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="P1 threshold must be strictly less than P2 threshold"
+            detail="Ngưỡng P1 phải nhỏ hơn ngưỡng P2."
         )
         
     config = db.query(AIRule).first()
@@ -65,8 +74,8 @@ def update_alert_config(payload: AlertConfigUpdate, db: Session = Depends(get_db
     # Cache Invalidation
     try:
         redis_client.delete("cache:alert_rules")
-    except Exception as e:
-        pass # Log error if needed, but don't fail the request
+    except Exception:
+        pass
         
     return {
         "id": str(config.id),
@@ -74,3 +83,4 @@ def update_alert_config(payload: AlertConfigUpdate, db: Session = Depends(get_db
         "p1_threshold": float(config.p1_threshold),
         "p2_threshold": float(config.p2_threshold)
     }
+

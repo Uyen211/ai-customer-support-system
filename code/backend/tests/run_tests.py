@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.test_customer_auth import TestCustomerAuth
 from tests.test_conversation import TestConversationManagement
 from tests.test_rag_pipeline import TestRAGPipeline
+from tests.test_block2_sentiment_tickets import TestBlock2SentimentAndTickets
 from tests.test_staff_management import TestStaffAuth, TestStaffManagement
 from tests.test_agent_conversations import TestAgentConversations
 from tests.test_canned_responses import TestCannedResponses
@@ -34,14 +35,17 @@ def suite():
     # 3. Khối 1 - Use Case 1.3: Trợ lý RAG Chatbot KH-06
     test_suite.addTest(unittest.makeSuite(TestRAGPipeline))
 
-    # 4. Khối 3 - Use Case 3.1 & 3.2: Tài khoản nhân viên & trạng thái làm việc
+    # 4. Khối 2 - Use Case 2.1, 2.2, 2.3: Giám sát cảm xúc, khởi tạo Ticket & cấu hình quy tắc
+    test_suite.addTest(unittest.makeSuite(TestBlock2SentimentAndTickets))
+
+    # 5. Khối 3 - Use Case 3.1 & 3.2: Tài khoản nhân viên & trạng thái làm việc
     test_suite.addTest(unittest.makeSuite(TestStaffAuth))
     test_suite.addTest(unittest.makeSuite(TestStaffManagement))
 
-    # 5. Khối 3 - Use Case 3.3: Hàng đợi & tiếp quản cuộc trò chuyện
+    # 6. Khối 3 - Use Case 3.3: Hàng đợi & tiếp quản cuộc trò chuyện
     test_suite.addTest(unittest.makeSuite(TestAgentConversations))
 
-    # 6. Khối 3 - Use Case 3.4: Mẫu phản hồi nhanh
+    # 7. Khối 3 - Use Case 3.4: Mẫu phản hồi nhanh
     test_suite.addTest(unittest.makeSuite(TestCannedResponses))
 
     return test_suite
